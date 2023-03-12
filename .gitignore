@@ -1,0 +1,13 @@
+dist/
+build/
+
+now.*
+
+*.so
+*.o
+*.a
+*.obj
+*.lst
+
+trace.*
+test.now
