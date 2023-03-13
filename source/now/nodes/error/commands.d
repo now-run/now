@@ -6,12 +6,12 @@ import now.nodes;
 
 static this()
 {
-    errorCommands["extract"] = function (string path, Context context)
+    errorCommands["get"] = function (string path, Context context)
     {
         /*
-        > print [extract $error code]
+        > print [get $error code]
         404
-        > print [extract $error message]
+        > print [get $error message]
         not found
         */
         auto target = context.pop!Erro();
@@ -29,11 +29,11 @@ static this()
             case "object":
                 return context.push(target.object);
             default:
-                auto msg = "Invalid argument to Error extraction";
+                auto msg = "Invalid argument to get from Error";
                 return context.error(msg, ErrorCode.InvalidArgument, "");
         }
     };
-    errorCommands["."] = errorCommands["extract"];
+    errorCommands["."] = errorCommands["get"];
 
     errorCommands["return"] = function (string path, Context context)
     {

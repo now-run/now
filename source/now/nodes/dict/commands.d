@@ -68,11 +68,11 @@ static this()
 
         return context;
     };
-    dictCommands["extract"] = function (string path, Context context)
+    dictCommands["get"] = function (string path, Context context)
     {
         /*
         > dict (a = 30) | as d
-        > set a [extract $d a]
+        > set a [get $d a]
         > print $a
         30
         */
@@ -99,5 +99,5 @@ static this()
             return context.error(ex.msg, ErrorCode.NotFound, "dict");
         }
     };
-    dictCommands["."] = dictCommands["extract"];
+    dictCommands["."] = dictCommands["get"];
 }

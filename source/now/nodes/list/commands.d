@@ -141,7 +141,7 @@ static this()
         List list = context.pop!List();
         return context.push(new ItemsRangeEnumerate(list.items));
     };
-    listCommands["extract"] = function (string path, Context context)
+    listCommands["get"] = function (string path, Context context)
     {
         List l = context.pop!List();
 
@@ -171,7 +171,7 @@ static this()
         // slice:
         return context.push(new List(l.items[start..end]));
     };
-    listCommands["."] = listCommands["extract"];
+    listCommands["."] = listCommands["get"];
 
     listCommands["infix"] = function (string path, Context context)
     {

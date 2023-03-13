@@ -34,7 +34,7 @@ class Vector(T) : Item
             return context;
         };
 
-        this.commands["extract"] = function (string path, Context context)
+        this.commands["get"] = function (string path, Context context)
         {
             auto item = context.pop!(typeof(this))();
 

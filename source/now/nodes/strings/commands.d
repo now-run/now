@@ -31,7 +31,7 @@ static this()
     };
 
 
-    stringCommands["extract"] = function (string path, Context context)
+    stringCommands["get"] = function (string path, Context context)
     {
         String target = context.pop!String();
 
@@ -67,7 +67,7 @@ static this()
 
         return context.push(target.repr[start..end]);
     };
-    stringCommands["."] = stringCommands["extract"];
+    stringCommands["."] = stringCommands["get"];
 
     stringCommands["length"] = function (string path, Context context)
     {
