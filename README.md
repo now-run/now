@@ -1,3 +1,3 @@
-# Now
+![now logo](https://blog.cleber.solutions/upload/now-title.png)
 
-A tool. A document. A language. 
+Your code is ready. Now run.
