@@ -1,15 +1,14 @@
+module now.packages;
+
+
+import core.sys.posix.dlfcn;
 import std.array : split;
 import std.file : dirEntries, SpanMode;
 import std.path : asAbsolutePath, asNormalizedPath, buildPath;
 import std.process : environment;
-import core.sys.posix.dlfcn;
 import std.string : toStringz;
 
-import nodes;
-
-
-/*
-*/
+import now.nodes;
 
 
 bool importModule(Program program, string packageName)

@@ -1,5 +1,5 @@
-import std.algorithm.iteration : filter;
-import std.array : array;
+module now.nodes.dict;
+
 
 import now.nodes;
 
@@ -9,8 +9,6 @@ CommandsMap dictCommands;
 
 class Dict : Item
 {
-    string description;
-    Dict parent;
     Item[string] values;
     string[] order;
 
@@ -20,18 +18,11 @@ class Dict : Item
         this.commands = dictCommands;
         this.typeName = "dict";
     }
-    this(Item[string] values, string description=null)
+    this(Item[string] values)
     {
         this();
-        this.description = description;
         this.values = values;
         order ~= values.keys;
-    }
-    this(Dict parent, string description=null)
-    {
-        this();
-        this.parent = parent;
-        this.description = description;
     }
 
     // ------------------
@@ -43,14 +34,6 @@ class Dict : Item
                 values.keys.map!(key => key ~ "=" ~ values[key].toString()).join(" ")
             )
             ~ ")";
-        if (this.description)
-        {
-            s = this.description ~ ":" ~ s;
-        }
-        if (this.parent)
-        {
-            s = this.parent.toString() ~ "/" ~ s;
-        }
         return s;
     }
 
@@ -169,11 +152,11 @@ class Dict : Item
         T getOrCreate(string[] keys)
         {
             Dict pivot = this;
-            foreach (key; keys)
+            foreach (key; keys[0..$-1])
             {
-                pivot = pivot.getOrCreate!T(key);
+                pivot = pivot.getOrCreate!Dict(key);
             }
-            return pivot;
+            return cast(T)(pivot.getOrCreate!T(keys[$-1]));
         }
     }
 
@@ -266,7 +249,7 @@ class SectionDict : Dict
     }
     Context evaluateAsList(Context context)
     {
-        context.push(new SimpleList(values.values.array));
+        context.push(new List(values.values));
         return context;
     }
 

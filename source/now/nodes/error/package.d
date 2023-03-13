@@ -1,6 +1,8 @@
-import std.conv : to;
+module now.nodes.error;
 
-import nodes;
+
+import now.nodes;
+
 
 CommandsMap errorCommands;
 

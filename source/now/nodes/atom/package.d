@@ -1,4 +1,7 @@
-import nodes;
+module now.nodes.atom;
+
+
+import now.nodes;
 
 
 CommandsMap booleanCommands;

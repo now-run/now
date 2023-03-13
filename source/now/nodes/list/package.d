@@ -1,17 +1,22 @@
-import std.array : array;
-import std.range : empty, front, popFront;
-
-import nodes;
+module now.nodes.list;
 
 
-CommandsMap simpleListCommands;
+import now.nodes;
 
-class SimpleList : BaseList
+
+CommandsMap listCommands;
+
+
+class List : BaseList
 {
+    this()
+    {
+        super();
+    }
     this(Items items)
     {
         super(items);
-        this.commands = simpleListCommands;
+        this.commands = listCommands;
         this.type = ObjectType.List;
         this.typeName = "list";
     }
@@ -47,10 +52,10 @@ class SimpleList : BaseList
             // [* [/ [+ 1 2 3 4] 5] 6]
             if (index % 2 == 0)
             {
-                if (item.type == ObjectType.SimpleList)
+                if (item.type == ObjectType.List)
                 {
-                    // Inner SimpleLists also become InfixPrograms:
-                    arguments ~= (cast(SimpleList)item).infixProgram();
+                    // Inner Lists also become InfixPrograms:
+                    arguments ~= (cast(List)item).infixProgram();
                 }
                 else
                 {
@@ -105,9 +110,9 @@ class SimpleList : BaseList
             if (arguments.length == 1)
             {
                 auto argument = arguments[0];
-                if (argument.type == ObjectType.SimpleList)
+                if (argument.type == ObjectType.List)
                 {
-                    return (cast(SimpleList)argument).infixProgram();
+                    return (cast(List)argument).infixProgram();
                 }
                 else
                 {

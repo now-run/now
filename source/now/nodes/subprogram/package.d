@@ -1,4 +1,7 @@
-import nodes;
+module now.nodes.subprogram;
+
+
+import now.nodes;
 
 
 CommandsMap subprogramCommands;

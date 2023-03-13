@@ -1,14 +1,36 @@
+module now.nodes.strings.commands;
+
+
 import std.array;
 import std.conv : ConvException;
 import std.regex : matchAll, matchFirst;
 import std.string;
 
-import conv;
-import nodes;
+import now.conv;
+import now.nodes;
 
 
 static this()
 {
+    stringCommands["eval"] = function (string path, Context context)
+    {
+        import now.grammar;
+
+        /*
+        > eval "set x 10"
+        > print $x
+        10
+        */
+        auto code = context.pop!string();
+
+        auto parser = new Parser(code);
+        SubProgram subprogram = parser.consumeSubProgram();
+
+        context = context.process.run(subprogram, context.next());
+        return context;
+    };
+
+
     stringCommands["extract"] = function (string path, Context context)
     {
         String target = context.pop!String();
@@ -68,7 +90,7 @@ static this()
         foreach (item; context.items)
         {
             auto s = item.toString();
-            SimpleList l = new SimpleList(
+            List l = new List(
                 cast(Items)(s.split(separator)
                     .map!(x => new String(x))
                     .array)
@@ -88,12 +110,12 @@ static this()
         }
         foreach (item; context.items)
         {
-            if (item.type != ObjectType.SimpleList)
+            if (item.type != ObjectType.List)
             {
-                auto msg = "`" ~ path ~ "` expects a list of SimpleLists";
+                auto msg = "`" ~ path ~ "` expects a list of Lists";
                 return context.error(msg, ErrorCode.InvalidSyntax, "");
             }
-            SimpleList l = cast(SimpleList)item;
+            List l = cast(List)item;
             context.push(
                 new String(l.items.map!(x => to!string(x)).join(joiner))
             );
@@ -162,7 +184,7 @@ static this()
         {
             string target = item.toString();
 
-            SimpleList l = new SimpleList([]);
+            List l = new List([]);
             foreach(m; target.matchAll(expression))
             {
                 l.items ~= new String(m.hit);
@@ -331,7 +353,7 @@ static this()
                 .map!(x => new IntegerAtom(x))
                 .map!(x => cast(Item)x)
                 .array;
-            context.push(new SimpleList(items));
+            context.push(new List(items));
         }
         return context;
     };

@@ -1,34 +1,16 @@
+module now.nodes.list.commands;
+
+
 import std.algorithm : map, sort;
 import std.algorithm.searching : canFind;
-import std.array;
 
-import nodes;
-import commands;
+import now.nodes;
 
 
 // Commands:
 static this()
 {
-    commands["list"] = function (string path, Context context)
-    {
-        /*
-        > set l [list 1 2 3 4]
-        # l = (1 , 2 , 3 , 4)
-        */
-        return context.push(new SimpleList(context.items));
-    };
-
-    // set lista (a , b , c , d)
-    // -> set lista [, a b c d]
-    // --> set lista [list a b c d]
-    commands[","] = commands["list"];
-
-    // set pair (a = b)
-    // -> set pair [= a b]
-    // --> set pairt [list a b]
-    commands["="] = commands["list"];
-
-    simpleListCommands["set"] = function (string path, Context context)
+    listCommands["set"] = function (string path, Context context)
     {
         string[] names;
 
@@ -38,8 +20,8 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        auto l1 = context.pop!SimpleList();
-        auto l2 = context.pop!SimpleList();
+        auto l1 = context.pop!List();
+        auto l2 = context.pop!List();
 
         names = l1.items.map!(x => to!string(x)).array;
 
@@ -65,15 +47,16 @@ static this()
         while(!values.empty)
         {
             // Everything else goes to the last name:
-            context.escopo[lastName] = context.escopo[lastName] ~ values.front;
+            auto seq = context.escopo[lastName];
+            seq ~= values.front;
             values.popFront();
         }
 
         return context;
     };
-    simpleListCommands["as"] = simpleListCommands["set"];
+    listCommands["as"] = listCommands["set"];
 
-    simpleListCommands["range"] = function (string path, Context context)
+    listCommands["range"] = function (string path, Context context)
     {
         /*
         range (1 2 3 4 5)
@@ -111,10 +94,10 @@ static this()
             }
         }
 
-        SimpleList list = context.pop!SimpleList();
+        List list = context.pop!List();
         return context.push(new ItemsRange(list.items));
     };
-    simpleListCommands["range.enumerate"] = function (string path, Context context)
+    listCommands["range.enumerate"] = function (string path, Context context)
     {
         /*
         range.enumerate (1 2 3 4 5)
@@ -155,12 +138,12 @@ static this()
             }
         }
 
-        SimpleList list = context.pop!SimpleList();
+        List list = context.pop!List();
         return context.push(new ItemsRangeEnumerate(list.items));
     };
-    simpleListCommands["extract"] = function (string path, Context context)
+    listCommands["extract"] = function (string path, Context context)
     {
-        SimpleList l = context.pop!SimpleList();
+        List l = context.pop!List();
 
         if (context.size == 0) return context.push(l);
 
@@ -186,19 +169,19 @@ static this()
         size_t end = cast(size_t)e;
 
         // slice:
-        return context.push(new SimpleList(l.items[start..end]));
+        return context.push(new List(l.items[start..end]));
     };
-    simpleListCommands["."] = simpleListCommands["extract"];
+    listCommands["."] = listCommands["extract"];
 
-    simpleListCommands["infix"] = function (string path, Context context)
+    listCommands["infix"] = function (string path, Context context)
     {
-        SimpleList list = context.pop!SimpleList();
+        List list = context.pop!List();
         context = list.runAsInfixProgram(context);
         return context;
     };
-    simpleListCommands["expand"] = function (string path, Context context)
+    listCommands["expand"] = function (string path, Context context)
     {
-        SimpleList list = context.pop!SimpleList();
+        List list = context.pop!List();
 
         foreach (item; list.items.retro)
         {
@@ -207,18 +190,18 @@ static this()
 
         return context;
     };
-    simpleListCommands["push"] = function (string path, Context context)
+    listCommands["push"] = function (string path, Context context)
     {
-        SimpleList list = context.pop!SimpleList();
+        List list = context.pop!List();
 
         Items items = context.items;
         list.items ~= items;
 
         return context;
     };
-    simpleListCommands["pop"] = function (string path, Context context)
+    listCommands["pop"] = function (string path, Context context)
     {
-        SimpleList list = context.pop!SimpleList();
+        List list = context.pop!List();
 
         if (list.items.length == 0)
         {
@@ -232,7 +215,7 @@ static this()
 
         return context;
     };
-    simpleListCommands["sort"] = function (string path, Context context)
+    listCommands["sort"] = function (string path, Context context)
     {
         class Comparator
         {
@@ -263,19 +246,19 @@ static this()
             }
         }
 
-        SimpleList list = context.pop!SimpleList();
+        List list = context.pop!List();
 
         Comparator[] comparators = list.items.map!(x => new Comparator(context, x)).array;
         Items sorted = comparators.sort.map!(x => x.item).array;
-        return context.push(new SimpleList(sorted));
+        return context.push(new List(sorted));
     };
-    simpleListCommands["reverse"] = function (string path, Context context)
+    listCommands["reverse"] = function (string path, Context context)
     {
-        SimpleList list = context.pop!SimpleList();
+        List list = context.pop!List();
         Items reversed = list.items.retro.array;
-        return context.push(new SimpleList(reversed));
+        return context.push(new List(reversed));
     };
-    simpleListCommands["contains"] = function (string path, Context context)
+    listCommands["contains"] = function (string path, Context context)
     {
         if (context.size != 2)
         {
@@ -283,7 +266,7 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        SimpleList list = context.pop!SimpleList();
+        List list = context.pop!List();
         Item item = context.pop();
 
         return context.push(
@@ -292,21 +275,21 @@ static this()
                 .canFind(to!string(item))
         );
     };
-    simpleListCommands["length"] = function (string path, Context context)
+    listCommands["length"] = function (string path, Context context)
     {
-        auto l = context.pop!SimpleList();
+        auto l = context.pop!List();
         return context.push(l.items.length);
     };
-    simpleListCommands["eq"] = function (string path, Context context)
+    listCommands["eq"] = function (string path, Context context)
     {
-        SimpleList rhs = context.pop!SimpleList();
+        List rhs = context.pop!List();
 
         Item other = context.pop();
-        if (other.type != ObjectType.SimpleList)
+        if (other.type != ObjectType.List)
         {
             return context.push(false);
         }
-        SimpleList lhs = cast(SimpleList)other;
+        List lhs = cast(List)other;
 
         // XXX: we could compare item by item instead of relying on toString,
         // or at least call a `eq` for each value (beware of recursion, though).
@@ -316,18 +299,18 @@ static this()
         }
         return context.push(lhs.toString() == rhs.toString());
     };
-    simpleListCommands["=="] = simpleListCommands["eq"];
+    listCommands["=="] = listCommands["eq"];
 
-    simpleListCommands["neq"] = function (string path, Context context)
+    listCommands["neq"] = function (string path, Context context)
     {
-        SimpleList rhs = context.pop!SimpleList();
+        List rhs = context.pop!List();
 
         Item other = context.pop();
-        if (other.type != ObjectType.SimpleList)
+        if (other.type != ObjectType.List)
         {
             return context.push(true);
         }
-        SimpleList lhs = cast(SimpleList)other;
+        List lhs = cast(List)other;
 
         // XXX: we could compare item by item instead of relying on toString,
         // or at least call a `neq` for each value (beware of recursion, though).
@@ -337,5 +320,5 @@ static this()
         }
         return context.push(lhs.toString() != rhs.toString());
     };
-    simpleListCommands["!="] = simpleListCommands["neq"];
+    listCommands["!="] = listCommands["neq"];
 }

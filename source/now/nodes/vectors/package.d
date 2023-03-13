@@ -1,6 +1,9 @@
+module now.nodes.vectors;
+
+
 import std.string : capitalize;
 
-import nodes;
+import now.nodes;
 
 
 CommandsMap byteVectorCommands;
@@ -24,14 +27,14 @@ class Vector(T) : Item
     }
     this()
     {
-        this.commands["length"] = new Command(function(string path, Context context)
+        this.commands["length"] = function (string path, Context context)
         {
             auto item = context.pop!(typeof(this))();
             context.push(item.values.length);
             return context;
-        });
+        };
 
-        this.commands["extract"] = new Command(function(string path, Context context)
+        this.commands["extract"] = function (string path, Context context)
         {
             auto item = context.pop!(typeof(this))();
 
@@ -87,8 +90,8 @@ class Vector(T) : Item
                     items ~= new IntegerAtom(x);
                 }
             }
-            return context.push(new SimpleList(items));
-        });
+            return context.push(new List(items));
+        };
     }
     override string toString()
     {

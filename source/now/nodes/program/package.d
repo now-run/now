@@ -1,6 +1,7 @@
+module now.nodes.program;
+
+
 import std.algorithm : each;
-import std.algorithm.iteration : filter;
-import std.array : join, split;
 import std.uni : toUpper;
 
 import now.nodes;
@@ -30,6 +31,7 @@ class Program : Dict {
         }
         this.globalCommands = commands;
 
+        // TODO: break all these sections in methods
         debug {
             stderr.writeln("Adjusting configuration");
         }
@@ -166,26 +168,33 @@ class Program : Dict {
     // Conversions
     override string toString()
     {
-        return "program " ~ this["program"]["name"].toString();
+        return "program " ~ this.get!String(
+            ["program","name"],
+            delegate (Dict d) {
+                return new String("PROGRAM WITHOUT A NAME");
+            }
+        ).toString();
     }
 
-    // Commands and procedures
-    override Command getCommand(string name)
+    override Context runCommand(string path, Context context)
     {
         // If it's a procedure:
-        auto cmdPtr = (name in this.procedures);
-        if (cmdPtr !is null) return *cmdPtr;
+        auto procPtr = (path in this.procedures);
+        if (procPtr !is null)
+        {
+            auto proc = *procPtr;
+            return proc.run(path, context);
+        }
 
-        // If it's a built-in command:
-        cmdPtr = (name in this.globalCommands);
-        if (cmdPtr !is null) return *cmdPtr;
+        // Or if it's a built-in command:
+        auto cmdPtr = (path in this.globalCommands);
+        if (cmdPtr !is null)
+        {
+            auto cmd = *cmdPtr;
+            return cmd(path, context);
+        }
 
-        /*
-        Do NOT try to call from subCommands!
-        They are supposed to be called from command line only.
-        */
-
-        return null;
+        throw new Exception("Command `" ~ path ~ "` not found.");
     }
 
     // Packages

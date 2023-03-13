@@ -1,4 +1,8 @@
-import nodes;
+module now.nodes.strings;
+
+
+import now.nodes;
+
 
 CommandsMap stringCommands;
 
@@ -124,10 +128,21 @@ class SubstString : String
                     return context.error(msg, ErrorCode.InvalidArgument, "");
                 }
 
+                debug{stderr.writeln("StringPart.evaluate.values:", values);}
                 foreach (v; values)
                 {
-                    auto newContext = v.runCommand("to.string", context.next(), true);
-                    result ~= to!string(newContext.items
+                    auto newContext = v.runMethod(
+                        "to.string", context.next()
+                    );
+                    if (newContext.exitCode == ExitCode.Failure)
+                    {
+                        return newContext;
+                    }
+                    auto resultItems = newContext.items;
+                    debug{
+                        stderr.writeln("StringPart.evaluate.resultItems:", resultItems);
+                    }
+                    result ~= to!string(resultItems
                         .map!(x => to!string(x))
                         .join(" "));
                     }
@@ -138,6 +153,7 @@ class SubstString : String
             }
         }
 
+        debug{stderr.writeln(">>> StringPart.evaluate.result:", result);}
         return context.push(new String(result));
     }
 }

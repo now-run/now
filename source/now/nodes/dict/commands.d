@@ -1,35 +1,11 @@
-import nodes;
-import commands;
+module now.nodes.dict.commands;
+
+
+import now.nodes;
 
 
 static this()
 {
-    commands["dict"] = function (string path, Context context)
-    {
-        /*
-        > dict (a = 1) (b = 2) | as d
-        > print ($d . a)
-        1
-        > print ($d . b)
-        2
-        */
-        auto dict = new Dict();
-
-        foreach(argument; context.items)
-        {
-            SimpleList l = cast(SimpleList)argument;
-
-            Item value = l.items.back;
-            l.items.popBack();
-
-            string lastKey = l.items.back.toString();
-            l.items.popBack();
-
-            auto nextDict = dict.navigateTo(l.items);
-            nextDict[lastKey] = value;
-        }
-        return context.push(dict);
-    };
     dictCommands["set"] = function (string path, Context context)
     {
         /*
@@ -42,7 +18,7 @@ static this()
 
         foreach(argument; context.items)
         {
-            SimpleList l = cast(SimpleList)argument;
+            List l = cast(List)argument;
 
             if (l.items.length < 2)
             {
@@ -73,12 +49,12 @@ static this()
         foreach (argument; context.items)
         {
             string key;
-            if (argument.type != ObjectType.SimpleList)
+            if (argument.type != ObjectType.List)
             {
-                argument = new SimpleList([argument]);
+                argument = new List([argument]);
             }
 
-            SimpleList l = cast(SimpleList)argument;
+            List l = cast(List)argument;
 
             key = l.items.back.toString();
             l.items.popBack();

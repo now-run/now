@@ -1,7 +1,10 @@
+module now.procedures;
+
+
 import std.algorithm : canFind;
 
-import exceptions;
-import nodes;
+import now.exceptions;
+import now.nodes;
 
 
 class Procedure
@@ -17,7 +20,6 @@ class Procedure
         this.name = name;
         this.parameters = parameters;
         this.body = body;
-        super(null);
     }
 
     Context run(string name, Context context)
@@ -65,9 +67,9 @@ class Procedure
                 continue;
             }
 
-            if (lookForNamedArguments && argument.type == ObjectType.SimpleList)
+            if (lookForNamedArguments && argument.type == ObjectType.List)
             {
-                SimpleList pair = cast(SimpleList)argument;
+                List pair = cast(List)argument;
                 if (pair.items.length != 2)
                 {
                     throw new Exception(

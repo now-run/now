@@ -1,4 +1,7 @@
-import nodes;
+module now.nodes.baselist;
+
+
+import now.nodes;
 
 
 class BaseList : Item

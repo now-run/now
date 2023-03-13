@@ -1,4 +1,7 @@
-import nodes;
+module now.stack;
+
+
+import now.nodes;
 
 
 class Stack

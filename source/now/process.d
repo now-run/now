@@ -1,3 +1,6 @@
+module now.process;
+
+
 import now.nodes;
 import now.stack;
 
@@ -20,7 +23,7 @@ class Process
     }
 
     // SubProgram execution:
-    Context run(SubProgram subprogram, Dict escopo)
+    Context run(SubProgram subprogram, Escopo escopo)
     {
         return run(subprogram, Context(this, escopo));
     }
@@ -82,10 +85,10 @@ class Process
 
     Context closeCMs(Context context)
     {
-        auto cmList = context.escopo.getOrCreate!List("contextManagers");
-        foreach (contextManager; cmList.items)
+        auto cmList = context.escopo.contextManagers;
+        foreach (contextManager; cmList)
         {
-            auto closeContext = contextManager.runCommand("close", context);
+            auto closeContext = contextManager.runMethod("close", context);
             if (closeContext.exitCode == ExitCode.Failure)
             {
                 // If the subprogram itself failed, we're going
@@ -114,5 +117,25 @@ class Process
         {
             return 0;
         }
+    }
+
+    int finish(Context context)
+    {
+        int returnCode = unixExitStatus(context);
+
+        if (context.exitCode == ExitCode.Failure)
+        {
+            auto e = context.pop!Erro();
+            stderr.writeln(e);
+        }
+        else
+        {
+            foreach (item; context.items)
+            {
+                stdout.writeln(item.toString());
+            }
+        }
+
+        return returnCode;
     }
 }

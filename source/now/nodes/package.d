@@ -1,16 +1,17 @@
-debug
-{
-    public import std.stdio;
-}
+module now.nodes;
 
-public import std.algorithm.iteration : map;
-public import std.range : back, popBack, retro;
-public import std.array : join, split;
+
+public import std.stdio;
+
+public import std.algorithm.iteration : filter, map;
+public import std.range : back, front, popBack, popFront, retro;
+public import std.array : array, empty, join, split;
 public import std.conv : to;
 
 public import now.exceptions;
 
 public import now.context;
+public import now.escopo;
 
 public import now.procedures;
 public import now.nodes.item;
@@ -29,10 +30,11 @@ public import now.nodes.subprogram;
 public import now.nodes.pipeline;
 public import now.nodes.command_call;
 public import now.nodes.strings;
+
 public import now.nodes.atom;
 
 alias Items = Item[];
-alias Command = void function(string, Context);
+alias Command = Context function(string, Context);
 alias CommandsMap = Command[string];
 
 enum ExitCode

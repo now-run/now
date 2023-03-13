@@ -1,3 +1,6 @@
+module now.exceptions;
+
+
 template customException(string name)
 {
     const string customException = "

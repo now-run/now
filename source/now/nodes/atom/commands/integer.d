@@ -1,4 +1,7 @@
-import nodes;
+module now.nodes.atom.commands.integer;
+
+
+import now.nodes;
 
 
 // Operators

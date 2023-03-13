@@ -1,6 +1,9 @@
+module now.nodes.item;
+
+
 import std.variant;
 
-import nodes;
+import now.nodes;
 
 
 // A base class for all kind of items that
@@ -40,6 +43,7 @@ class Item
         throw new Exception(
             "Conversion from "
             ~ thisInfo.toString() ~ " to int not implemented."
+            ~ " (" ~ this.toString() ~ ")"
         );
     }
     float toFloat()
@@ -71,33 +75,26 @@ class Item
     }
     Context next(Context context)
     {
-        context = runCommand("next", context);
+        context = runMethod("next", context);
         return context;
     }
 
-    // Commands:
-    Command getCommand(string name)
+    Context runMethod(string name, Context context)
     {
-        auto cmd = (name in this.commands);
-        if (cmd is null)
+        auto cmdPtr = (name in this.commands);
+        if (cmdPtr !is null)
         {
-            return null;
+            auto cmd = *cmdPtr;
+            context.push(this);
+            return cmd(name, context);
         }
         else
         {
-            return *cmd;
+            context.push(this);
+            return context.program.runCommand(name, context);
         }
-    }
-    Context runCommand(string name, Context context, bool allowGlobal=false)
-    {
-        Command cmd = this.getCommand(name);
-
-        if (cmd is null && allowGlobal)
-        {
-            cmd = context.program.getCommand(name);
-        }
-
-        if (cmd is null)
+        /*
+        else
         {
             auto info = typeid(this);
             string msg = 
@@ -106,8 +103,31 @@ class Item
                 ~ info.toString();
             return context.error(msg, ErrorCode.NotImplemented, "");
         }
+        */
+    }
 
-        context.push(this);
-        return cmd.run(name, context);
+    Context runCommand(string name, Context context)
+    {
+        auto cmdPtr = (name in this.commands);
+        if (cmdPtr !is null)
+        {
+            auto cmd = *cmdPtr;
+            return cmd(name, context);
+        }
+        else
+        {
+            return context.program.runCommand(name, context);
+        }
+        /*
+        else
+        {
+            auto info = typeid(this);
+            string msg = 
+                name
+                ~ " not implemented for "
+                ~ info.toString();
+            return context.error(msg, ErrorCode.NotImplemented, "");
+        }
+        */
     }
 }

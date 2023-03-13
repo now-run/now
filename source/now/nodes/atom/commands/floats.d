@@ -1,4 +1,7 @@
-import nodes;
+module now.nodes.atom.commands.floats;
+
+
+import now.nodes;
 
 
 template CreateOperator(string cmdName, string operator)

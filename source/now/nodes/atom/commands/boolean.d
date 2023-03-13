@@ -1,8 +1,11 @@
+module now.nodes.atom.commands.boolean;
+
+
 import std.array;
 import std.regex : matchAll, matchFirst;
 import std.string;
 
-import nodes;
+import now.nodes;
 
 
 template CreateComparisonOperator(string cmdName, string operator)

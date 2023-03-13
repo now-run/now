@@ -1,6 +1,7 @@
-import std.array : join;
+module now.nodes.command_call;
 
-import nodes;
+
+import now.nodes;
 
 
 class CommandCall
@@ -59,24 +60,6 @@ class CommandCall
         return context;
     }
 
-    Command getCommand(Program program, Item target)
-    {
-        Command cmd;
-
-        if (target !is null)
-        {
-            cmd = target.getCommand(name);
-            if (cmd !is null) return cmd;
-        }
-
-        cmd = program.getCommand(name);
-        if (cmd !is null && target !is null)
-        {
-            target.commands[name] = cmd;
-        }
-        return cmd;
-    }
-
     Context run(Context context)
     {
         // evaluate arguments and set proper context.size:
@@ -97,26 +80,20 @@ class CommandCall
         debug {stderr.writeln(name, ".executionContext.size:", executionContext.size);}
         debug {stderr.writeln(name, ".executionContext.inputSize:", executionContext.inputSize);}
 
+        // Inform the procedure how many arguments were passed:
+        executionContext.escopo["args.count"] = new IntegerAtom(executionContext.size);
+
         // We consider the first argument as potentially
         // the "target", when present:
         Item target = null;
         if (executionContext.size)
         {
             target = executionContext.peek();
+            return target.runCommand(name, executionContext);
         }
-
-        auto cmd = this.getCommand(context.program, target);
-        debug {stderr.writeln(name, ".cmd:", cmd);}
-        if (cmd is null)
+        else
         {
-            return context.error(
-                "Command " ~ this.name ~ " not found",
-                ErrorCode.CommandNotFound,
-                "internal"
-            );
+            return context.program.runCommand(name, executionContext);
         }
-
-        executionContext.escopo["args.count"] = new IntegerAtom(executionContext.size);
-        return cmd.run(this.name, executionContext);
     }
 }

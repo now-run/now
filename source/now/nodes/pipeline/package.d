@@ -1,4 +1,7 @@
-import nodes;
+module now.nodes.pipeline;
+
+
+import now.nodes;
 
 
 class Pipeline

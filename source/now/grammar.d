@@ -1,11 +1,15 @@
+module now.grammar;
+
+
 import std.algorithm : among, canFind;
 import std.conv : to;
 import std.math : pow;
 
-import conv;
-import exceptions;
-import nodes;
-import procedures;
+import now.conv;
+import now.exceptions;
+import now.nodes;
+import now.procedures;
+
 
 const EOL = '\n';
 const SPACE = ' ';
@@ -207,6 +211,7 @@ class Parser
             );
         }
         auto metadataSection = consumeSection();
+        p["program"] = metadataSection;
 
         consumeWhitespaces();
 
@@ -557,7 +562,7 @@ class Parser
             case '[':
                 return consumeExecList();
             case '(':
-                return consumeSimpleList();
+                return consumeList();
             case '<':
                 return consumeInlineSectionDict();
             case '"':
@@ -655,7 +660,7 @@ class Parser
         return new ExecList(subprogram);
     }
 
-    SimpleList consumeSimpleList()
+    List consumeList()
     {
         Item[] items;
         auto open = consumeChar();
@@ -674,7 +679,7 @@ class Parser
         auto close = consumeChar();
         assert(close == ')');
 
-        return new SimpleList(items);
+        return new List(items);
     }
 
     String consumeString()
@@ -832,7 +837,7 @@ class Parser
             else if (currentChar == '(')
             {
                 // $(1 + 2 + 4)
-                SimpleList list = consumeSimpleList();
+                List list = consumeList();
                 return list.infixProgram();
             }
             */

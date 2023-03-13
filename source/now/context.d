@@ -1,13 +1,16 @@
+module now.context;
+
+
 import std.array;
 
 import now.process;
-import nodes;
+import now.nodes;
 
 
 struct Context
 {
     Program program;
-    Dict escopo;
+    Escopo escopo;
     Process process;
     ExitCode exitCode = ExitCode.Success;
     uint inputSize = 0;
@@ -19,7 +22,7 @@ struct Context
     int size = 0;
 
     @disable this();
-    this(Process process, Dict escopo, int size=0)
+    this(Process process, Escopo escopo, int size=0)
     {
         this.process = process;
         this.escopo = escopo;
@@ -31,7 +34,7 @@ struct Context
     {
         return this.next(escopo, argumentCount);
     }
-    Context next(Dict escopo, int size=0)
+    Context next(Escopo escopo, int size=0)
     {
         this.size -= size;
         auto newContext = Context(process, escopo, size);
