@@ -117,7 +117,16 @@ int main(string[] args)
 
     debug {sw.start();}
 
-    auto program = parser.run();
+    Program program;
+    try
+    {
+        program = parser.run();
+    }
+    catch (Exception ex)
+    {
+        stderr.writeln(ex.to!string);
+        return -1;
+    }
     program.initialize(commands, envVars);
 
     debug

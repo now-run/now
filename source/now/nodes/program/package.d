@@ -194,7 +194,12 @@ class Program : Dict {
             return cmd(path, context);
         }
 
-        throw new Exception("Command `" ~ path ~ "` not found.");
+        context.error(
+            "Command `" ~ path ~ "` not found.",
+            ErrorCode.CommandNotFound.to!int,
+            ""
+        );
+        return context;
     }
 
     // Packages

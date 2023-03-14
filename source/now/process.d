@@ -39,7 +39,11 @@ class Process
             final switch(context.exitCode)
             {
                 case ExitCode.Undefined:
-                    throw new Exception(to!string(pipeline) ~ " returned Undefined");
+                    return context.error(
+                        to!string(pipeline) ~ " returned Undefined",
+                        ErrorCode.InternalError,
+                        ""
+                    );
 
                 case ExitCode.Success:
                     // That is the expected result from Pipelines:

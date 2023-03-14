@@ -39,7 +39,11 @@ class Pipeline
             final switch(context.exitCode)
             {
                 case ExitCode.Undefined:
-                    throw new Exception(to!string(command) ~ " returned Undefined");
+                    return context.error(
+                        to!string(command) ~ " returned Undefined",
+                        ErrorCode.InternalError,
+                        ""
+                    );
 
                 // -----------------
                 // Proc execution:

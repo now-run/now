@@ -72,9 +72,11 @@ class Procedure
                 List pair = cast(List)argument;
                 if (pair.items.length != 2)
                 {
-                    throw new Exception(
+                    return context.error(
                         "Invalid named parameter: "
-                        ~ pair.toString()
+                        ~ pair.toString(),
+                        ErrorCode.InvalidSyntax,
+                        ""
                     );
                 }
                 auto key = pair.items[0].toString();

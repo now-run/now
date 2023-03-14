@@ -22,9 +22,21 @@ static this()
         10
         */
         auto code = context.pop!string();
+        SubProgram subprogram;
 
         auto parser = new Parser(code);
-        SubProgram subprogram = parser.consumeSubProgram();
+        try
+        {
+            subprogram = parser.consumeSubProgram();
+        }
+        catch (Exception ex)
+        {
+            return context.error(
+                ex.to!string,
+                ErrorCode.InvalidSyntax,
+                ""
+            );
+        }
 
         context = context.process.run(subprogram, context.next());
         return context;

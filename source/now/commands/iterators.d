@@ -53,10 +53,12 @@ class Transformer : Item
             case ExitCode.Continue:
                 break;
             default:
-                throw new Exception(
+                return context.error(
                     to!string(target)
                     ~ ".next returned "
-                    ~ to!string(targetContext.exitCode)
+                    ~ to!string(targetContext.exitCode),
+                    ErrorCode.Invalid,
+                    ""
                 );
         }
 
