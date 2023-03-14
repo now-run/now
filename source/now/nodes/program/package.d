@@ -115,10 +115,22 @@ class Program : Dict {
         foreach (name, infoItem; proceduresDict.values)
         {
             auto info = cast(Dict)infoItem;
+
+            SubProgram subprogram;
+            try
+            {
+                subprogram = cast(SubProgram)(info["subprogram"]);
+            }
+            catch (Exception ex)
+            {
+                stderr.writeln("Error while declaring procedure ", name);
+                throw ex;
+            }
+
             auto proc = new Procedure(
                 name,
                 info.getOrCreate!Dict("parameters"),
-                cast(SubProgram)(info["subprogram"])
+                subprogram
             );
 
             // Event handlers:
