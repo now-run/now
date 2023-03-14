@@ -1,0 +1,363 @@
+[program]
+# vim: syntax=toml
+name "Now Document Example"
+description "Show how the document syntax works."
+
+
+[# About this document]
+
+This is a document, but also a program. You can both use `now` as a
+document definition language (just like JSON, YAML or TOML) and as a
+programming language (just like Tcl or Python).
+
+The document (or program) is divided into **sections** and each section
+starts with a *section header*, as you've already saw, followed (or not)
+by a *section body*.
+
+The secion body is divided in two parts:
+
+1. the document part and
+2. the code part.
+
+## Document
+
+The document part has a specific syntax, a little bit diffent from the syntax
+for the code part, but similar enough to not be confusing. This part ends with
+a blank line and follows this format:
+
+```
+key value
+```
+
+The key must be a valid **atom**, that is:
+
+- All lowercase;
+- No special characters besides underscore (`_`).
+
+And the value can be:
+
+- A number (`123`, `12.34`);
+- An atom (`hello`);
+- A string (`"hey"`);
+- A dict.
+
+The syntax for dicts is as follows:
+
+```
+{
+    key value
+    key value
+    ...
+}
+```
+
+That is: it's a sequence of zero or many key/value pairs, **one by line**. A
+value can be another dict, in which case it may extend for more lines.
+
+```
+{
+    subdict {
+        key value
+        yet_another_subdict {
+            another_key another_value
+        }
+    }
+}
+```
+
+## Code
+
+The code follows a syntax very similar to Tcl. Each code part of a section is
+a `SubProgram`, and each SubProgram is comprised of a list of **Pipelines**,
+in this format:
+
+```
+command1
+command2 argument1
+command3 argument1 argument2 argument3 etc
+command4 | command5 | command6
+```
+
+Now each argument can be:
+
+- A number, an atom or a string;
+- Another SubProgram;
+- An ExecList;
+- An InfixList;
+
+A SubProgram inside a SubProgram is enclosed by `{}`, like this:
+
+```
+scope "demonstrate a subprogram" {
+    this is a subprogram
+}
+```
+
+An ExecList is a way to run commands to create arguments to other commands. So
+instead of relying on ad-hoc variables, you can run a command directly while
+calling another one, like this:
+
+```
+print [list 1 2 3 4]
+# (1 2 3 4)
+```
+
+`now` tries to minimize the ammount of *syntax* developers have to learn, so
+instead of complicating the parser with lots of different symbols, it
+implements a elegant way of writing things that fits better as
+**infix notation**, like mathematical operations, comparisons, etc.
+
+```
+# This works. Notice that `+` has nothing special going on: it is
+# simply a regular command:
+set x [+ 1 2 3]
+# 7
+
+# If you like your program to be that *lispy*, okay. But if you don't:
+set y (1 + 2 + 3)
+```
+
+What the parenthesis (`()`) do is to **rearrange the terms** so that they
+fit the command-arguments pattern. In the above case, both operations are
+effectually **the same**.
+Not only that, but the parenthesis also group sequential equal operators, so:
+
+```
+set z (100 - 99 - 98 - 97 - 96 - 95)
+```
+
+is the same as
+
+```
+set z [- 100 99 98 97 96 95]
+```
+
+This way we can also operate over **dicts**:
+
+```
+# "Traditional" way:
+print [get $program configuration hello salute_word]
+
+# Infix notation way:
+print ($program . configuration . hello . salute_word)
+
+# (As you already realized, the above also could be written this way:)
+# print [. $program configuration hello salute_word]
+```
+
+### Dicts
+
+Speaking of dicts, the entire Program is actually read as a big dict. Each
+section document part is a subdict and the code part goes to a special key
+called "subprogram".
+
+You can define a dict in two ways: using the `dict` command or using the
+document syntax inside a special operator:
+
+```
+# Using the `dict` command:
+set my_dict [dict (a = 1) (b = 2)]
+
+# Using the well-known document syntax:
+set my_other_dict <{
+    a 1
+    b 2
+    s {
+        x 10
+        y 20
+    }
+}>
+```
+
+(I know I said `now` tries to minimize syntax, but it would be SO weird to
+not have this alternative syntax available inside the code part...)
+
+If you want to define a **list**, you can also use both ways: with the `list`
+command or using the document syntax:
+
+```
+# Using the `list` command:
+set lista [list alfa beta gama delta]
+
+# Using the document syntax:
+set listb <{
+    - alfa
+    - beta
+    - gama
+    - delta
+>}
+```
+
+(Again, `now` try to minimize the ammount of syntax, so in a document, lists
+are declared with the same syntax as dicts, only using a flag-key, `-`.)
+
+You can access both dicts and lists elements using the command `get`:
+
+```
+get $lista 0  # the second element of the list
+get $my_other_dict a  # the value of the key "a" of the dict
+```
+
+As said before, you can also use the `.` command, specially in conjunction
+with the infix syntax:
+
+```
+print ($my_other_dict . s . x)
+# The following would also work
+print ($my_other_dict get s get x)
+# But, yeah, it would seem VERY strange...
+```
+
+## Configuration
+
+`now` has hte ability to load configuration automatically from
+**environment variables**. So if you check the "configuration/hello"
+part of this document, you'll see there's a key "salute_word". It
+can be set via the environment variable `HELLO_SALUTE_WORD`.
+
+(You can set default values, there, too.)
+
+## Constants
+
+Constants are very similar to configuration, but they're not loaded
+from any other place than their definition section. Besides, since
+you are already giving their values, there's no need to inform
+`default`, `type` or anything else.
+
+## Procedures versus commands
+
+Procedures are code meant to be called by other parts of your code, while
+commands (I mean, the code defined in `[commands/*]` sections) are
+meant to be called from the command line. You cannot call a command from
+inside your code.
+
+Commands parameters definitions are used to auto-generate a **help text**
+that is shown whenever you call `now` without a command name, while
+procedures definitions are intended to both call validation, eventual
+type coercion and auto-generate **documentation**.
+
+
+
+Now see the rest of this document to learn more by looking into the examples!
+
+
+
+---
+
+[configuration/hello]
+salute_word {
+    type string
+    default "Hello"
+}
+
+
+[constants/math]
+pi 3.1415
+
+
+[procedures/hello]
+parameters {
+    name {
+        type string
+        description "The name of whoever is going to be saluted"
+    }
+    times {
+        type int
+        description "How many times the procedure should salute"
+        default 1
+    }
+}
+
+# Configuration variables are global, so you only
+# need to specify the full "path" when really needed:
+# print ($configuration . hello . salute_word) ", $name!"
+print "# hello"
+print "arguments: name=$name times=$times salute_word=$salute_word"
+print "configuration: hello.salute_word: $hello.salute_word"
+range.silent 1 $times | {
+    print ">>> $salute_word, $name!"
+}
+
+
+[procedures/error_handling]
+
+error "Test error" 123 "generic-error"
+print "POST ERROR: we should never reach this command."
+
+[procedures/error_handling/on.error]
+
+stack.pop | as error
+print "Error $error"
+
+
+[commands/hello]
+description "Say hello to someone."
+parameters {
+    # Some stuff seems repetitive, but this is just
+    # because we are declaring another procedure,
+    # which in real life would be unnecessary.
+    name {
+        type string
+        description "The name of whoever is going to be saluted"
+        default "World"
+    }
+    salute_word {
+        type string
+        description "The word used to salute"
+        default "Hello"
+    }
+}
+
+print "commands/hello: name=$name salute_word=$salute_word"
+
+print "calling hello only with a name..."
+hello $name
+print
+
+print "calling hello with positional and named arguments..."
+hello $name (salute_word = $salute_word)
+print
+
+print "calling hello with times = 3 and a different salute word..."
+hello $name (times = 3) (salute_word = "hi")
+
+
+[commands/pi]
+description "Tells the value of pi using program contants."
+parameters {}
+
+# We can access constants using their full name:
+print "math.pi is $math.pi"
+# But using only the last name also works - it's handy when there's
+# not name collision:
+print "pi is " $pi
+
+
+[commands/e]
+description "Shows how errors can be handled."
+
+error_handling
+
+
+[commands/exit]
+description "Exits the program with an error code."
+parameters {
+    code {
+        type int
+        default 123
+    }
+}
+
+to.int $code | as n
+if (($n > 127) || ($n < 0)) {
+    error "The exit code should be between zero and 127"
+}
+
+print "Exiting the program with code ${n}..."
+exit $n
+
+[commands/run]
+description "Show some help text."
+
+print "Try running `now` without any arguments to see"
+print "a list of available subcommands for this project."
