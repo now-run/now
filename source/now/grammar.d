@@ -390,7 +390,7 @@ class Parser
         }
         return dict;
     }
-    SectionDict consumeInlineSectionDict()
+    Item consumeInlineSectionDict()
     {
         /*
              \ /
@@ -404,8 +404,16 @@ class Parser
             stderr.writeln("consumeInlineSectionDict: " ~ currentChar);
         }
         auto inlineOpener = consumeChar();
-        auto opener = consumeChar();
-        assert(opener == '{');
+        if (currentChar != '{')
+        {
+            // Ooops! Go back one char...
+            index --;
+            // It's probably an operator:
+            return consumeAtom();
+        }
+        // Consume the opener:
+        consumeChar();
+
         consumeWhitespaces();
         auto dict = consumeSectionDict();
         /*
