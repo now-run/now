@@ -6,7 +6,31 @@ Your code is ready. Now run.
 
 ## Syntax
 
-See [program.now](https://raw.githubusercontent.com/now-lang/now/main/program.now).
+```tcl
+[program]
+name "Sample Program"
+description "Show the basics of the syntax"
+
+[commands/hello]
+parameters {
+    name {
+        type str
+        default "World"
+    }
+}
+
+print "Hello, ${name}!"
+```
+
+Save is as `program.now` and run this in the same directory:
+
+```bash
+$ now hello
+```
+
+
+See [program.now](https://raw.githubusercontent.com/now-lang/now/main/program.now)
+for more.
 
 ## Running
 
