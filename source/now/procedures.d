@@ -24,6 +24,9 @@ class Procedure
 
     Context run(string name, Context context)
     {
+        debug {
+            stderr.writeln(">>> running:", name);
+        }
         auto newScope = new Escopo(context.escopo);
         // Procedures are always top-level:
         newScope.parent = null;
@@ -131,9 +134,14 @@ class Procedure
 
         auto newContext = context.next(newScope, context.size);
 
+        // Unused arguments go to this "va_list" crude implementation:
+        newScope["args"] = arguments[currentIndex..$];
+        debug {
+            stderr.writeln(" extra args: ", newScope["args"]);
+        }
+
         // RUN!
-        newContext = context.process.run(body, newContext);
-        newContext = context.process.closeCMs(newContext);
+        newContext = this.doRun(name, newContext);
 
         context.size = newContext.size;
 
@@ -146,6 +154,12 @@ class Procedure
             context.exitCode = newContext.exitCode;
         }
 
+        return context;
+    }
+    Context doRun(string name, Context context)
+    {
+        context = context.process.run(this.body, context);
+        context = context.process.closeCMs(context);
         return context;
     }
 
@@ -173,6 +187,9 @@ class Procedure
         }
         else
         {
+            debug {
+                stderr.writeln("proc ", name, " has no ", event, " handler.");
+            }
             return context;
         }
     }

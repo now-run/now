@@ -25,6 +25,8 @@ public import now.nodes.vectors;
 
 public import now.nodes.error;
 
+public import now.nodes.system_commands;
+
 public import now.nodes.program;
 public import now.nodes.subprogram;
 public import now.nodes.pipeline;
@@ -53,6 +55,7 @@ enum ErrorCode
     Unknown = 1,
     InternalError,
 
+    Undefined,
     NotFound,
     CommandNotFound,
 
@@ -98,4 +101,5 @@ enum ObjectType
     Range,
 
     Program,
+    SystemProcess,
 }

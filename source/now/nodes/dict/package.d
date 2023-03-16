@@ -160,6 +160,35 @@ class Dict : Item
         }
     }
 
+    void on(string key, void delegate(Item) callback, void delegate() neCallback)
+    {
+        auto valuePtr = (key in values);
+        if (valuePtr !is null)
+        {
+            Item value = *valuePtr;
+            callback(value);
+        }
+        else
+        {
+            neCallback();
+        }
+    }
+    Item getOrNull(string key)
+    {
+        auto valuePtr = (key in values);
+        if (valuePtr !is null)
+        {
+            Item value = *valuePtr;
+            return value;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+
+
     Dict navigateTo(Items items, bool autoCreate=true)
     {
         // debug {stderr.writeln("navigateTo:", items, "/", autoCreate);}
@@ -249,7 +278,18 @@ class SectionDict : Dict
     }
     Context evaluateAsList(Context context)
     {
-        context.push(new List(values.values));
+        Items items;
+        foreach (key; this.order)
+        {
+            auto value = this.values[key];
+            context = value.evaluate(context);
+            if (context.exitCode == ExitCode.Failure)
+            {
+                return context;
+            }
+            items ~= context.pop();
+        }
+        context.push(new List(items));
         return context;
     }
 

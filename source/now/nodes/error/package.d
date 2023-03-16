@@ -12,12 +12,12 @@ class Erro : Item
     int code = -1;
     string classe;
     string message;
-    Item object;
+    Item subject;
     Context context;
 
-    this(string message, int code, string classe, Context context, Item object=null)
+    this(string message, int code, string classe, Context context, Item subject=null)
     {
-        this.object = object;
+        this.subject = subject;
         this.message = message;
         this.code = code;
         this.classe = classe;

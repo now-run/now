@@ -232,6 +232,28 @@ int main(string[] args)
     */
     context = subCommand.run(subCommandName, context);
 
+    if (context.exitCode == ExitCode.Failure)
+    {
+        // Global error handler:
+        auto handler = program.get!SubProgram(
+            ["program", "on.error", "subprogram"],
+            delegate (Dict d) {
+                return null;
+            }
+        );
+        if (handler !is null)
+        {
+            // XXX: can't it be the SAME scope???
+            auto newScope = new Escopo(context.escopo);
+
+            // Avoid calling on.error recursively:
+            newScope.rootCommand = null;
+
+            auto newContext = Context(context.process, newScope);
+            context = context.process.run(handler, newContext);
+        }
+    }
+
     int returnCode = process.finish(context);
 
     debug
@@ -248,7 +270,6 @@ int main(string[] args)
 
 int show_program_help(string filepath, string[] args, Program program)
 {
-    debug {stderr.writeln("program.values:", program.values);}
     auto programName = program.get!String(
         ["program", "name"],
         delegate (Dict d) {

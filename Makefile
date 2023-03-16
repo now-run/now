@@ -6,7 +6,7 @@ dist/now: dist/libnow.a
 		-L-Ldist -L-lnow \
 		--O2 -of=dist/now
 
-dist/now.debug: dist/libnow.debug.a
+dist/now.debug: dist/libnow.debug.a cli/source/now/app.d
 	ldc2 --d-debug \
 		-od=build -oq \
 		cli/source/now/app.d \
@@ -31,5 +31,5 @@ dist/libnow.debug.a:
 		--O1 -of=dist/libnow.debug.a
 
 clean:
-	-rm -f dist/libnow.*
+	-rm -f dist/libnow.* dist/now*
 	-rm -f build/*

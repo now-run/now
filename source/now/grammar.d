@@ -236,8 +236,32 @@ class Parser
                 continue;
             }
             auto subDict = p.navigateTo(section_path[0..$-1]);
-            subDict[section_path[$-1].toString()] = consumeSection();
+            auto key = section_path[$-1].toString();
+            auto value = consumeSection();
+
+            subDict.on(key, delegate (item) {
+                // If the key EXISTS:
+                auto existentDict = cast(Dict)item;
+                foreach (subKey, subValue; value.values)
+                {
+                    // Here it is okay to overwrite
+                    existentDict[subKey] = subValue;
+                }
+            }, delegate () {
+                // If the key doesn't exist yet:
+                subDict[key] = value;
+                debug {
+                     if (key == "on.error")
+                     {
+                      stderr.writeln("on.error for ", section_path);
+                     }
+                }
+            });
             consumeWhitespaces();
+        }
+
+        debug {
+            stderr.writeln("p[program]: ", p["program"]);
         }
 
         return p;

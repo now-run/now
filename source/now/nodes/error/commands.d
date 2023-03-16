@@ -26,8 +26,19 @@ static this()
                 return context.push(target.message);
             case "class":
                 return context.push(target.classe);
-            case "object":
-                return context.push(target.object);
+            case "subject":
+                if (target.subject is null)
+                {
+                    return context.error(
+                        "No subject defined for this error",
+                        ErrorCode.Undefined,
+                        ""
+                    );
+                }
+                else
+                {
+                    return context.push(target.subject);
+                }
             default:
                 auto msg = "Invalid argument to get from Error";
                 return context.error(msg, ErrorCode.InvalidArgument, "");

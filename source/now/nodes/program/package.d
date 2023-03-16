@@ -161,6 +161,63 @@ class Program : Dict {
                 cast(SubProgram)(info["subprogram"])
             );
             subCommands[name] = proc;
+
+            info.values.keys.filter!(x => (x[0..3] == "on.")).each!((k) {
+                auto v = cast(Dict)(info[k]);
+                proc.eventHandlers[k] = cast(SubProgram)(v["subprogram"]);
+                debug {
+                    stderr.writeln(proc, ".", k, "=", proc.eventHandlers[k]);
+                }
+            });
+        }
+
+        debug {
+            stderr.writeln("Preparing system commands");
+        }
+
+        auto system_commands = this.getOrCreate!Dict("system_commands");
+        foreach (name, infoItem; system_commands.values)
+        {
+            auto info = cast(Dict)infoItem;
+
+            /*
+            [system_commands/list-dir]
+            parameters {
+                path {
+                    type string
+                    default ""
+                }
+            }
+            workdir "/opt"
+            which "ls -h"
+            command "ls"
+            */
+            info.on("which", delegate (item) {
+                auto cmd = item.toString().split(" ");
+                // TODO: run which value to check if the
+                // requested command is available.
+            }, delegate () {
+                // TODO: run `which` (the system command) to
+                // check if the requested command is available.
+            });
+            auto command = info.get!SectionDict(
+                "command",
+                delegate (d) {
+                    throw new Exception(
+                        "commands/" ~ name
+                        ~ " must declare a `command` value."
+                    );
+                    return cast(SectionDict)null;
+                }
+            );
+            auto systemCommand = new SystemCommandCall(name, command, info);
+            this.procedures[name] = systemCommand;
+
+            // Event handlers:
+            info.values.keys.filter!(x => (x[0..3] == "on.")).each!((k) {
+                auto v = cast(Dict)(info[k]);
+                systemCommand.eventHandlers[k] = cast(SubProgram)(v["subprogram"]);
+            });
         }
 
         debug {

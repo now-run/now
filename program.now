@@ -4,6 +4,14 @@ name "Now Document Example"
 description "Show how the document syntax works."
 
 
+[program/on.error]
+
+stack.pop | as error
+print "The program terminated with some error."
+# The program will LIE to the user by not returning the (or an) error:
+return $error
+
+
 [# About this document]
 
 This is a document, but also a program. You can both use `now` as a
@@ -242,7 +250,7 @@ Now see the rest of this document to learn more by looking into the examples!
 
 
 
----
+-----
 
 [configuration/hello]
 salute_word {
@@ -253,6 +261,23 @@ salute_word {
 
 [constants/math]
 pi 3.1415
+
+
+[system_commands/list_dir]
+parameters {
+    path {
+        type string
+    }
+    options {
+        type string
+        default "-lh"
+    }
+}
+command {
+    - "ls"
+    - $options
+    - $path
+}
 
 
 [procedures/hello]
@@ -355,6 +380,25 @@ if (($n > 127) || ($n < 0)) {
 
 print "Exiting the program with code ${n}..."
 exit $n
+
+
+[commands/ls/on.error]
+
+stack.pop | as error
+print "list-dir returned an error: $error"
+return $error
+
+
+[commands/ls]
+parameters {
+    path {
+        type string
+    }
+}
+
+print "running: list_dir $path"
+list_dir $path | {print}
+
 
 [commands/run]
 description "Show some help text."
