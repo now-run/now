@@ -450,6 +450,21 @@ static this()
     };
     commands["as"] = commands["set"];
 
+    commands["get"] = function (string path, Context context)
+    {
+        auto name = context.pop();
+        Items value;
+        try
+        {
+            value = context.escopo[name.toString()];
+        }
+        catch (NotFoundException ex)
+        {
+            return context.push(ex.to!string);
+        }
+        return context.push(value);
+    };
+
     commands["vars"] = function (string path, Context context)
     {
         auto escopo = context.escopo;
