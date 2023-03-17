@@ -160,10 +160,10 @@ class BaseCommand
 
         // RUN!
         newContext = this.preRun(name, newContext);
-        newContext = this.handleEvent(newContext, "on.call");
+        newContext = this.handleEvent(newContext, "call");
         newContext = this.doRun(name, newContext);
         newContext = context.process.closeCMs(newContext);
-        newContext = this.handleEvent(newContext, "on.return");
+        newContext = this.handleEvent(newContext, "return");
 
         if (newContext.exitCode == ExitCode.Failure)
         {
@@ -196,11 +196,12 @@ class BaseCommand
 
     Context handleEvent(Context context, string event)
     {
-        if (auto handlerPtr = (event in eventHandlers))
+        auto fullname = "on." ~ event;
+        if (auto handlerPtr = (fullname in eventHandlers))
         {
             auto handler = *handlerPtr;
             debug {
-                stderr.writeln("Calling ", event);
+                stderr.writeln("Calling ", fullname);
                 stderr.writeln(" context:", context);
             }
             /*

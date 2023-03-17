@@ -249,12 +249,6 @@ class Parser
             }, delegate () {
                 // If the key doesn't exist yet:
                 subDict[key] = value;
-                debug {
-                     if (key == "on.error")
-                     {
-                      stderr.writeln("on.error for ", section_path);
-                     }
-                }
             });
             consumeWhitespaces();
         }

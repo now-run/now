@@ -1,0 +1,65 @@
+[program]
+# vim: syntax=toml
+name "PlantUML Example"
+description "Show how to encapsulate a diagram definition inside a Now program"
+focal_point "shells/plantuml/scripts/sequence_diagram"
+
+[shells/bash/scripts/create_plantuml_file]
+description "Given a PlantUML content, creates a file with both startuml and enduml markers"
+parameters {
+    filepath {
+        type string
+    }
+    content {
+        type string
+    }
+}
+
+echo "@startuml" > $filepath
+echo "$content" >> $filepath
+echo "@enduml" >> $filepath
+
+
+[system_commands/visualize]
+description "Open a file using a proper program from the system"
+parameters {
+    filepath {
+        type string
+    }
+}
+command {
+    - open
+    - $filepath
+}
+
+
+[shells/plantuml]
+command {
+    - plantuml
+    - "${script_name}.uml"
+}
+
+
+[shells/plantuml/on.call]
+description "PlantUML only works with files, so we create one here."
+
+create_plantuml_file "${script_name}.uml" $script_body
+
+
+[shells/plantuml/on.return]
+description "After generating a diagram, open it for visualization."
+
+visualize "${script_name}.png"
+
+
+[shells/plantuml/scripts/sequence_diagram]
+description "A simple sequence diagram"
+
+A -> B : hey
+A <-- B : hello
+
+
+[commands/run]
+description "Generate and visualize a diagram using PlantUML."
+
+sequence_diagram

@@ -62,7 +62,7 @@ class Process
                     {
                         auto escopo = context.escopo;
                         auto rootCommand = escopo.rootCommand;
-                        context = rootCommand.handleEvent(context, "on.error");
+                        context = rootCommand.handleEvent(context, "error");
                     }
                     /*
                     Wheter we called errorHandler or not,
