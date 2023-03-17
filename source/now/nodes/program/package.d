@@ -6,14 +6,13 @@ import std.uni : toUpper;
 
 import now.nodes;
 import now.packages;
-import now.procedures;
 
 
 class Program : Dict {
     // CLI commands:
     Procedure[string] subCommands;
     // Procedures:
-    Procedure[string] procedures;
+    BaseCommand[string] procedures;
     // Global commands:
     CommandsMap globalCommands;
 
@@ -47,7 +46,16 @@ class Program : Dict {
             auto d = cast(Dict)configSection;
             foreach (name, infoItem; d.values)
             {
+                if (infoItem.type != ObjectType.Dict)
+                {
+                    continue;
+                }
+
                 auto full_name = configSectionName ~ "." ~ name;
+
+                debug {
+                    stderr.writeln(" ", full_name);
+                }
 
                 auto info = cast(Dict)infoItem;
                 Item* valuePtr = ("default" in info.values);
@@ -95,12 +103,60 @@ class Program : Dict {
             auto d = cast(Dict)section;
             foreach (name, value; d.values)
             {
+                if (value.type != ObjectType.Dict)
+                {
+                    continue;
+                }
+
                 auto full_name = sectionName ~ "." ~ name;
 
                 // pi = 3.1415
                 this[name] = value;
                 // math.pi = 3.1415
                 this[full_name] = value;
+            }
+        }
+
+
+        debug {
+            stderr.writeln("Adjusting shells");
+        }
+        auto shells = this.getOrCreate!Dict("shells");
+        foreach (shellName, infoItem; shells.values)
+        {
+            auto shellInfo = cast(Dict)infoItem;
+
+            auto shellCommand = shellInfo.get!SectionDict(
+                "command",
+                delegate (Dict d) {
+                    auto cmdDict = new SectionDict();
+                    shellInfo["command"] = cmdDict;
+                    // default options for every shell:
+                    // (works fine on bash)
+                    cmdDict["-"] = new String(shellName);
+                    cmdDict["-"] = new String("-c");
+                    cmdDict["-"] = new SubstAtom("script_body");
+                    if (shellName[0..3] != "ksh")
+                    {
+                        cmdDict["-"] = new SubstAtom("script_name");
+                    }
+                    return cast(SectionDict)null;
+                }
+            );
+
+            // Scripts for this shell:
+            auto scripts = shellInfo.getOrCreate!Dict("scripts");
+            foreach (scriptName, scriptInfoItem; scripts.values)
+            {
+                /*
+                XXX: since we are passing shellInfo IMMEDIATELY,
+                we can't declare the shell itself AFTER the scripts
+                were declared (we could, but it'd be innefective).
+                */
+                auto scriptInfo = cast(Dict)scriptInfoItem;
+                this.procedures[scriptName] = new ShellScript(
+                    shellName, shellInfo, scriptName, scriptInfo
+                );
             }
         }
 
@@ -111,40 +167,10 @@ class Program : Dict {
         // The program dict is loaded, now
         // act accordingly on each different section.
         auto procedures = this.getOrCreate!Dict("procedures");
-        Dict proceduresDict = cast(Dict)procedures;
-        foreach (name, infoItem; proceduresDict.values)
+        foreach (name, infoItem; procedures.values)
         {
             auto info = cast(Dict)infoItem;
-
-            SubProgram subprogram;
-            try
-            {
-                subprogram = cast(SubProgram)(info["subprogram"]);
-            }
-            catch (Exception ex)
-            {
-                stderr.writeln("Error while declaring procedure ", name);
-                throw ex;
-            }
-
-            auto proc = new Procedure(
-                name,
-                info.getOrCreate!Dict("parameters"),
-                subprogram
-            );
-
-            // Event handlers:
-            /*
-            [procedures/f/on.error]
-
-            return
-            */
-            info.values.keys.filter!(x => (x[0..3] == "on.")).each!((k) {
-                auto v = cast(Dict)(info[k]);
-                proc.eventHandlers[k] = cast(SubProgram)(v["subprogram"]);
-            });
-
-            this.procedures[name] = proc;
+            this.procedures[name] = new Procedure(name, info);
         }
 
         debug {
@@ -155,20 +181,8 @@ class Program : Dict {
         foreach (name, infoItem; commandsDict.values)
         {
             auto info = cast(Dict)infoItem;
-            auto proc = new Procedure(
-                name,
-                info.getOrCreate!Dict("parameters"),
-                cast(SubProgram)(info["subprogram"])
-            );
-            subCommands[name] = proc;
+            subCommands[name] = new Procedure(name, info);
 
-            info.values.keys.filter!(x => (x[0..3] == "on.")).each!((k) {
-                auto v = cast(Dict)(info[k]);
-                proc.eventHandlers[k] = cast(SubProgram)(v["subprogram"]);
-                debug {
-                    stderr.writeln(proc, ".", k, "=", proc.eventHandlers[k]);
-                }
-            });
         }
 
         debug {
@@ -179,45 +193,9 @@ class Program : Dict {
         foreach (name, infoItem; system_commands.values)
         {
             auto info = cast(Dict)infoItem;
-
-            /*
-            [system_commands/list-dir]
-            parameters {
-                path {
-                    type string
-                    default ""
-                }
-            }
-            workdir "/opt"
-            which "ls -h"
-            command "ls"
-            */
-            info.on("which", delegate (item) {
-                auto cmd = item.toString().split(" ");
-                // TODO: run which value to check if the
-                // requested command is available.
-            }, delegate () {
-                // TODO: run `which` (the system command) to
-                // check if the requested command is available.
-            });
-            auto command = info.get!SectionDict(
-                "command",
-                delegate (d) {
-                    throw new Exception(
-                        "commands/" ~ name
-                        ~ " must declare a `command` value."
-                    );
-                    return cast(SectionDict)null;
-                }
-            );
-            auto systemCommand = new SystemCommandCall(name, command, info);
-            this.procedures[name] = systemCommand;
-
-            // Event handlers:
-            info.values.keys.filter!(x => (x[0..3] == "on.")).each!((k) {
-                auto v = cast(Dict)(info[k]);
-                systemCommand.eventHandlers[k] = cast(SubProgram)(v["subprogram"]);
-            });
+            // XXX: is it correct to save procedures and
+            // syscmdcalls in the same place???
+            this.procedures[name] = new SystemCommand(name, info);
         }
 
         debug {

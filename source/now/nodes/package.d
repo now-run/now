@@ -3,7 +3,7 @@ module now.nodes;
 
 public import std.stdio;
 
-public import std.algorithm.iteration : filter, map;
+public import std.algorithm.iteration : each, filter, map;
 public import std.range : back, front, popBack, popFront, retro;
 public import std.array : array, empty, join, split;
 public import std.conv : to;
@@ -13,7 +13,12 @@ public import now.exceptions;
 public import now.context;
 public import now.escopo;
 
-public import now.procedures;
+public import now.base_command;
+public import now.procedure;
+public import now.system_command;
+public import now.shell_script;
+
+// Items
 public import now.nodes.item;
 
 public import now.nodes.baselist;
@@ -25,7 +30,6 @@ public import now.nodes.vectors;
 
 public import now.nodes.error;
 
-public import now.nodes.system_commands;
 
 public import now.nodes.program;
 public import now.nodes.subprogram;

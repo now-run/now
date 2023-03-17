@@ -11,7 +11,7 @@ class Escopo
     Items[string] variables;
     Items contextManagers;
     string description;
-    Procedure rootCommand;
+    BaseCommand rootCommand;
 
     this(Program program, string description=null)
     {

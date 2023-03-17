@@ -1,4 +1,4 @@
-module now.nodes.system_commands;
+module now.system_command;
 
 import std.process;
 import std.stdio : readln;
@@ -10,21 +10,48 @@ import now.nodes;
 CommandsMap systemProcessCommands;
 
 
-class SystemCommandCall : Procedure
+class SystemCommand : BaseCommand
 {
-    Dict parameters;
     string[] which;
     SectionDict command;
-    Item workdir;
 
-    this(string name, SectionDict command, Dict info)
+    this(string name, Dict info)
     {
-        auto parameters = info.getOrCreate!Dict("parameters");
-        super(name, parameters, null);
+        super(name, info);
 
-        // this.info = info;
-        this.workdir = info.getOrNull("workdir");
-        this.command = command;
+        /*
+        [system_commands/list-dir]
+        parameters {
+            path {
+                type string
+                default ""
+            }
+        }
+        workdir "/opt"
+        which "ls -h"
+        command "ls"
+        */
+        info.on("which", delegate (item) {
+            auto cmd = item.toString().split(" ");
+            // TODO: run which value to check if the
+            // requested command is available.
+        }, delegate () {
+            // TODO: run `which` (the system command) to
+            // check if the requested command is available.
+        });
+        this.command = info.get!SectionDict(
+            "command",
+            delegate (d) {
+                throw new Exception(
+                    "commands/" ~ name
+                    ~ " must declare a `command` value."
+                );
+                return cast(SectionDict)null;
+            }
+        );
+        debug {
+            stderr.writeln("SystemCommand ", name, " command: ", this.command);
+        }
     }
 
     override Context doRun(string name, Context context)
@@ -63,13 +90,46 @@ class SystemCommandCall : Procedure
         We must evaluate that before splitting and running.
         */
 
+        debug {
+            stderr.writeln("evaluating ", this.command, " as List...");
+            stderr.writeln("  this.command.order:", this.command.order);
+        }
         context = this.command.evaluateAsList(context);
+        if (context.exitCode == ExitCode.Failure)
+        {
+            return context;
+        }
         List cmd = context.pop!List();
+
+        debug {
+            stderr.writeln(" ", this.name, " cmd: ", cmd);
+        }
+
+        // set each variable on this Escopo as
+        // a environment variable:
+        string[string] env;
+        foreach (key, value; context.escopo.variables)
+        {
+            // TODO:
+            // set x 1 2 3
+            // env["x"] = ?
+            debug {
+                stderr.writeln( this.name, " ", key, "=", value);
+            }
+            if (value.length)
+            {
+                env[key] = value[0].toString();
+            }
+            else
+            {
+                env[key] = "";
+            }
+        }
 
         try
         {
             context.push(
-                new SystemProcess(cmd, arguments, inputStream)
+                new SystemProcess(cmd, arguments, inputStream, env)
             );
         }
         catch (ProcessException ex)
@@ -91,14 +151,20 @@ class SystemProcess : Item
     string[] cmdline;
     int returnCode = 0;
     bool _isRunning;
+    string[string] env;
 
     auto type = ObjectType.SystemProcess;
     auto typeName = "system_process";
 
-    this(List command, string[] arguments, Item inputStream=null)
+    this(
+        List command,
+        string[] arguments,
+        Item inputStream=null,
+        string[string] env=null
+    )
     {
-        // TODO: split with regexp or something safer than simply `split`:
         this.command = command;
+        this.env = env;
         debug {stderr.writeln("this.command:", this.command);}
         this.arguments = arguments;
         this.inputStream = inputStream;
@@ -110,11 +176,19 @@ class SystemProcess : Item
 
         if (inputStream is null)
         {
-            pipes = pipeProcess(cmdline, Redirect.stdout | Redirect.stderr);
+            pipes = pipeProcess(
+                cmdline,
+                Redirect.stdout | Redirect.stderr,
+                this.env
+            );
         }
         else
         {
-            pipes = pipeProcess(cmdline, Redirect.all);
+            pipes = pipeProcess(
+                cmdline,
+                Redirect.all,
+                this.env
+            );
         }
 
         this.pid = pipes.pid;

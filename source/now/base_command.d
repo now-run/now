@@ -1,25 +1,43 @@
-module now.procedures;
+module now.base_command;
 
 
 import std.algorithm : canFind;
 
 import now.exceptions;
 import now.nodes;
+import now.grammar;
 
 
-class Procedure
+class BaseCommand
 {
     SubProgram[string] eventHandlers;
 
     string name;
     Dict parameters;
-    SubProgram body;
+    Dict info;
+    Item workdir;
 
-    this(string name, Dict parameters, SubProgram body)
+    this(string name, Dict info)
     {
+        debug {
+            stderr.writeln("BaseCommand:", name, info);
+        }
         this.name = name;
-        this.parameters = parameters;
-        this.body = body;
+        this.parameters = info.getOrCreate!Dict("parameters");
+        this.info = info;
+
+        // event handlers:
+        info.order.filter!(x => x[0..3] == "on.").each!((k) {
+            debug {
+                stderr.writeln(" eventHandler:", k);
+            }
+            auto v = cast(Dict)(info[k]);
+            auto body = cast(String)v["body"];
+            auto parser = new Parser(body.toString());
+            this.eventHandlers[k] = parser.consumeSubProgram();
+        });
+
+        this.workdir = info.getOrNull("workdir");
     }
 
     Context run(string name, Context context)
@@ -142,6 +160,12 @@ class Procedure
 
         // RUN!
         newContext = this.doRun(name, newContext);
+        newContext = context.process.closeCMs(newContext);
+
+        if (newContext.exitCode == ExitCode.Failure)
+        {
+            return newContext;
+        }
 
         context.size = newContext.size;
 
@@ -158,8 +182,7 @@ class Procedure
     }
     Context doRun(string name, Context context)
     {
-        context = context.process.run(this.body, context);
-        context = context.process.closeCMs(context);
+        // pass
         return context;
     }
 

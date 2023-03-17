@@ -8,6 +8,7 @@ import std.file;
 import std.process : environment;
 import std.range : retro;
 import std.stdio;
+import std.string;
 
 // import now.lib;
 import now.commands;
@@ -194,13 +195,15 @@ int main(string[] args)
     ---
     $ now program.now Fulano
     Hello, Fulano!
+
+    No need to cast, here. Leave it to
+    the BaseCommand/Procedure class.
     */
     foreach (arg; args[programArgsIndex..$].retro)
     {
         debug {stderr.writeln(" arg:", arg);}
         if (arg.length > 2 && arg[0..2] == "--")
         {
-            // TODO: add support to escaping, etc, etc.
             auto pair = arg[2..$].split("=");
             // alfa-beta -> alfa_beta
             auto key = pair[0].replace("-", "_");
@@ -217,7 +220,6 @@ int main(string[] args)
         }
         else
         {
-            // TODO: cast into correct type!
             context.push(arg);
         }
     }
@@ -235,14 +237,17 @@ int main(string[] args)
     if (context.exitCode == ExitCode.Failure)
     {
         // Global error handler:
-        auto handler = program.get!SubProgram(
-            ["program", "on.error", "subprogram"],
+        auto handlerString = program.get!String(
+            ["program", "on.error", "body"],
             delegate (Dict d) {
                 return null;
             }
         );
-        if (handler !is null)
+        if (handlerString !is null)
         {
+            auto localParser = new Parser(handlerString.toString());
+            SubProgram handler = localParser.consumeSubProgram();
+
             // XXX: can't it be the SAME scope???
             auto newScope = new Escopo(context.escopo);
 
@@ -299,19 +304,30 @@ int show_program_help(string filepath, string[] args, Program program)
 
     auto programDict = cast(Dict)program;
     auto commands = cast(Dict)(programDict["commands"]);
+
+    long maxLength = 16;
+    foreach (commandName; program.subCommands.keys)
+    {
+        // XXX: certainly there's a Dlangier way of doing this:
+        auto l = commandName.length;
+        if (l > maxLength)
+        {
+            maxLength = l;
+        }
+    }
     foreach (commandName; program.subCommands.keys)
     {
         auto command = cast(Dict)(commands[commandName]);
 
+        string description = "?";
         if (auto descriptionPtr = ("description" in command.values))
         {
-            auto description = *descriptionPtr;
-            stdout.writeln(" ", commandName, "    ", description.toString());
+            description = (*descriptionPtr).toString();
         }
-        else
-        {
-            stdout.writeln(" ", commandName);
-        }
+        stdout.writeln(
+            " ", (commandName ~ " ").leftJustify(maxLength, '-'),
+            "> ", description
+        );
 
         auto parameters = cast(Dict)(command["parameters"]);
         foreach (parameter; parameters.order)

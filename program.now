@@ -280,6 +280,27 @@ command {
 }
 
 
+[shells/bash]
+# This configuration is optional.
+# The following values are the default ones:
+command {
+    - "bash"
+    - "-c"
+    - $script_body
+    - $script_name
+}
+
+
+[shells/bash/scripts/find_device]
+parameters {
+    name {
+        type string
+    }
+}
+
+/bin/ls -lh /dev | grep "$name"
+
+
 [procedures/hello]
 parameters {
     name {
@@ -398,6 +419,17 @@ parameters {
 
 print "running: list_dir $path"
 list_dir $path | {print}
+
+
+[commands/find_device]
+description "Scans /dev for devices matching a name."
+parameters {
+    name {
+        type string
+    }
+}
+
+find_device $name | { print }
 
 
 [commands/run]

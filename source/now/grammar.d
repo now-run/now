@@ -8,7 +8,6 @@ import std.math : pow;
 import now.conv;
 import now.exceptions;
 import now.nodes;
-import now.procedures;
 
 
 const EOL = '\n';
@@ -342,11 +341,37 @@ class Parser
         }
         // After a newline, it's
         // i) another section header or
-        // ii) a SubProgram.
+        // ii) a section body, that we're not assuming
+        //     to be a SubProgram just yet.
+        string body = "";
         if (currentChar != '[')
         {
-            auto subprogram = consumeSubProgram();
-            dict["subprogram"] = subprogram;
+            while (!eof)
+            {
+                if (isEndOfLine)
+                {
+                    // newline:
+                    auto nl = consumeChar();
+
+                    // "\n[" is a new section!
+                    if (currentChar == '[')
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        body ~= nl;
+                    }
+                }
+                else
+                {
+                    body ~= consumeChar();
+                }
+            }
+        }
+        if (body.length)
+        {
+            dict["body"] = new String(body);
         }
 
         return dict;

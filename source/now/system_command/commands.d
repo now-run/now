@@ -1,7 +1,7 @@
-module now.nodes.system_commands.commands;
+module now.system_command.commands;
 
 import now.nodes;
-import now.nodes.system_commands;
+import now.system_command;
 
 
 static this()

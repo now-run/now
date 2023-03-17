@@ -17,7 +17,7 @@ dist/now.debug: dist/libnow.debug.a cli/source/now/app.d
 dist/libnow.a:
 	ldc2 --lib \
 		-oq -od=build \
-		source/now/*.d source/now/commands/*.d \
+		source/now/*.d source/now/commands/*.d source/now/system_command/* \
 		source/now/nodes/*.d source/now/nodes/*/*.d source/now/nodes/*/*/*.d \
 		-I source \
 		--O2 -of=dist/libnow.a
@@ -25,7 +25,7 @@ dist/libnow.a:
 dist/libnow.debug.a:
 	ldc2 --lib --d-debug \
 		-oq -od=build \
-		source/now/*.d source/now/commands/*.d \
+		source/now/*.d source/now/commands/*.d source/now/system_command/* \
 		source/now/nodes/*.d source/now/nodes/*/*.d source/now/nodes/*/*/*.d \
 		-I source \
 		--O1 -of=dist/libnow.debug.a
