@@ -62,6 +62,10 @@ class Process
                     {
                         auto escopo = context.escopo;
                         auto rootCommand = escopo.rootCommand;
+                        if (context.peek().type == ObjectType.Error)
+                        {
+                            escopo["error"] = context.pop();
+                        }
                         context = rootCommand.handleEvent(context, "error");
                     }
                     /*

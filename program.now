@@ -6,7 +6,6 @@ description "Show how the document syntax works."
 
 [program/on.error]
 
-stack.pop | as error
 print "The program terminated with some error."
 # The program will LIE to the user by not returning the (or an) error:
 return $error
@@ -332,7 +331,6 @@ print "POST ERROR: we should never reach this command."
 
 [procedures/error_handling/on.error]
 
-stack.pop | as error
 print "Error $error"
 
 
@@ -405,7 +403,6 @@ exit $n
 
 [commands/ls/on.error]
 
-stack.pop | as error
 print "list-dir returned an error: $error"
 return $error
 
