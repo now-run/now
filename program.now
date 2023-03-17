@@ -421,6 +421,10 @@ print "running: list_dir $path"
 list_dir $path | {print}
 
 
+[commands/find_device/on.call]
+
+print "Starting find_device..."
+
 [commands/find_device]
 description "Scans /dev for devices matching a name."
 parameters {
@@ -430,6 +434,10 @@ parameters {
 }
 
 find_device $name | { print }
+
+[commands/find_device/on.return]
+
+print "find_device finished."
 
 
 [commands/run]

@@ -32,14 +32,13 @@ class ShellScript : SystemCommand
             }
         );
     }
-    override Context doRun(string name, Context context)
+    override Context preRun(string name, Context context)
     {
         auto escopo = context.escopo;
         escopo["script_body"] = this.body;
         escopo["script_name"] = new String(this.name);
         escopo["script_call_name"] = new String(name);
         escopo["shell_name"] = new String(this.shellName);
-
-        return super.doRun(name, context);
+        return context;
     }
 }
