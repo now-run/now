@@ -159,16 +159,55 @@ class BaseCommand
         }
 
         // RUN!
+        // pre-run
         newContext = this.preRun(name, newContext);
-        newContext = this.handleEvent(newContext, "call");
-        newContext = this.doRun(name, newContext);
-        newContext = context.process.closeCMs(newContext);
-        newContext = this.handleEvent(newContext, "return");
-
         if (newContext.exitCode == ExitCode.Failure)
         {
             return newContext;
         }
+
+        // on.call
+        newContext = this.handleEvent(newContext, "call");
+        if (newContext.exitCode == ExitCode.Failure)
+        {
+            return newContext;
+        }
+        else if (newContext.exitCode == ExitCode.Skip)
+        {
+            // do not execute the handler
+            // but execute on.return
+        }
+        else if (newContext.exitCode == ExitCode.Break)
+        {
+            // do not execute anything else
+            context.exitCode = ExitCode.Break;
+            // XXX: should we set the exitCode to Success???
+            return context;
+        }
+        else
+        {
+            // run
+            newContext = this.doRun(name, newContext);
+        }
+        if (newContext.exitCode == ExitCode.Failure)
+        {
+            return newContext;
+        }
+
+        // close context managers
+        newContext = context.process.closeCMs(newContext);
+        if (newContext.exitCode == ExitCode.Failure)
+        {
+            return newContext;
+        }
+
+        // on.return
+        newContext = this.handleEvent(newContext, "return");
+        if (newContext.exitCode == ExitCode.Failure)
+        {
+            return newContext;
+        }
+        // -----------------------------------
 
         context.size = newContext.size;
 

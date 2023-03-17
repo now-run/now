@@ -4,6 +4,7 @@ name "PlantUML Example"
 description "Show how to encapsulate a diagram definition inside a Now program"
 focal_point "shells/plantuml/scripts/sequence_diagram"
 
+
 [shells/bash/scripts/create_plantuml_file]
 description "Given a PlantUML content, creates a file with both startuml and enduml markers"
 parameters {
@@ -49,14 +50,20 @@ create_plantuml_file "${script_name}.uml" $script_body
 [shells/plantuml/on.return]
 description "After generating a diagram, open it for visualization."
 
-visualize "${script_name}.png"
+wait $process | as return_code
+if ($return_code == 0) {
+    set filepath "${script_name}.png"
+    visualize $filepath
+} else {
+    print "PlantUML returned $return_code"
+}
 
 
 [shells/plantuml/scripts/sequence_diagram]
 description "A simple sequence diagram"
 
-A -> B : hey
-A <-- B : hello
+A -> B : request
+A <-- B : reply
 
 
 [commands/run]

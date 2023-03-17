@@ -41,4 +41,27 @@ class ShellScript : SystemCommand
         escopo["shell_name"] = new String(this.shellName);
         return context;
     }
+    override Context doRun(string name, Context context)
+    {
+        context = super.doRun(name, context);
+        /*
+        What the SystemCommand do is to push
+        a new SystemProcess, so we can peek the
+        stack and set that as a variable so that
+        event handlers can access the process (to wait
+        for it to finish, for instance).
+        */
+        if (context.exitCode != ExitCode.Failure)
+        {
+            auto process = context.peek();
+            debug {
+                stderr.writeln(" process? ", process, " / ", process.type);
+            }
+            if (process.type == ObjectType.SystemProcess)
+            {
+                context.escopo["process"] = process;
+            }
+        }
+        return context;
+    }
 }

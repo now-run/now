@@ -19,3 +19,5 @@ import now.nodes.list.commands;
 import now.nodes.strings.commands;
 import now.nodes.subprogram.commands;
 import now.nodes.vectors.commands;
+
+import now.system_command.commands;

@@ -153,9 +153,6 @@ class SystemProcess : Item
     bool _isRunning;
     string[string] env;
 
-    auto type = ObjectType.SystemProcess;
-    auto typeName = "system_process";
-
     this(
         List command,
         string[] arguments,
@@ -163,6 +160,10 @@ class SystemProcess : Item
         string[string] env=null
     )
     {
+        this.type = ObjectType.SystemProcess;
+        this.typeName = "system_process";
+        this.commands = systemProcessCommands;
+
         this.command = command;
         this.env = env;
         debug {stderr.writeln("this.command:", this.command);}
@@ -192,7 +193,6 @@ class SystemProcess : Item
         }
 
         this.pid = pipes.pid;
-        this.commands = systemProcessCommands;
     }
 
     override string toString()
@@ -299,7 +299,7 @@ class SystemProcessError : Item
     {
         this.parent = parent;
         this.pipes = parent.pipes;
-        this.type = ObjectType.Other;
+        this.type = ObjectType.SystemProcessError;
         this.typeName = "system_process_error";
     }
 

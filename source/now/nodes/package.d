@@ -106,4 +106,5 @@ enum ObjectType
 
     Program,
     SystemProcess,
+    SystemProcessError,
 }
