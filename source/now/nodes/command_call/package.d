@@ -85,10 +85,9 @@ class CommandCall
 
         // We consider the first argument as potentially
         // the "target", when present:
-        Item target = null;
         if (executionContext.size)
         {
-            target = executionContext.peek();
+            Item target = executionContext.peek();
             return target.runCommand(name, executionContext);
         }
         else

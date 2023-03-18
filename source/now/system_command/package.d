@@ -13,7 +13,7 @@ CommandsMap systemProcessCommands;
 class SystemCommand : BaseCommand
 {
     string[] which;
-    SectionDict command;
+    List command;
 
     this(string name, Dict info)
     {
@@ -39,14 +39,14 @@ class SystemCommand : BaseCommand
             // TODO: run `which` (the system command) to
             // check if the requested command is available.
         });
-        this.command = info.get!SectionDict(
+        this.command = info.get!List(
             "command",
             delegate (d) {
                 throw new Exception(
                     "commands/" ~ name
                     ~ " must declare a `command` value."
                 );
-                return cast(SectionDict)null;
+                return cast(List)null;
             }
         );
         debug {
@@ -87,23 +87,33 @@ class SystemCommand : BaseCommand
             - $options
             - $path
         }
-        We must evaluate that before splitting and running.
+        We must evaluate that before and running.
         */
-
-        debug {
-            stderr.writeln("evaluating ", this.command, " as List...");
-            stderr.writeln("  this.command.order:", this.command.order);
-        }
-        context = this.command.evaluateAsList(context);
-        if (context.exitCode == ExitCode.Failure)
+        Items cmdItems;
+        foreach (segment; command.items)
         {
-            return context;
+            context = segment.evaluate(context);
+            Item nextItem = context.pop();
+            if (nextItem.type == ObjectType.List)
+            {
+                // Expand Lists inside the command arguments:
+                cmdItems ~= (cast(List)nextItem).items;
+            }
+            // dict (verbosity = 3)
+            // -> "--verbosity=3"
+            else if (nextItem.type == ObjectType.Dict)
+            {
+                foreach (k, v; (cast(Dict)nextItem).values)
+                {
+                    cmdItems ~= new String(k ~ "=" ~ v.toString());
+                }
+            }
+            else
+            {
+                cmdItems ~= nextItem;
+            }
         }
-        List cmd = context.pop!List();
-
-        debug {
-            stderr.writeln(" ", this.name, " cmd: ", cmd);
-        }
+        List cmd = new List(cmdItems);
 
         // set each variable on this Escopo as
         // a environment variable:
