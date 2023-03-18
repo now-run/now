@@ -27,6 +27,7 @@ static this()
             body, context.next(escopo, 0)
         );
         debug {stderr.writeln("returnedContext.size:", returnedContext.size);}
+        // XXX: do we need to close cms manually???
         returnedContext = context.process.closeCMs(returnedContext);
         debug {stderr.writeln("                     ", returnedContext.size);}
 

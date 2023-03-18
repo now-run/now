@@ -75,12 +75,14 @@ class BaseCommand
 
         string[] namedParametersAlreadySet;
         Items positionalArguments;
+
         // Search for named arguments:
         bool lookForNamedArguments = true;
         foreach (argument; arguments)
         {
             debug {
                 stderr.writeln(" argument:", argument, "/", argument.type);
+                stderr.writeln("  lookForNamedArguments:", lookForNamedArguments);
             }
             if (argument.toString() == "--")
             {
@@ -130,7 +132,7 @@ class BaseCommand
                 continue;
             }
 
-            if (currentIndex >= positionalArguments.length)
+            else if (currentIndex >= positionalArguments.length)
             {
                 if (parametersAlreadySet.canFind(parameterName))
                 {
@@ -153,7 +155,7 @@ class BaseCommand
         auto newContext = context.next(newScope, context.size);
 
         // Unused arguments go to this "va_list" crude implementation:
-        newScope["args"] = arguments[currentIndex..$];
+        newScope["args"] = positionalArguments[currentIndex..$];
         debug {
             stderr.writeln(" extra args: ", newScope["args"]);
         }
@@ -243,6 +245,7 @@ class BaseCommand
                 stderr.writeln("Calling ", fullname);
                 stderr.writeln(" context:", context);
             }
+
             /*
             Event handlers are not procedures or
             commands, but simple SubProgram.
@@ -250,6 +253,15 @@ class BaseCommand
             auto newScope = new Escopo(context.escopo);
             // Avoid calling on.error recursively:
             newScope.rootCommand = null;
+
+            if (event == "error")
+            {
+                if (context.peek().type == ObjectType.Error)
+                {
+                    newScope["error"] = context.pop();
+                }
+            }
+
             auto newContext = Context(context.process, newScope);
 
             newContext = context.process.run(handler, newContext);
