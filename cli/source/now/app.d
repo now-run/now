@@ -234,6 +234,9 @@ int main(string[] args)
     */
     context = subCommand.run(subCommandName, context);
 
+    debug {
+        stderr.writeln(" end of program; context: ", context);
+    }
     if (context.exitCode == ExitCode.Failure)
     {
         // Global error handler:
@@ -253,6 +256,12 @@ int main(string[] args)
 
             // Avoid calling on.error recursively:
             newScope.rootCommand = null;
+
+            auto error = context.peek();
+            if (error.type == ObjectType.Error)
+            {
+                newScope["error"] = error;
+            }
 
             auto newContext = Context(context.process, newScope);
             context = context.process.run(handler, newContext);
