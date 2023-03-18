@@ -91,32 +91,12 @@ class Program : Dict {
         debug {
             stderr.writeln("Adjusting constants");
         }
-        /*
-        About [constants]:
-        - It must always follow the format "constants/:key";
-        - No sub-keys are allowed;
-        - No "direct" configuration is allowed.
-        */
+
         auto constants = this.getOrCreate!Dict("constants");
         foreach (sectionName, section; constants.values)
         {
-            auto d = cast(Dict)section;
-            foreach (name, value; d.values)
-            {
-                if (value.type != ObjectType.Dict)
-                {
-                    continue;
-                }
-
-                auto full_name = sectionName ~ "." ~ name;
-
-                // pi = 3.1415
-                this[name] = value;
-                // math.pi = 3.1415
-                this[full_name] = value;
-            }
+            this[sectionName] = section;
         }
-
 
         debug {
             stderr.writeln("Adjusting shells");
@@ -124,7 +104,7 @@ class Program : Dict {
         auto shells = this.getOrCreate!Dict("shells");
         foreach (shellName, infoItem; shells.values)
         {
-            auto shellInfo = cast(Dict)infoItem;
+            auto shellInfo = cast(SectionDict)infoItem;
 
             auto shellCommand = shellInfo.get!SectionDict(
                 "command",
@@ -193,6 +173,18 @@ class Program : Dict {
         foreach (name, infoItem; system_commands.values)
         {
             auto info = cast(Dict)infoItem;
+            debug {
+                stderr.writeln("system_commands/", name, ".infoItem:", infoItem);
+                stderr.writeln("  ", infoItem.type);
+                stderr.writeln("  becomes: ", info);
+            }
+            if (info is null)
+            {
+                throw new Exception(
+                    "system_commands/" ~ name
+                    ~ ".info is null"
+                );
+            }
             // XXX: is it correct to save procedures and
             // syscmdcalls in the same place???
             this.procedures[name] = new SystemCommand(name, info);
