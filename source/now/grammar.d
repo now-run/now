@@ -239,6 +239,10 @@ class Parser
             auto value = consumeSection();
 
             subDict.on(key, delegate (item) {
+                debug {stderr.writeln(
+                    "key ", key, " already exists in ", section_path,
+                    " and has type:", item.type
+                );}
                 // If the key EXISTS:
                 auto existentDict = cast(Dict)item;
                 foreach (subKey, subValue; value.values)
@@ -247,6 +251,9 @@ class Parser
                     existentDict[subKey] = subValue;
                 }
             }, delegate () {
+                debug {stderr.writeln(
+                    "key ", key, " is new."
+                );}
                 // If the key doesn't exist yet:
                 subDict[key] = value;
             });
@@ -306,7 +313,7 @@ class Parser
 
         return items;
     }
-    Dict consumeSection()
+    SectionDict consumeSection()
     {
 
         debug {
@@ -409,7 +416,15 @@ class Parser
             {
                 consumeChar();
                 consumeWhitespaces();
-                value = consumeSectionDict();
+                auto valueDict = consumeSectionDict();
+                if (valueDict.order.length && valueDict.isNumeric)
+                {
+                    value = valueDict.asList();
+                }
+                else
+                {
+                    value = valueDict;
+                }
             }
             else
             {
