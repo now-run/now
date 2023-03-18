@@ -1,0 +1,312 @@
+[program]
+# vim: syntax=toml
+name "Now as an alternative to Make"
+description "A very convoluted way of doing the same a Makefile would do much more easily."
+focal_point "constants/targets/now"
+
+[configuration/compilation]
+force {
+    type bool
+    default false
+    description "Wheter you want to force a rebuild or not."
+}
+
+
+[shells/bash/scripts/delete_file]
+parameters {
+    file {
+        type string
+    }
+}
+
+rm $file
+
+
+[shells/bash/scripts/is_newer]
+parameters {
+    file1 {
+        type string
+    }
+    file2 {
+        type string
+    }
+}
+
+\[ $file1 -nt $file2 ]
+
+
+[shells/bash/scripts/exists]
+parameters {
+    file {
+        type string
+    }
+}
+
+\[ -f $file ]
+
+
+[procedures/needs_recompilation]
+parameters {
+    output_filepath {
+        type string
+    }
+    files {
+        type list
+    }
+}
+
+if [exists $output_filepath | success] {
+    range $files | foreach file {
+        if [is_newer $file $output_filepath | success] {
+            print.stderr "$file is newer than ${output_filepath}."
+            return
+        }
+    }
+    # If no input file is newer than output, no need to
+    # compile again:
+    print.stderr "-- No need to compile $output_filepath again. Skipping."
+    skip
+}
+
+
+[system_commands/ldc/on.call]
+
+needs_recompilation $output_filepath $files
+
+
+[system_commands/ldc]
+parameters {
+    files {
+        type any
+    }
+    output_filepath {
+        type string
+    }
+    optimization {
+        type int
+        min 0
+        max 3
+        default 2
+    }
+    extra {
+        type list
+        default {
+        }
+    }
+}
+command {
+    - "ldc2"
+    - $extra
+    - "-od=build"
+    - "-oq"
+    - "-I=source"
+    - "-I=cli/source"
+    - "--O${optimization}"
+    - $files
+    - "-of=$output_filepath"
+}
+
+
+[constants/targets/now]
+description "now binary, release"
+output_filepath "dist/now"
+depends_on {
+    - now_lib
+}
+source_files {
+    - {
+        directory "cli/source/now"
+        pattern "app.d"
+    }
+    - {
+        directory "dist"
+        pattern "libnow.a"
+    }
+}
+lib false
+release true
+debug false
+command compile
+
+
+[constants/targets/now_lib]
+description "now static library, release"
+output_filepath "dist/libnow.a"
+source_files {
+    - {
+        directory "source/now"
+        pattern "*.d"
+    }
+}
+lib true
+release true
+debug false
+command compile
+
+
+[constants/targets/now_debug]
+description "now binary, debug"
+output_filepath "dist/now.debug"
+depends_on {
+    - now_lib_debug
+}
+source_files {
+    - {
+        directory "cli/source/now"
+        pattern "app.d"
+    }
+    - {
+        directory "dist"
+        pattern "libnow.debug.a"
+    }
+}
+lib false
+release false
+debug true
+command compile
+
+
+[constants/targets/now_lib_debug]
+description "now static library, debug"
+output_filepath "dist/libnow.debug.a"
+source_files {
+    - {
+        directory "source/now"
+        pattern "*.d"
+    }
+}
+lib true
+release false
+debug true
+command compile
+
+
+[procedures/compile]
+parameters {
+    files {
+        type list
+    }
+    output_filepath {
+        type string
+    }
+    lib {
+        type bool
+        default false
+    }
+    release {
+        type bool
+        default true
+    }
+    debug {
+        type bool
+        default false
+    }
+}
+
+list | as extra
+if $lib {
+    push $extra "--lib"
+}
+if $release {
+    push $extra "--release"
+}
+if $debug {
+    push $extra "--d-debug"
+}
+
+print "compile: ldc $files $output_filepath (extra = $extra)"
+ldc $files $output_filepath (extra = $extra)
+
+
+[procedures/make]
+parameters {
+    target_name {
+        type string
+    }
+}
+
+print.stderr "making $target_name"
+set target ($targets . $target_name)
+
+scope "resolve dependencies" {
+    try { get $target depends_on } { list } | range | foreach dependency {
+        make $dependency
+    }
+}
+
+scope "compile" {
+    set command ($target . command)
+    set source_files [list]
+
+    range ($target . source_files) | foreach pair {
+        set directory ($pair . directory)
+        set pattern ($pair . pattern)
+
+        glob $directory $pattern | range | foreach file {
+            push $source_files $file
+        }
+    }
+
+    set output_filepath ($target . output_filepath)
+    if ($compilation . force) {
+        print.stderr "-- deleting $output_filepath (forcing a recompilation)"
+        delete_file $output_filepath
+    }
+    try {
+        call $command
+            . $source_files
+            . $output_filepath
+            . (lib = ($target . lib))
+            . (release = ($target . release))
+            . (debug = ($target . debug))
+            | foreach line {
+                print.stderr "$command: $line"
+            }
+    } {
+        print.stderr ">>>>> ERROR: $error"
+        get $error subject | as process
+        get $process error | { print.stderr }
+        print.stderr ""
+        return $error
+    }
+    print.stderr "compilation finished."
+}
+
+print.stderr "make $target_name finished."
+
+[commands/build/on.call]
+description "Verify if the user is running from inside the examples directory."
+
+split "/" ($env . "PWD") | as pwd
+length $pwd | as length
+get $pwd ($length - 1) | as cwd
+if (($cwd == "examples") || ($cwd == "make")) {
+    print "Do not run this program from inside the examples directory!"
+    print "Go to the repository root and run it this way:"
+    print "    cat examples/make/program.now | now :stdin build"
+    print "--------------------------------------------------------"
+    exit 1
+}
+
+[commands/build]
+description "Build now binary"
+parameters {
+    mode {
+        description "debug/release"
+        type string
+        default release
+    }
+    force {
+        type bool
+        default false
+    }
+}
+
+
+set $compilation (force = $force)
+
+if ($mode == "debug") {
+    make now_debug
+} else {
+    make now
+}
