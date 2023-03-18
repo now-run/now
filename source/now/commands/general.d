@@ -301,7 +301,7 @@ static this()
         stdout.writeln();
         return context;
     };
-    commands["print.error"] = function (string path, Context context)
+    commands["print.stderr"] = function (string path, Context context)
     {
         while(context.size) stderr.write(context.pop!string());
         stderr.writeln();

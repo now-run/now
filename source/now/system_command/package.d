@@ -39,16 +39,44 @@ class SystemCommand : BaseCommand
             // TODO: run `which` (the system command) to
             // check if the requested command is available.
         });
-        this.command = info.get!List(
+
+        try
+        {
+            auto c = info["command"];
+            debug {
+                stderr.writeln(" ", name, " command: (before casting): ", c);
+            }
+        }
+        catch (Exception ex)
+        {
+            // do nothing
+        }
+
+        auto cmdItem = info.get(
             "command",
             delegate (d) {
                 throw new Exception(
                     "commands/" ~ name
                     ~ " must declare a `command` value."
                 );
-                return cast(List)null;
+                return cast(Item)null;
             }
         );
+        if (cmdItem.type == ObjectType.List)
+        {
+            this.command = cast(List)cmdItem;
+        }
+        else if (cmdItem.type == ObjectType.Dict)
+        {
+            this.command = (cast(Dict)cmdItem).asList();
+        }
+        else
+        {
+            throw new Exception(
+                "commands/" ~ name
+                ~ ".command must be a list"
+            );
+        }
         debug {
             stderr.writeln("SystemCommand ", name, " command: ", this.command);
         }
@@ -78,7 +106,8 @@ class SystemCommand : BaseCommand
         }
 
         debug {
-            stderr.writeln(" >> arguments: ", arguments);
+            stderr.writeln(" SystemCommand ", name, " arguments: ", arguments);
+            stderr.writeln(" command: ", command);
         }
 
         /*

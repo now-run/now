@@ -104,12 +104,12 @@ class Program : Dict {
         auto shells = this.getOrCreate!Dict("shells");
         foreach (shellName, infoItem; shells.values)
         {
-            auto shellInfo = cast(SectionDict)infoItem;
+            auto shellInfo = cast(Dict)infoItem;
 
-            auto shellCommand = shellInfo.get!SectionDict(
+            shellInfo.get!Dict(
                 "command",
                 delegate (Dict d) {
-                    auto cmdDict = new SectionDict();
+                    auto cmdDict = new Dict();
                     shellInfo["command"] = cmdDict;
                     // default options for every shell:
                     // (works fine on bash)
@@ -120,7 +120,7 @@ class Program : Dict {
                     {
                         cmdDict["-"] = new SubstAtom("script_name");
                     }
-                    return cast(SectionDict)null;
+                    return cast(Dict)null;
                 }
             );
 
@@ -134,6 +134,9 @@ class Program : Dict {
                 were declared (we could, but it'd be innefective).
                 */
                 auto scriptInfo = cast(Dict)scriptInfoItem;
+                debug {
+                    stderr.writeln("scripts/", scriptName, ": ", scriptInfo);
+                }
                 this.procedures[scriptName] = new ShellScript(
                     shellName, shellInfo, scriptName, scriptInfo
                 );
