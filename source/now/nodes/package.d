@@ -88,6 +88,7 @@ enum ObjectType
     Other,
     None,
 
+    Pair,
     List,
     ExecList,
     SubProgram,

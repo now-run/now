@@ -18,22 +18,18 @@ static this()
 
         foreach(argument; context.items)
         {
-            List l = cast(List)argument;
+            Pair pair = cast(Pair)argument;
 
-            if (l.items.length < 2)
+            if (pair.type != ObjectType.Pair)
             {
-                auto msg = "`dict." ~ path ~ "` expects lists with at least 2 items";
+                auto msg = "`dict." ~ path ~ "` expects pairs as arguments";
                 return context.error(msg, ErrorCode.InvalidArgument, "dict");
             }
 
-            Item value = l.items.back;
-            l.items.popBack();
+            string key = pair.items[0].toString();
+            Item value = pair.items[1];
 
-            string lastKey = l.items.back.toString();
-            l.items.popBack();
-
-            auto nextDict = dict.navigateTo(l.items);
-            nextDict[lastKey] = value;
+            dict[key] = value;
         }
 
         return context;

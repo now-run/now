@@ -534,8 +534,20 @@ static this()
     // set pair (a = b)
     // -> set pair [= a b]
     // --> set pairt [list a b]
-    commands["="] = commands["list"];
-
+    commands["="] = function (string path, Context context)
+    {
+        auto key = context.pop();
+        auto value = context.pop();
+        if (context.size)
+        {
+            return context.error(
+                "Invalid pair",
+                ErrorCode.InvalidSyntax,
+                ""
+            );
+        }
+        return context.push(new Pair([key, value]));
+    };
     void addVectorCommands(T, C)()
     {
         auto typeName = T.stringof ~ "_vector";

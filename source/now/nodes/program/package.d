@@ -51,11 +51,8 @@ class Program : Dict {
                     continue;
                 }
 
-                auto full_name = configSectionName ~ "." ~ name;
-
-                debug {
-                    stderr.writeln(" ", full_name);
-                }
+                // Make sure the subDict exists:
+                this.getOrCreate!Dict([configSectionName, name]);
 
                 auto info = cast(Dict)infoItem;
                 Item* valuePtr = ("default" in info.values);
@@ -63,10 +60,8 @@ class Program : Dict {
                 {
                     Item value = *valuePtr;
 
-                    // port = 5000
-                    this[name] = value;
                     // http.port = 5000
-                    this[full_name] = value;
+                    this[[configSectionName, name]] = value;
                 }
 
                 string envName = (configSectionName ~ "_" ~ name).toUpper;
@@ -76,13 +71,11 @@ class Program : Dict {
                 Item *envValuePtr = (envName in environmentVariables.values);
                 if (envValuePtr !is null)
                 {
-
                     String envValue = cast(String)(*envValuePtr);
                     debug {
                         stderr.writeln(" -->", envValue);
                     }
-                    this[name] = envValue;
-                    this[full_name] = envValue;
+                    this[[configSectionName, name]] = envValue;
                     this[envName] = envValue;
                 }
             }

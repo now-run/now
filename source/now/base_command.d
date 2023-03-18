@@ -82,7 +82,6 @@ class BaseCommand
         {
             debug {
                 stderr.writeln(" argument:", argument, "/", argument.type);
-                stderr.writeln("  lookForNamedArguments:", lookForNamedArguments);
             }
             if (argument.toString() == "--")
             {
@@ -90,18 +89,9 @@ class BaseCommand
                 continue;
             }
 
-            if (lookForNamedArguments && argument.type == ObjectType.List)
+            if (lookForNamedArguments && argument.type == ObjectType.Pair)
             {
                 List pair = cast(List)argument;
-                if (pair.items.length != 2)
-                {
-                    return context.error(
-                        "Invalid named parameter: "
-                        ~ pair.toString(),
-                        ErrorCode.InvalidSyntax,
-                        ""
-                    );
-                }
                 auto key = pair.items[0].toString();
                 auto value = pair.items[1];
                 newScope[key] = value;

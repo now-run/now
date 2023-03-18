@@ -138,3 +138,23 @@ class List : BaseList
         return this.infixProgram().evaluate(context);
     }
 }
+
+class Pair : List
+{
+    this()
+    {
+        super();
+        this.type = ObjectType.Pair;
+        this.typeName = "pair";
+    }
+    this(Items items)
+    {
+        if (items.length != 2)
+        {
+            throw new InvalidException("Pairs can only have 2 items");
+        }
+        super(items);
+        this.type = ObjectType.Pair;
+        this.typeName = "pair";
+    }
+}

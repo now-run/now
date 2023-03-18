@@ -213,7 +213,7 @@ int main(string[] args)
 
             auto p = new Parser(value);
 
-            context.push(new List([
+            context.push(new Pair([
                 new String(key),
                 p.consumeItem()
             ]));

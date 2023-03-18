@@ -47,6 +47,12 @@ static this()
         p.wait();
         return context.push(p.returnCode);
     };
+    systemProcessCommands["success"] = function (string path, Context context)
+    {
+        auto p = context.pop!SystemProcess();
+        p.wait();
+        return context.push(p.returnCode == 0);
+    };
     systemProcessCommands["kill"] = function (string path, Context context)
     {
         return context.error(
