@@ -1,8 +1,8 @@
 module now.nodes.strings.commands;
 
-
 import std.array;
 import std.conv : ConvException;
+import std.file : dirEntries, SpanMode;
 import std.regex : matchAll, matchFirst;
 import std.string;
 
@@ -377,5 +377,17 @@ static this()
             context.push(new ByteVector(s.toBytes()));
         }
         return context;
+    };
+
+    stringCommands["glob"] = function (string path, Context context)
+    {
+        auto directory = context.pop!string();
+        auto pattern = context.pop!string();
+
+        String[] items = directory
+            .dirEntries(pattern, SpanMode.depth)
+            .map!(x => new String(x))
+            .array;
+        return context.push(new List(cast(Items)items));
     };
 }
