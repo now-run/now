@@ -331,7 +331,8 @@ print "POST ERROR: we should never reach this command."
 
 [procedures/error_handling/on.error]
 
-print "Error $error"
+print "The following error occurred and was handled:"
+print "    $error"
 
 
 [commands/hello]
@@ -370,11 +371,7 @@ hello $name (times = 3) (salute_word = "hi")
 description "Tells the value of pi using program contants."
 parameters {}
 
-# We can access constants using their full name:
-print "math.pi is $math.pi"
-# But using only the last name also works - it's handy when there's
-# not name collision:
-print "pi is " $pi
+print "math/pi is " ($math . pi)
 
 
 [commands/e]
