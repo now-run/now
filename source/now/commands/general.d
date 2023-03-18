@@ -153,12 +153,17 @@ static this()
             file.read $f | as content
           }
         */
+        // TODO: set Escopo name
         string name = context.pop!string();
+        debug {
+            stderr.writeln("= scope ", name, " =");
+        }
         SubProgram body = context.pop!SubProgram();
 
         auto returnedContext = context.process.run(
             body, context.next()
         );
+        // XXX: do we still have to close cms by hand?
         returnedContext = context.process.closeCMs(returnedContext);
 
         context.size = returnedContext.size;
@@ -882,5 +887,51 @@ static this()
         }
 
         return context.push(new List(items));
+    };
+
+    commands["try"] = function (string path, Context context)
+    {
+        /*
+        try { subcommand } { return default_value }
+        */
+        auto body = context.pop!SubProgram();
+        auto default_body = context.pop!SubProgram();
+
+        context = context.process.run(body, context);
+        if (context.exitCode == ExitCode.Failure)
+        {
+            debug {
+                stderr.writeln("try on ", context.escopo.description);
+                stderr.writeln(" try failure context:", context);
+            }
+            auto error = context.pop();
+            debug {
+                stderr.writeln(" error:", error);
+            }
+            context.escopo["error"] = error;
+            context.exitCode = ExitCode.Success;
+            context = context.process.run(default_body, context);
+        }
+
+        return context;
+    };
+
+    commands["call"] = function (string path, Context context)
+    {
+        auto name = context.pop!string();
+
+        if (context.size)
+        {
+            Item target = context.peek();
+            context = target.runCommand(name, context);
+        }
+        else
+        {
+            context = context.program.runCommand(name, context);
+        }
+        debug {
+            stderr.writeln("call ", name, " context:", context, "/", context.exitCode);
+        }
+        return context;
     };
 }
