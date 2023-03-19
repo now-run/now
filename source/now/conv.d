@@ -9,7 +9,8 @@ long toLong(string s)
     long result;
     if (s.length >= 2 && s[0..2] == "0x")
     {
-        s[2..$].formattedRead("%x", result);
+        string sub = s[2..$];
+        sub.formattedRead("%x", result);
     }
     else
     {

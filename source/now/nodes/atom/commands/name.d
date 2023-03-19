@@ -2,25 +2,11 @@ module now.nodes.atom.commands.name;
 
 
 import now.nodes;
-import now.packages;
 
 
 // Commands:
 static this()
 {
-    nameCommands["import"] = function (string path, Context context)
-    {
-        // import http
-        auto packagePath = context.pop!string();
-
-        if (!importModule(context.program, packagePath))
-        {
-            auto msg = "Module not found: " ~ packagePath;
-            return context.error(msg, ErrorCode.NotFound, "");
-        }
-
-        return context;
-    };
     nameCommands["unset"] = function (string path, Context context)
     {
         auto firstArgument = context.pop();

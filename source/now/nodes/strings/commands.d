@@ -5,6 +5,7 @@ import std.conv : ConvException;
 import std.file : dirEntries, SpanMode;
 import std.regex : matchAll, matchFirst;
 import std.string;
+import std.algorithm.mutation : strip, stripLeft, stripRight;
 
 import now.conv;
 import now.nodes;
@@ -141,7 +142,7 @@ static this()
         foreach (item; context.items)
         {
             string s = item.toString();
-            context.push(new String(s.strip(chars)));
+            context.push(new String(s.strip(chars[0])));
         }
         return context;
     };
@@ -152,7 +153,7 @@ static this()
         foreach (item; context.items)
         {
             string s = item.toString();
-            context.push(new String(s.stripLeft(chars)));
+            context.push(new String(s.stripLeft(chars[0])));
         }
         return context;
     };
@@ -163,7 +164,7 @@ static this()
         foreach (item; context.items)
         {
             string s = item.toString();
-            context.push(new String(s.stripRight(chars)));
+            context.push(new String(s.stripRight(chars[0])));
         }
         return context;
     };

@@ -2,7 +2,8 @@ module now.system_command;
 
 import std.process;
 import std.stdio : readln;
-import std.string;
+// import std.string;
+import std.algorithm.mutation : stripRight;
 
 import now.nodes;
 
@@ -320,7 +321,7 @@ class SystemProcess : Item
             }
         }
 
-        context.push(line.stripRight("\n"));
+        context.push(line.stripRight('\n'));
         context.exitCode = ExitCode.Continue;
         return context;
     }
@@ -374,7 +375,7 @@ class SystemProcessError : Item
             }
         }
 
-        context.push(line.stripRight("\n"));
+        context.push(line.stripRight('\n'));
         context.exitCode = ExitCode.Continue;
         return context;
     }

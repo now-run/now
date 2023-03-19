@@ -69,12 +69,12 @@ if [exists $output_filepath | success] {
 }
 
 
-[system_commands/ldc/on.call]
+[system_commands/gdc/on.call]
 
 needs_recompilation $output_filepath $files
 
 
-[system_commands/ldc]
+[system_commands/gdc]
 parameters {
     files {
         type any
@@ -95,51 +95,31 @@ parameters {
     }
 }
 command {
-    - "ldc2"
+    - "gdc"
     - $extra
-    - "-od=build"
-    - "-oq"
-    - "-I=source"
-    - "-I=cli/source"
-    - "--O${optimization}"
+    - "-static-libphobos"
+    - "-static-libgcc"
+    - "-Isource"
+    - "-Icli/source"
+    - "-O${optimization}"
     - $files
-    - "-of=$output_filepath"
+    - "-o$output_filepath"
 }
 
 
 [constants/targets/now]
 description "now binary, release"
 output_filepath "dist/now"
-depends_on {
-    - now_lib
-}
 source_files {
     - {
         directory "cli/source/now"
         pattern "app.d"
     }
     - {
-        directory "dist"
-        pattern "libnow.a"
-    }
-}
-lib false
-release true
-debug false
-command compile
-
-
-[constants/targets/now_lib]
-description "now static library, release"
-output_filepath "dist/libnow.a"
-source_files {
-    - {
         directory "source/now"
         pattern "*.d"
     }
 }
-lib true
-release true
 debug false
 command compile
 
@@ -147,36 +127,16 @@ command compile
 [constants/targets/now_debug]
 description "now binary, debug"
 output_filepath "dist/now.debug"
-depends_on {
-    - now_lib_debug
-}
 source_files {
     - {
         directory "cli/source/now"
         pattern "app.d"
     }
     - {
-        directory "dist"
-        pattern "libnow.debug.a"
-    }
-}
-lib false
-release false
-debug true
-command compile
-
-
-[constants/targets/now_lib_debug]
-description "now static library, debug"
-output_filepath "dist/libnow.debug.a"
-source_files {
-    - {
         directory "source/now"
         pattern "*.d"
     }
 }
-lib true
-release false
 debug true
 command compile
 
@@ -189,14 +149,6 @@ parameters {
     output_filepath {
         type string
     }
-    lib {
-        type bool
-        default false
-    }
-    release {
-        type bool
-        default true
-    }
     debug {
         type bool
         default false
@@ -204,18 +156,12 @@ parameters {
 }
 
 list | as extra
-if $lib {
-    push $extra "--lib"
-}
-if $release {
-    push $extra "--release"
-}
 if $debug {
-    push $extra "--d-debug"
+    push $extra "-fdebug"
 }
 
-print "compile: ldc $files $output_filepath (extra = $extra)"
-ldc $files $output_filepath (extra = $extra)
+print "compile: gdc $files $output_filepath (extra = $extra)"
+gdc $files $output_filepath (extra = $extra)
 
 
 [procedures/make]
@@ -256,8 +202,6 @@ scope "compile" {
         call $command
             . $source_files
             . $output_filepath
-            . (lib = ($target . lib))
-            . (release = ($target . release))
             . (debug = ($target . debug))
             | foreach line {
                 print.stderr "$command: $line"

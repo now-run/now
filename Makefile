@@ -1,34 +1,24 @@
-dist/now: dist/libnow.a
-	ldc2 \
-		-od=build -oq \
+dist/now:
+	gdc \
+		-static-libphobos -static-libgcc \
 		cli/source/now/app.d \
-		-I=source -I=cli/source \
-		-L-Ldist -L-lnow \
-		--O2 -of=dist/now
-
-dist/now.debug: dist/libnow.debug.a cli/source/now/app.d
-	ldc2 --d-debug \
-		-od=build -oq \
-		cli/source/now/app.d \
-		-I=source -I=cli/source \
-		-L-Ldist -L-lnow.debug \
-		--O1 -of=dist/now.debug
-
-dist/libnow.a:
-	ldc2 --lib \
-		-oq -od=build \
 		source/now/*.d source/now/commands/*.d source/now/system_command/* \
 		source/now/nodes/*.d source/now/nodes/*/*.d source/now/nodes/*/*/*.d \
-		-I source \
-		--O2 -of=dist/libnow.a
+		-Isource -Icli/source \
+		-O3 -o dist/now
 
-dist/libnow.debug.a:
-	ldc2 --lib --d-debug \
-		-oq -od=build \
+release: dist/now
+	strip dist/now
+
+dist/now.debug:
+	gdc -fdebug \
+		-static-libphobos -static-libgcc \
+		cli/source/now/app.d \
 		source/now/*.d source/now/commands/*.d source/now/system_command/* \
 		source/now/nodes/*.d source/now/nodes/*/*.d source/now/nodes/*/*/*.d \
-		-I source \
-		--O1 -of=dist/libnow.debug.a
+		-Isource -Icli/source \
+		-O1 -o dist/now
+
 
 clean:
 	-rm -f dist/libnow.* dist/now*

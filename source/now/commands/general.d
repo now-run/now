@@ -4,7 +4,8 @@ module now.commands.general;
 import std.array;
 import std.file : read;
 import std.stdio;
-import std.string : toLower, stripRight;
+import std.string : toLower;
+import std.algorithm.mutation : stripRight;
 
 import now.nodes;
 import now.commands;
@@ -311,7 +312,7 @@ static this()
     commands["read"] = function (string path, Context context)
     {
         // read a line from std.stdin
-        return context.push(new String(stdin.readln().stripRight("\n")));
+        return context.push(new String(stdin.readln().stripRight('\n')));
     };
 
     // ---------------------------------------------

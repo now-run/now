@@ -5,7 +5,6 @@ import std.algorithm : each;
 import std.uni : toUpper;
 
 import now.nodes;
-import now.packages;
 
 
 class Program : Dict {
@@ -184,19 +183,6 @@ class Program : Dict {
             // XXX: is it correct to save procedures and
             // syscmdcalls in the same place???
             this.procedures[name] = new SystemCommand(name, info);
-        }
-
-        debug {
-            stderr.writeln("Importing external packages");
-        }
-
-        auto packages = this.getOrCreate!Dict(["dependencies","packages"]);
-        foreach (packageName, packageInfo; packages.values)
-        {
-            /*
-            We're not installing any packages here.
-            */
-            this.importModule(packageName);
         }
     }
 
