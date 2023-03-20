@@ -156,13 +156,16 @@ static this()
         */
         // TODO: set Escopo name
         string name = context.pop!string();
-        debug {
-            stderr.writeln("= scope ", name, " =");
-        }
         SubProgram body = context.pop!SubProgram();
 
+        debug {stderr.writeln("= scope ", name, " =");}
+
+        auto escopo = context.escopo;
+        auto newScope = new Escopo(escopo, name);
+        newScope.variables = escopo.variables;
+
         auto returnedContext = context.process.run(
-            body, context.next()
+            body, context.next(newScope)
         );
         // XXX: do we still have to close cms by hand?
         returnedContext = context.process.closeCMs(returnedContext);

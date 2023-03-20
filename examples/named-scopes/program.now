@@ -1,0 +1,30 @@
+[program]
+# vim: syntax=toml
+name "Scopes Example"
+description "Shows how named scopes help to debug some errors."
+
+[procedures/example]
+
+print "Set x to 1 in the procedures scope"
+set x 1
+scope "no error" {
+    print " Now set x to 2 inside the named scope"
+    set x 2
+}
+print "And assert that x is, in fact, 2."
+assert ($x == 2)
+
+print "    all right!"
+
+print "THIS PROCEDURE WILL NOW THROW AN ERROR."
+scope "alfa" {
+    scope "beta" {
+        scope "gama" {
+            error "A deliberate error"
+        }
+    }
+}
+
+[commands/run]
+
+example

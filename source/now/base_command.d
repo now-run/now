@@ -19,18 +19,12 @@ class BaseCommand
 
     this(string name, Dict info)
     {
-        debug {
-            stderr.writeln("BaseCommand:", name, info);
-        }
         this.name = name;
         this.parameters = info.getOrCreate!Dict("parameters");
         this.info = info;
 
         // event handlers:
         info.order.filter!(x => x[0..3] == "on.").each!((k) {
-            debug {
-                stderr.writeln(" eventHandler:", k);
-            }
             auto v = cast(Dict)(info[k]);
             auto body = cast(String)v["body"];
             auto parser = new Parser(body.toString());
@@ -42,9 +36,7 @@ class BaseCommand
 
     Context run(string name, Context context)
     {
-        debug {
-            stderr.writeln(">>> running:", name);
-        }
+        debug {stderr.writeln(">>> running:", name);}
         auto newScope = new Escopo(context.escopo);
         // Procedures are always top-level:
         newScope.parent = null;
@@ -69,9 +61,7 @@ class BaseCommand
         }
 
         auto arguments = context.items;
-        debug {
-            stderr.writeln("arguments:", arguments);
-        }
+        debug {stderr.writeln("arguments:", arguments);}
 
         string[] namedParametersAlreadySet;
         Items positionalArguments;
@@ -95,9 +85,7 @@ class BaseCommand
                 auto key = pair.items[0].toString();
                 auto value = pair.items[1];
                 newScope[key] = value;
-                debug {
-                    stderr.writeln(key, "=", value);
-                }
+                debug {stderr.writeln(key, "=", value);}
                 namedParametersAlreadySet ~= key;
                 parametersAlreadySet ~= key;
             }
@@ -231,10 +219,7 @@ class BaseCommand
         if (auto handlerPtr = (fullname in eventHandlers))
         {
             auto handler = *handlerPtr;
-            debug {
-                stderr.writeln("Calling ", fullname);
-                stderr.writeln(" context:", context);
-            }
+            debug {stderr.writeln("Calling ", fullname);}
 
             /*
             Event handlers are not procedures or
