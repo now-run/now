@@ -129,9 +129,7 @@ class Process
 
     int finish(Context context)
     {
-        debug {
-            stderr.writeln("process finish: ", context);
-        }
+        debug {stderr.writeln("process finish: ", context);}
         int returnCode = unixExitStatus(context);
 
         if (context.exitCode == ExitCode.Failure)

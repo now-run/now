@@ -921,9 +921,8 @@ static this()
                 stderr.writeln(" try failure context:", context);
             }
             auto error = context.pop();
-            debug {
-                stderr.writeln(" error:", error);
-            }
+            debug {stderr.writeln(" error:", error);}
+
             context.escopo["error"] = error;
             context.exitCode = ExitCode.Success;
             context = context.process.run(default_body, context);

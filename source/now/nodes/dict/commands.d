@@ -79,7 +79,6 @@ static this()
         items.popBack();
 
         auto innerDict = dict.navigateTo(items, false);
-        debug {stderr.writeln(" innerDict:", innerDict);}
         if (innerDict is null)
         {
             auto msg = "Key `" ~ to!string(items.map!(x => x.toString()).join(".")) ~ "." ~ lastKey ~ "` not found";

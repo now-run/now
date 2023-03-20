@@ -46,9 +46,6 @@ class SystemCommand : BaseCommand
         try
         {
             auto c = info["command"];
-            debug {
-                stderr.writeln(" ", name, " command: (before casting): ", c);
-            }
         }
         catch (Exception ex)
         {
@@ -101,10 +98,6 @@ class SystemCommand : BaseCommand
                 return separator;
             }
         ).toString();
-
-        debug {
-            stderr.writeln("SystemCommand ", name, " command: ", this.command);
-        }
     }
 
     override Context doRun(string name, Context context)
@@ -182,9 +175,7 @@ class SystemCommand : BaseCommand
             // TODO:
             // set x 1 2 3
             // env["x"] = ?
-            debug {
-                stderr.writeln( this.name, " ", key, "=", value);
-            }
+            debug {stderr.writeln( this.name, " ", key, "=", value);}
             if (value.length)
             {
                 env[key] = value[0].toString();

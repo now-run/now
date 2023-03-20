@@ -198,7 +198,6 @@ class Dict : Item
 
     Dict navigateTo(Items items, bool autoCreate=true)
     {
-        // debug {stderr.writeln("navigateTo:", items, "/", autoCreate);}
         auto pivot = this;
         foreach (item; items)
         {
@@ -292,13 +291,9 @@ class SectionDict : Dict
             }
             // XXX: but what if an item evaluates to a sequence?
             d[key] = newContext.pop();
-            debug {
-                stderr.writeln("  d[", key, "] = ", d[key]);
-            }
+            debug {stderr.writeln("  d[", key, "] = ", d[key]);}
         }
-        debug {
-            stderr.writeln("    Result:", d);
-        }
+        debug {stderr.writeln("    Result:", d);}
         context.push(d);
         return context;
     }

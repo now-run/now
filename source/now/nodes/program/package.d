@@ -24,15 +24,11 @@ class Program : Dict {
 
     void initialize(CommandsMap commands, Dict environmentVariables)
     {
-        debug {
-            stderr.writeln("Initializing program");
-        }
+        debug {stderr.writeln("Initializing program");}
         this.globalCommands = commands;
 
         // TODO: break all these sections in methods
-        debug {
-            stderr.writeln("Adjusting configuration");
-        }
+        debug {stderr.writeln("Adjusting configuration");}
         /*
         About [configuration]:
         - It must always follow the format "configuration/:key";
@@ -64,25 +60,19 @@ class Program : Dict {
                 }
 
                 string envName = (configSectionName ~ "_" ~ name).toUpper;
-                debug {
-                    stderr.writeln("envName:", envName);
-                }
+                debug {stderr.writeln("envName:", envName);}
                 Item *envValuePtr = (envName in environmentVariables.values);
                 if (envValuePtr !is null)
                 {
                     String envValue = cast(String)(*envValuePtr);
-                    debug {
-                        stderr.writeln(" -->", envValue);
-                    }
+                    debug {stderr.writeln(" -->", envValue);}
                     this[[configSectionName, name]] = envValue;
                     this[envName] = envValue;
                 }
             }
         }
 
-        debug {
-            stderr.writeln("Adjusting constants");
-        }
+        debug {stderr.writeln("Adjusting constants");}
 
         auto constants = this.getOrCreate!Dict("constants");
         foreach (sectionName, section; constants.values)
@@ -90,9 +80,7 @@ class Program : Dict {
             this[sectionName] = section;
         }
 
-        debug {
-            stderr.writeln("Adjusting shells");
-        }
+        debug {stderr.writeln("Adjusting shells");}
         auto shells = this.getOrCreate!Dict("shells");
         foreach (shellName, infoItem; shells.values)
         {
@@ -135,9 +123,7 @@ class Program : Dict {
             }
         }
 
-        debug {
-            stderr.writeln("Adjusting procedures");
-        }
+        debug {stderr.writeln("Adjusting procedures");}
 
         // The program dict is loaded, now
         // act accordingly on each different section.
@@ -148,9 +134,7 @@ class Program : Dict {
             this.procedures[name] = new Procedure(name, info);
         }
 
-        debug {
-            stderr.writeln("Adjusting commands");
-        }
+        debug {stderr.writeln("Adjusting commands");}
 
         auto commandsDict = this.getOrCreate!Dict("commands");
         foreach (name, infoItem; commandsDict.values)
@@ -160,19 +144,12 @@ class Program : Dict {
 
         }
 
-        debug {
-            stderr.writeln("Preparing system commands");
-        }
+        debug {stderr.writeln("Preparing system commands");}
 
         auto system_commands = this.getOrCreate!Dict("system_commands");
         foreach (name, infoItem; system_commands.values)
         {
             auto info = cast(Dict)infoItem;
-            debug {
-                stderr.writeln("system_commands/", name, ".infoItem:", infoItem);
-                stderr.writeln("  ", infoItem.type);
-                stderr.writeln("  becomes: ", info);
-            }
             if (info is null)
             {
                 throw new Exception(

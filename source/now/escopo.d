@@ -47,11 +47,9 @@ class Escopo
             return this.parent[name];
         }
 
-        debug {stderr.writeln("opIndex:", name);}
         Item* valuePtr = (name in this.program.values);
         if (valuePtr !is null)
         {
-            debug {stderr.writeln("     :", *valuePtr);}
             return [*valuePtr];
         }
         throw new NotFoundException("`" ~ name ~ "` variable not found!");

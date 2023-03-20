@@ -17,9 +17,6 @@ class ShellScript : SystemCommand
 
         // It's going to have no "parameters", since
         // we are passing the SHELL definition:
-        debug {
-            stderr.writeln("ShellScript ", name, " shellInfo:", shellInfo);
-        }
         super(name, shellInfo);
         // So we fix it now:
         this.parameters = info.getOrCreate!Dict("parameters");
@@ -81,9 +78,6 @@ class ShellScript : SystemCommand
         if (context.exitCode != ExitCode.Failure)
         {
             auto process = context.peek();
-            debug {
-                stderr.writeln(" process? ", process, " / ", process.type);
-            }
             if (process.type == ObjectType.SystemProcess)
             {
                 context.escopo["process"] = process;

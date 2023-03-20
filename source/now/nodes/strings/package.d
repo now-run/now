@@ -128,7 +128,6 @@ class SubstString : String
                     return context.error(msg, ErrorCode.InvalidArgument, "");
                 }
 
-                debug{stderr.writeln("StringPart.evaluate.values:", values);}
                 foreach (v; values)
                 {
                     auto newContext = v.runMethod(
@@ -139,9 +138,6 @@ class SubstString : String
                         return newContext;
                     }
                     auto resultItems = newContext.items;
-                    debug{
-                        stderr.writeln("StringPart.evaluate.resultItems:", resultItems);
-                    }
                     result ~= to!string(resultItems
                         .map!(x => to!string(x))
                         .join(" "));
@@ -153,7 +149,6 @@ class SubstString : String
             }
         }
 
-        debug{stderr.writeln(">>> StringPart.evaluate.result:", result);}
         return context.push(new String(result));
     }
 }
