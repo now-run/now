@@ -477,9 +477,6 @@ class Parser
 
         consumeWhitespaces();
         auto dict = consumeSectionDict();
-        /*
-        consumeSectionDict will already consume the closing '}'
-        */
         // XXX: this consumeSectionDict function is kinda weird...
         auto inlineCloser = consumeChar();
 

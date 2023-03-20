@@ -15,6 +15,8 @@ class SystemCommand : BaseCommand
 {
     string[] which;
     List command;
+    string optionPrefix;
+    string keyValueSeparator;
 
     this(string name, Dict info)
     {
@@ -78,6 +80,28 @@ class SystemCommand : BaseCommand
                 ~ ".command must be a list"
             );
         }
+
+        /*
+        Option prefix and key/value separator follows
+        GNU conventions by default ("--key=value").
+        */
+        this.optionPrefix = info.get!String(
+            "option_prefix",
+            delegate (Dict d) {
+                auto prefix = new String("--");
+                d["option_prefix"] = prefix;
+                return prefix;
+            }
+        ).toString();
+        this.keyValueSeparator = info.get!String(
+            "key_value_separator",
+            delegate (Dict d) {
+                auto separator = new String("=");
+                d["key_value_separator"] = separator;
+                return separator;
+            }
+        ).toString();
+
         debug {
             stderr.writeln("SystemCommand ", name, " command: ", this.command);
         }
@@ -135,7 +159,12 @@ class SystemCommand : BaseCommand
             {
                 foreach (k, v; (cast(Dict)nextItem).values)
                 {
-                    cmdItems ~= new String(k ~ "=" ~ v.toString());
+                    cmdItems ~= new String(
+                        this.optionPrefix
+                        ~ k
+                        ~ this.keyValueSeparator
+                        ~ v.toString()
+                    );
                 }
             }
             else

@@ -94,6 +94,8 @@ parameters {
         }
     }
 }
+key_value_separator ""
+option_prefix "-"
 command {
     - "gdc"
     - $extra
@@ -101,9 +103,11 @@ command {
     - "-static-libgcc"
     - "-Isource"
     - "-Icli/source"
-    - "-O${optimization}"
+    - "-O$optimization"
+    - {
+        o $output_filepath
+    }
     - $files
-    - "-o$output_filepath"
 }
 
 
