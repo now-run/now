@@ -61,12 +61,33 @@ if ($return_code == 0) {
 
 [shells/plantuml/scripts/sequence_diagram]
 description "A simple sequence diagram"
+parameters {
+    name1 {
+        type string
+        default "Alfa"
+    }
+    name2 {
+        type string
+        default "Beta"
+    }
+}
+expand_variables true
 
-A -> B : request
-A <-- B : reply
+$name1 -> $name1 : request
+$name1 <-- $name2 : reply
 
 
 [commands/run]
 description "Generate and visualize a diagram using PlantUML."
+parameters {
+    name1 {
+        type string
+        default "Alfa"
+    }
+    name2 {
+        type string
+        default "Beta"
+    }
+}
 
-sequence_diagram
+sequence_diagram $name1 $name2

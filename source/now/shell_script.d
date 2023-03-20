@@ -2,12 +2,14 @@ module now.shell_script;
 
 
 import now.nodes;
+import now.grammar;
 
 
 class ShellScript : SystemCommand
 {
     String body;
     string shellName;
+    bool expandVariables = false;
 
     this(string shellName, Dict shellInfo, string name, Dict info)
     {
@@ -31,14 +33,39 @@ class ShellScript : SystemCommand
                 return cast(String)null;
             }
         );
+        this.expandVariables = info.get!BooleanAtom(
+            "expand_variables",
+            delegate (Dict d) {
+                auto v = new BooleanAtom(false);
+                d["expand_variables"] = v;
+                return v;
+            }
+        ).toBool();
+
     }
     override Context preRun(string name, Context context)
     {
         auto escopo = context.escopo;
-        escopo["script_body"] = this.body;
+
+        String body;
+        if (expandVariables)
+        {
+            // XXX: will it work properly???
+            auto parser = new Parser(this.body.toString());
+            auto substString = parser.consumeString(cast(char)null);
+            context = substString.evaluate(context);
+            body = context.pop!String();
+        }
+        else
+        {
+            body = this.body;
+        }
+
+        escopo["script_body"] = body;
         escopo["script_name"] = new String(this.name);
         escopo["script_call_name"] = new String(name);
         escopo["shell_name"] = new String(this.shellName);
+
         return context;
     }
     override Context doRun(string name, Context context)

@@ -81,7 +81,10 @@ class Parser
     {
         if (eof)
         {
-            throw new IncompleteInputException("Code input already ended");
+            throw new IncompleteInputException(
+                "Code input already ended."
+                ~ " Last char: " ~ currentChar.to!string
+            );
         }
         debug {
             if (code[index] == EOL)
@@ -633,7 +636,11 @@ class Parser
                 return consumeInlineSectionDict();
             case '"':
             case '\'':
-                return consumeString();
+                auto opener = consumeChar();
+                auto item = consumeString(opener);
+                auto closer = consumeChar();
+                assert(closer == opener);
+                return item;
             default:
                 return consumeAtom();
         }
@@ -748,17 +755,14 @@ class Parser
         return new List(items);
     }
 
-    String consumeString()
+    String consumeString(char opener)
     {
-        auto opener = consumeChar();
-        assert(opener == '"' || opener == '\'');
-
         char[] token;
         StringPart[] parts;
         bool hasSubstitution = false;
 
         ulong index = 0;
-        while (currentChar != opener)
+        while (!eof && currentChar != opener)
         {
             if (currentChar == '$')
             {
@@ -847,9 +851,6 @@ class Parser
         {
             parts ~= new StringPart(token, false);
         }
-
-        auto closer = consumeChar();
-        assert(closer == opener);
 
         if (hasSubstitution)
         {
