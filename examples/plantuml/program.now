@@ -44,7 +44,12 @@ command {
 [shells/plantuml/on.call]
 description "PlantUML only works with files, so we create one here."
 
-create_plantuml_file "${script_name}.uml" $script_body
+scope "time it!" {
+    timer {
+        print "generating the file took $microseconds microseconds, or $miliseconds miliseconds."
+    } | autoclose
+    create_plantuml_file "${script_name}.uml" $script_body
+}
 
 
 [shells/plantuml/on.return]

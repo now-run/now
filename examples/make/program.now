@@ -2,7 +2,7 @@
 # vim: syntax=toml
 name "Now as an alternative to Make"
 description "A very convoluted way of doing the same a Makefile would do much more easily."
-focal_point "constants/targets/now"
+focal_point "constants/targets/release"
 
 [configuration/compilation]
 force {
@@ -111,7 +111,7 @@ command {
 }
 
 
-[constants/targets/now]
+[constants/targets/release]
 description "now binary, release"
 output_filepath "dist/now"
 source_files {
@@ -128,7 +128,7 @@ debug false
 command compile
 
 
-[constants/targets/now_debug]
+[constants/targets/debug]
 description "now binary, debug"
 output_filepath "dist/now.debug"
 source_files {
@@ -164,7 +164,7 @@ if $debug {
     push $extra "-fdebug"
 }
 
-print "compile: gdc $files $output_filepath (extra = $extra)"
+print.stderr "compile: gdc $files $output_filepath (extra = $extra)"
 gdc $files $output_filepath (extra = $extra)
 
 
@@ -239,10 +239,14 @@ if (($cwd == "examples") || ($cwd == "make")) {
 [commands/build]
 description "Build now binary"
 parameters {
-    mode {
+    target {
         description "debug/release"
         type string
-        default release
+        default "release"
+        choices {
+            - "release"
+            - "debug"
+        }
     }
     force {
         type bool
@@ -253,8 +257,4 @@ parameters {
 
 set $compilation (force = $force)
 
-if ($mode == "debug") {
-    make now_debug
-} else {
-    make now
-}
+make $target

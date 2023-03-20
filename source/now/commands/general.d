@@ -183,18 +183,22 @@ static this()
           }
         */
         auto contextManager = context.peek();
+        debug {stderr.writeln("contextManager:", contextManager);}
         auto escopo = context.escopo;
 
-        auto cmContext = contextManager.runCommand("open", context);
+        context = contextManager.runCommand("open", context);
+        debug {stderr.writeln(" cmContext:", context);}
 
-        if (cmContext.exitCode == ExitCode.Failure)
+        if (context.exitCode == ExitCode.Failure)
         {
-            return cmContext;
+            return context;
         }
         escopo.contextManagers ~= contextManager;
 
         // Make sure the stack is okay:
+        debug {stderr.writeln(" cleaning the stack...");}
         context.items();
+        debug {stderr.writeln(" pushing ", contextManager);}
         context.push(contextManager);
 
         context.exitCode = ExitCode.Success;

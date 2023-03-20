@@ -27,7 +27,7 @@ class List : BaseList
     {
         return "(" ~ to!string(this.items
             .map!(x => to!string(x))
-            .join(" ")) ~ ")";
+            .join(" , ")) ~ ")";
     }
 
     override Context evaluate(Context context)

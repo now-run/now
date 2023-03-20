@@ -89,12 +89,12 @@ class Process
 
     Context closeCMs(Context context)
     {
-        auto cmList = context.escopo.contextManagers;
         bool hasFailures = false;
+        auto cmList = context.escopo.contextManagers;
         foreach (contextManager; cmList)
         {
-            auto closeContext = contextManager.runMethod("close", context);
-            if (closeContext.exitCode == ExitCode.Failure)
+            context = contextManager.runMethod("close", context);
+            if (context.exitCode == ExitCode.Failure)
             {
                 /*
                 Each failure when closing a context manager pushes

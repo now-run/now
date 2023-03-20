@@ -412,7 +412,7 @@ parameters {
 }
 
 print "running: list_dir $path"
-list_dir $path | {print}
+list_dir $path | { print }
 
 
 [commands/find_device/on.call]
@@ -432,6 +432,41 @@ find_device $name | { print }
 [commands/find_device/on.return]
 
 print "find_device finished."
+
+
+[shells/bash/scripts/make]
+parameters {
+    target {
+        type string
+    }
+}
+
+cat examples/make/program.now | now :stdin build $target
+
+
+[commands/make]
+description "Compiles Now"
+parameters {
+    target {
+        type string
+        default "release"
+        choices {
+            - "release"
+            - "debug"
+        }
+    }
+}
+
+try {
+    make $target | foreach line {
+        print "> $line"
+    }
+    print.stderr "Made successfully."
+} {
+    print $error
+    get $error subject | as process
+    get $process error | { print }
+}
 
 
 [commands/run]

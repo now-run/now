@@ -1,0 +1,30 @@
+[program]
+# vim: syntax=toml
+name "Now's syntax examples"
+description "Illustrates some aspects of Now's syntax"
+
+
+[commands/list_generation]
+description "Equivalent to 'list comprehensions' but without any special syntax"
+reference "http://xahlee.info/comp/list_comprehension.html"
+
+# Python:
+# [2 * n for n in range(0,9) if ((n % 2) == 0)]
+# Ruby:
+# (0..9).select{|n| n.even?}.map{|n| 2*n}
+range 0 8 | transform x {
+    if ($x % 2 == 0) {
+        return ($x * 2)
+    } else {
+        skip
+    }
+} | collect | as result
+print $result
+assert ($result == (0 , 4 , 8 , 12 , 16))
+print.stderr "ok!"
+
+
+[commands/strings]
+
+set s {{ A string that won't expand $variables }}
+print $s
