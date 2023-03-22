@@ -938,7 +938,12 @@ static this()
         try { subcommand } { return default_value }
         */
         auto body = context.pop!SubProgram();
-        auto default_body = context.pop!SubProgram();
+        SubProgram default_body = null;
+
+        if (context.size)
+        {
+            default_body = context.pop!SubProgram();
+        }
 
         context = context.process.run(body, context);
         if (context.exitCode == ExitCode.Failure)
@@ -947,12 +952,41 @@ static this()
                 stderr.writeln("try on ", context.escopo.description);
                 stderr.writeln(" try failure context:", context);
             }
-            auto error = context.pop();
-            debug {stderr.writeln(" error:", error);}
 
-            context.escopo["error"] = error;
-            context.exitCode = ExitCode.Success;
-            context = context.process.run(default_body, context);
+            if (default_body)
+            {
+                auto error = context.pop();
+                debug {stderr.writeln(" error:", error);}
+
+                context.escopo["error"] = error;
+                context.exitCode = ExitCode.Success;
+                context = context.process.run(default_body, context);
+            }
+            else
+            {
+                Item errorItem = context.peek();
+                if (errorItem.type == ObjectType.Error)
+                {
+                    auto error = cast(Erro)errorItem;
+
+                    if (error.subject !is null)
+                    {
+                        if (error.subject.type == ObjectType.SystemProcess)
+                        {
+                            auto subject = cast(SystemProcess)(error.subject);
+                            while (!subject.pipes.stderr.eof)
+                            {
+                                stderr.writeln(
+                                    "error> ",
+                                    subject.pipes.stderr
+                                        .readln()
+                                        .stripRight('\n')
+                                );
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         return context;
