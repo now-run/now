@@ -53,6 +53,17 @@ static this()
         p.wait();
         return context.push(p.returnCode == 0);
     };
+    systemProcessCommands["check"] = function (string path, Context context)
+    {
+        auto p = context.pop!SystemProcess();
+        p.wait();
+        if (p.returnCode != 0)
+        {
+            auto msg = "Error while executing " ~ p.toString();
+            return context.error(msg, p.returnCode, "", p);
+        }
+        return context;
+    };
     systemProcessCommands["kill"] = function (string path, Context context)
     {
         return context.error(
