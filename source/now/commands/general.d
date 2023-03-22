@@ -465,6 +465,11 @@ static this()
 
     commands["get"] = function (string path, Context context)
     {
+        /*
+        > set x 10
+        > get $x | print
+        10
+        */
         auto name = context.pop();
         Items value;
         try
@@ -476,6 +481,24 @@ static this()
             return context.push(ex.to!string);
         }
         return context.push(value);
+    };
+    commands["value_of"] = function (string path, Context context)
+    {
+        /*
+        > dict (a = 30) | value_of a | print
+        30
+        # It's simply an inverted `get`.
+        > dict (a = 30) | as d
+        > value_of a $d | print
+        30
+        */
+        Items items = context.items;
+        Item target = items[$-1];
+
+        context.push(items[0..$-1]);
+        context.push(target);
+
+        return target.runCommand("get", context);
     };
 
     commands["vars"] = function (string path, Context context)

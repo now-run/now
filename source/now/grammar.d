@@ -161,7 +161,13 @@ class Parser
     }
     void consumeWhitespace()
     {
-        assert(isWhitespace);
+        //assert(isWhitespace);
+        if (!isWhitespace)
+        {
+            throw new Exception(
+                "Expecting whitespace, found " ~ currentChar.to!string
+            );
+        }
         debug {stderr.writeln("whitespace");}
         consumeChar();
     }
