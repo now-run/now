@@ -108,6 +108,10 @@ class SystemCommand : BaseCommand
         // We need this because we support event handling:
         context.escopo.rootCommand = this;
 
+        debug {
+            stderr.writeln("xxx SystemCommand ", name);
+            stderr.writeln("xxx   context.inputSize: ", context.inputSize);
+        }
         if (context.inputSize == 1)
         {
             arguments = context.pop(context.size - 1).map!(x => to!string(x)).array;
@@ -124,8 +128,9 @@ class SystemCommand : BaseCommand
         }
 
         debug {
-            stderr.writeln(" SystemCommand ", name, " arguments: ", arguments);
-            stderr.writeln(" command: ", command);
+            stderr.writeln("xxx   arguments: ", arguments);
+            stderr.writeln("xxx   command: ", command);
+            stderr.writeln("xxx   inputStream: ", inputStream);
         }
 
         /*
@@ -195,6 +200,9 @@ class SystemCommand : BaseCommand
         catch (ProcessException ex)
         {
             return context.error(ex.msg, ErrorCode.Unknown, "");
+        }
+        debug {
+            stderr.writeln("SystemProcess.doRun.context.size:", context.size);
         }
         return context;
     }
@@ -279,36 +287,55 @@ class SystemProcess : Item
             // Send from inputStream, first:
             if (inputStream !is null)
             {
+                debug {stderr.writeln("xxx ", this.command.items[0], " inputStream is not null");}
                 auto inputContext = this.inputStream.next(context);
                 if (inputContext.exitCode == ExitCode.Break)
                 {
+                    debug {stderr.writeln("xxx ", this.command.items[0], " inputContext -> Break");}
                     this.inputStream = null;
                     pipes.stdin.close();
                     continue;
                 }
                 else if (inputContext.exitCode == ExitCode.Skip)
                 {
+                    debug {stderr.writeln("xxx ", this.command.items[0], " inputContext -> Skip");}
                     continue;
                 }
                 else if (inputContext.exitCode != ExitCode.Continue)
                 {
-                    auto msg = "Error while reading from " ~ this.toString();
-                    return context.error(msg, returnCode, "");
+                    return context.error(
+                        "Error on " ~ this.toString()
+                        ~ " while reading from "
+                        ~ inputStream.toString()
+                        ~ " (exitCode " ~ inputContext.exitCode.to!string ~ ")",
+                        returnCode,
+                        "",
+                        inputStream
+                    );
                 }
 
                 foreach (item; inputContext.items)
                 {
                     string s = item.toString();
+                    debug {
+                        stderr.writeln("xxx ", this.command.items[0], " writing <", s, "> to pipes.stdin");
+                    }
                     pipes.stdin.writeln(s);
                     pipes.stdin.flush();
                 }
                 continue;
             }
+            else
+            {
+                debug {stderr.writeln("xxx ", this.command.items[0], " inputStream is null");}
+            }
 
             if (pipes.stdout.eof)
             {
+                debug {stderr.writeln("xxx ", this.command.items[0], " stdout.eof");}
                 if (isRunning)
                 {
+                    debug {stderr.writeln("xxx ", this.command.items[0], " isRunning. Returning Skip");}
                     context.exitCode = ExitCode.Skip;
                     return context;
                 }
@@ -323,12 +350,16 @@ class SystemProcess : Item
                 }
                 else
                 {
+                    debug {
+                        stderr.writeln("xxx ", this.command.items[0], " returnCode is zero. Returning Break");
+                    }
                     context.exitCode = ExitCode.Break;
                     return context;
                 }
             }
 
             line = pipes.stdout.readln();
+            debug {stderr.writeln("xxx ", this.command.items[0], " line=", line);}
 
             if (line is null)
             {
@@ -343,6 +374,7 @@ class SystemProcess : Item
 
         context.push(line.stripRight('\n'));
         context.exitCode = ExitCode.Continue;
+        debug {stderr.writeln("xxx ", this.command.items[0], " returning Continue");}
         return context;
     }
     void wait()
@@ -388,7 +420,7 @@ class SystemProcessError : Item
                     break;
                 }
             }
-            else 
+            else
             {
                 context.exitCode = ExitCode.Break;
                 return context;

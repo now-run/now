@@ -1,0 +1,41 @@
+[program]
+# vim: syntax=toml
+name "System Commands"
+description "Show various forms of calling system commands"
+
+
+[system_commands/ls]
+parameters {
+    path {
+        type string
+    }
+}
+command {
+    - ls
+    - "-lha"
+    - $path
+}
+
+
+[commands/list_try]
+parameters {
+    path {
+        type string
+    }
+}
+
+try {
+    ls $path | { print "> " }
+}
+print "ok"
+
+
+[commands/list_check]
+parameters {
+    path {
+        type string
+    }
+}
+
+print "It is not supposed to print the output of ls..."
+ls $path | check

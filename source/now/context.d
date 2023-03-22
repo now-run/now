@@ -38,6 +38,7 @@ struct Context
     {
         this.size -= size;
         auto newContext = Context(process, escopo, size);
+        newContext.inputSize = this.inputSize;
         return newContext;
     }
 
@@ -140,11 +141,11 @@ struct Context
         }
     }
 
-    Item[] pop(uint count)
+    Items pop(uint count)
     {
         return this.pop(cast(ulong)count);
     }
-    Item[] pop(ulong count)
+    Items pop(ulong count)
     {
         size -= count;
         return process.stack.pop(count);

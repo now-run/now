@@ -60,8 +60,23 @@ class BaseCommand
             }
         }
 
-        auto arguments = context.items;
+        // inputs are NOT on the top of the stack!!!
+        Items items = context.items;
+        auto arguments = items[0..$-context.inputSize];
         debug {stderr.writeln("arguments:", arguments);}
+
+        if (context.inputSize)
+        {
+            debug {
+                stderr.writeln("inputSize:", context.inputSize);
+                stderr.writeln("  items.length:", items.length);
+                stderr.writeln("  start:", (items.length - context.inputSize));
+                stderr.writeln("  end:", (items.length));
+            }
+            auto inputs = items[$-context.inputSize..$];
+            debug {stderr.writeln("inputs:", inputs);}
+            context.push(inputs);
+        }
 
         string[] namedParametersAlreadySet;
         Items positionalArguments;
@@ -131,6 +146,13 @@ class BaseCommand
         }
 
         auto newContext = context.next(newScope, context.size);
+        // TESTE: see context.d / next
+        // newContext.inputSize = context.inputSize;
+
+        debug {
+            stderr.writeln("xxx newContext.size: ", newContext.size);
+            stderr.writeln("xxx newContext.inputSize: ", newContext.inputSize);
+        }
 
         // Unused arguments go to this "va_list" crude implementation:
         newScope["args"] = positionalArguments[currentIndex..$];
@@ -144,6 +166,9 @@ class BaseCommand
         if (newContext.exitCode == ExitCode.Failure)
         {
             return newContext;
+        }
+        debug {
+            stderr.writeln("xxx after preRun newContext.size: ", newContext.size);
         }
 
         // on.call
@@ -173,6 +198,10 @@ class BaseCommand
         {
             return newContext;
         }
+        debug {
+            stderr.writeln("xxx   doRun.context.size: ", newContext.size);
+            stderr.writeln("xxx   doRun.context.inputSize: ", newContext.inputSize);
+        }
 
         // close context managers
         newContext = context.process.closeCMs(newContext);
@@ -190,6 +219,11 @@ class BaseCommand
         // -----------------------------------
 
         context.size = newContext.size;
+        debug {
+            stderr.writeln("xxx exiting.");
+            stderr.writeln("xxx   context.size: ", context.size);
+            stderr.writeln("xxx   context.exitCode: ", context.exitCode);
+        }
 
         if (newContext.exitCode == ExitCode.Return)
         {
@@ -215,6 +249,11 @@ class BaseCommand
 
     Context handleEvent(Context context, string event)
     {
+        debug {
+            stderr.writeln("xxx handleEvent ", event, " for ", this.name);
+            stderr.writeln("xxx     context.size: ", context.size);
+            stderr.writeln("xxx     context.inputSize: ", context.inputSize);
+        }
         auto fullname = "on." ~ event;
         if (auto handlerPtr = (fullname in eventHandlers))
         {

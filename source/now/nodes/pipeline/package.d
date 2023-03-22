@@ -63,6 +63,8 @@ class Pipeline
                 case ExitCode.Break:
                 case ExitCode.Continue:
                 case ExitCode.Skip:
+                    // TODO: check if this will affect anything:
+                    context.inputSize = context.size;
                     return context;
 
                 // -----------------

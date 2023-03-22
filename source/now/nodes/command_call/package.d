@@ -63,6 +63,7 @@ class CommandCall
     Context run(Context context)
     {
         // evaluate arguments and set proper context.size:
+        debug {stderr.writeln(name, ".context.initial_size:", context.size);}
         auto executionContext = this.evaluateArguments(context);
         if (executionContext.exitCode == ExitCode.Failure)
         {
