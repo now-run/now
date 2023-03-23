@@ -1,11 +1,23 @@
 [program]
 # vim: syntax=toml
 name "Now's syntax examples"
-description "Illustrates some aspects of Now's syntax"
+description "Illustrate some aspects of Now's syntax."
+
+
+[system_commands/wd]
+parameters {
+    directory {
+        type string
+    }
+}
+command {
+    - ls
+}
+workdir $directory
 
 
 [commands/list_generation]
-description "Equivalent to 'list comprehensions' but without any special syntax"
+description "Equivalent to 'list comprehensions' but without any special syntax."
 reference "http://xahlee.info/comp/list_comprehension.html"
 
 # Python:
@@ -25,6 +37,28 @@ print.stderr "ok!"
 
 
 [commands/strings]
+description "Show some special cases of strings."
 
 set s {{ A string that won't expand $variables }}
 print $s
+
+
+[commands/val]
+description "Show how to use the `val` command."
+
+set "TESTE" 123
+val "TESTE" | print "TESTE value is: "
+
+
+[commands/wd]
+description "Run a system_command in another work directory."
+parameters {
+    directory {
+        type string
+        default "/dev"
+    }
+}
+
+try {
+    wd $directory | { print }
+}

@@ -15,4 +15,5 @@ class " ~ name ~ " : Exception
 }
 
 mixin(customException!"InvalidException");
+mixin(customException!"InvalidConfigurationException");
 mixin(customException!"NotFoundException");

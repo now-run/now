@@ -60,23 +60,15 @@ class BaseCommand
             }
         }
 
-        // inputs are NOT on the top of the stack!!!
-        Items items = context.items;
-        auto arguments = items[0..$-context.inputSize];
+        /*
+        Everything is an argument, including the piped input.
+        But after parsing all of then, if the input was not
+        used as argument for this, then it must be restored
+        so inner commands can read from it.
+        */
+        auto arguments = context.items;
+        auto inputSize = context.inputSize;
         debug {stderr.writeln("arguments:", arguments);}
-
-        if (context.inputSize)
-        {
-            debug {
-                stderr.writeln("inputSize:", context.inputSize);
-                stderr.writeln("  items.length:", items.length);
-                stderr.writeln("  start:", (items.length - context.inputSize));
-                stderr.writeln("  end:", (items.length));
-            }
-            auto inputs = items[$-context.inputSize..$];
-            debug {stderr.writeln("inputs:", inputs);}
-            context.push(inputs);
-        }
 
         string[] namedParametersAlreadySet;
         Items positionalArguments;
@@ -154,11 +146,43 @@ class BaseCommand
             stderr.writeln("xxx newContext.inputSize: ", newContext.inputSize);
         }
 
-        // Unused arguments go to this "va_list" crude implementation:
-        newScope["args"] = positionalArguments[currentIndex..$];
+        // Unused arguments go to this "va_list" crude implementation.
+        // Inputs will be pushed back, absent from `args`.
+        auto remaining = positionalArguments[currentIndex..$];
+        auto inputsPushedBack = 0;
+        foreach (unusedArg; remaining.retro)
+        {
+            if (inputsPushedBack >= inputSize)
+            {
+                break;
+            }
+            debug {stderr.writeln("pushing input back:", unusedArg);}
+            newContext.push(unusedArg);
+            inputsPushedBack++;
+        }
+        newContext.inputSize = inputsPushedBack;
+        auto argsLength = remaining.length - inputsPushedBack;
+        debug {
+            stderr.writeln("remaining:", remaining);
+            stderr.writeln("inputsPushedBack:", inputsPushedBack);
+        }
+        if (argsLength > 0)
+        {
+            newScope["args"] = remaining[0..argsLength];
+        }
+        else
+        {
+            newScope["args"] = [];
+        }
+
         debug {
             stderr.writeln(" extra args: ", newScope["args"]);
         }
+
+        // TODO: what was this supposed to do, exactly?
+        // See lines 152-176!
+        // newContext.push(positionalArguments[$-inputSize..$]);
+        // 2023-03-22: it seems we really don't need it.
 
         // RUN!
         // pre-run
@@ -267,6 +291,8 @@ class BaseCommand
             auto newScope = new Escopo(context.escopo);
             // Avoid calling on.error recursively:
             newScope.rootCommand = null;
+            // We still want to share variables:
+            newScope.variables = context.escopo.variables;
 
             if (event == "error")
             {

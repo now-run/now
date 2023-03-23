@@ -38,25 +38,17 @@ class Program : Dict {
         auto config = this.getOrCreate!Dict("configuration");
         foreach (configSectionName, configSection; config.values)
         {
+            // Make sure the subDict exists:
+            this.getOrCreate!Dict(configSectionName);
+
+            // configSectionName = http
             auto d = cast(Dict)configSection;
             foreach (name, infoItem; d.values)
             {
+                // name = host
                 if (infoItem.type != ObjectType.Dict)
                 {
                     continue;
-                }
-
-                // Make sure the subDict exists:
-                this.getOrCreate!Dict([configSectionName, name]);
-
-                auto info = cast(Dict)infoItem;
-                Item* valuePtr = ("default" in info.values);
-                if (valuePtr !is null)
-                {
-                    Item value = *valuePtr;
-
-                    // http.port = 5000
-                    this[[configSectionName, name]] = value;
                 }
 
                 string envName = (configSectionName ~ "_" ~ name).toUpper;
@@ -69,6 +61,28 @@ class Program : Dict {
                     this[[configSectionName, name]] = envValue;
                     this[envName] = envValue;
                 }
+                else
+                {
+                    auto info = cast(Dict)infoItem;
+                    Item* valuePtr = ("default" in info.values);
+                    if (valuePtr !is null)
+                    {
+                        Item value = *valuePtr;
+
+                        // http.port = 5000
+                        this[[configSectionName, name]] = value;
+                    }
+                    else
+                    {
+                        throw new InvalidConfigurationException(
+                            "Configuration "
+                            ~ configSectionName ~ "/" ~ name
+                            ~ " not found. The environment variable "
+                            ~ envName
+                            ~ " should be set."
+                        );
+                    }
+                }
             }
         }
 
@@ -77,7 +91,29 @@ class Program : Dict {
         auto constants = this.getOrCreate!Dict("constants");
         foreach (sectionName, section; constants.values)
         {
-            this[sectionName] = section;
+            if (section.type == ObjectType.Dict)
+            {
+                auto sectionDict = cast(Dict)section;
+                this.on(
+                    sectionName,
+                    // If it already exists:
+                    delegate (Item value) {
+                        auto d = cast(Dict)value;
+                        foreach (k, v; sectionDict.values)
+                        {
+                            d[k] = v;
+                        }
+                    },
+                    // If doesn't exist:
+                    delegate () {
+                        this[sectionName] = section;
+                    }
+                );
+            }
+            else
+            {
+                this[sectionName] = section;
+            }
         }
 
         debug {stderr.writeln("Adjusting shells");}

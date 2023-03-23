@@ -463,11 +463,11 @@ static this()
     };
     commands["as"] = commands["set"];
 
-    commands["get"] = function (string path, Context context)
+    commands["val"] = function (string path, Context context)
     {
         /*
         > set x 10
-        > get $x | print
+        > val x | print
         10
         */
         auto name = context.pop();

@@ -17,6 +17,7 @@ class SystemCommand : BaseCommand
     List command;
     string optionPrefix;
     string keyValueSeparator;
+    Item workdir;
 
     this(string name, Dict info)
     {
@@ -98,6 +99,13 @@ class SystemCommand : BaseCommand
                 return separator;
             }
         ).toString();
+
+        this.workdir = info.get!Item(
+            "workdir",
+            delegate (Dict d) {
+                return cast(Item)null;
+            }
+        );
     }
 
     override Context doRun(string name, Context context)
@@ -180,7 +188,7 @@ class SystemCommand : BaseCommand
             // TODO:
             // set x 1 2 3
             // env["x"] = ?
-            debug {stderr.writeln( this.name, " ", key, "=", value);}
+            debug {stderr.writeln(this.name, " ", key, "=", value);}
             if (value.length)
             {
                 env[key] = value[0].toString();
@@ -191,10 +199,18 @@ class SystemCommand : BaseCommand
             }
         }
 
+        // Evaluate workdir:
+        string workdirStr = null;
+        if (workdir !is null)
+        {
+            context = workdir.evaluate(context);
+            workdirStr = context.pop().toString();
+        }
+
         try
         {
             context.push(
-                new SystemProcess(cmd, arguments, inputStream, env)
+                new SystemProcess(cmd, arguments, inputStream, env, workdirStr)
             );
         }
         catch (ProcessException ex)
@@ -225,7 +241,8 @@ class SystemProcess : Item
         List command,
         string[] arguments,
         Item inputStream=null,
-        string[string] env=null
+        string[string] env=null,
+        string workdir=null
     )
     {
         this.type = ObjectType.SystemProcess;
@@ -248,7 +265,9 @@ class SystemProcess : Item
             pipes = pipeProcess(
                 cmdline,
                 Redirect.stdout | Redirect.stderr,
-                this.env
+                this.env,
+                Config(),
+                workdir
             );
         }
         else
@@ -256,7 +275,9 @@ class SystemProcess : Item
             pipes = pipeProcess(
                 cmdline,
                 Redirect.all,
-                this.env
+                this.env,
+                Config(),
+                workdir
             );
         }
 
@@ -265,7 +286,15 @@ class SystemProcess : Item
 
     override string toString()
     {
-        return this.cmdline.join(" ");
+        auto s = this.cmdline.join(" ");
+        if (s.length > 64)
+        {
+            return s[0..64] ~ "...";
+        }
+        else
+        {
+            return s;
+        }
     }
 
     bool isRunning()
