@@ -1,8 +1,6 @@
 dist/
 build/
 
-now.*
-
 *.so
 *.o
 *.a

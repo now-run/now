@@ -1,5 +1,5 @@
 [program]
-# vim: syntax=toml
+# vim: syntax=now
 name "Now Document Example"
 description "Show how the document syntax works."
 

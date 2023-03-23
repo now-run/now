@@ -1,5 +1,5 @@
 [program]
-# vim: syntax=toml
+# vim: syntax=now
 name "Now's syntax examples"
 description "Illustrate some aspects of Now's syntax."
 
