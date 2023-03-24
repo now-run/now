@@ -269,13 +269,26 @@ parameters {
     }
     options {
         type string
-        default "-lh"
+        default "-1"
     }
 }
 command {
     - "ls"
     - $options
     - $path
+}
+
+
+[system_commands/now]
+parameters {
+    path {
+        type string
+    }
+}
+workdir $path
+command {
+    - "now"
+    - "run"
 }
 
 
@@ -408,10 +421,10 @@ return $error
 parameters {
     path {
         type string
+        default "."
     }
 }
 
-print "running: list_dir $path"
 list_dir $path | { print }
 
 
@@ -466,6 +479,18 @@ try {
     print $error
     get $error subject | as process
     get $process error | { print }
+}
+
+
+[commands/test]
+description "Run all the examples."
+
+try {
+    list_dir "examples" | foreach directory {
+        if ($directory == "make") { continue }
+        print "Testing examples/${directory}..."
+        now "examples/$directory"
+    }
 }
 
 

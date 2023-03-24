@@ -1,5 +1,6 @@
 module now.nodes.pipeline;
 
+import core.exception : RangeError;
 
 import now.nodes;
 
@@ -7,10 +8,12 @@ import now.nodes;
 class Pipeline
 {
     CommandCall[] commandCalls;
+    long lineIndex;
 
-    this(CommandCall[] commandCalls)
+    this(CommandCall[] commandCalls, long lineIndex=0)
     {
         this.commandCalls = commandCalls;
+        this.lineIndex = lineIndex;
     }
 
     ulong size()
@@ -20,19 +23,54 @@ class Pipeline
 
     override string toString()
     {
-        return to!string(commandCalls
+        auto s = to!string(commandCalls
             .map!(x => x.toString())
             .join(" | "));
+        if (lineIndex)
+        {
+            s ~= " - line=" ~ lineIndex.to!string;
+        }
+        return s;
     }
 
     Context run(Context context)
     {
         debug {stderr.writeln("Running Pipeline: ", this);}
 
+        void printStatus(Context context, CommandCall command)
+        {
+            stderr.writeln(
+                "Exception: Pipeline=", this,
+                " context=", context,
+                " command_call=", command
+            );
+        }
+
         foreach(index, command; commandCalls)
         {
             debug {stderr.writeln(command.name, ">run:", context.size, "/", context.inputSize);}
-            context = command.run(context);
+            try
+            {
+                context = command.run(context);
+            }
+            catch (Exception ex)
+            {
+                printStatus(context, command);
+                return context.error(
+                    "Exception: " ~ ex.to!string,
+                    ErrorCode.InternalError,
+                    "", null
+                );
+            }
+            catch (RangeError ex)
+            {
+                printStatus(context, command);
+                return context.error(
+                    "RangeError: " ~ ex.to!string,
+                    ErrorCode.InternalError,
+                    "", null
+                );
+            }
             debug {stderr.writeln(command.name, ">run.exitCode:", context.exitCode);}
             debug {stderr.writeln(command.name, ">context.size:", context.size);}
 

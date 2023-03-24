@@ -102,7 +102,7 @@ static this()
         auto target = context.pop();
         return context.push(target.toBool());
     };
-    commands["to.int"] = function (string path, Context context)
+    commands["to.integer"] = function (string path, Context context)
     {
         auto target = context.pop();
         return context.push(target.toInt());

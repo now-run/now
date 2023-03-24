@@ -309,7 +309,7 @@ static this()
     stringCommands["!="] = stringCommands["neq"];
 
     // Conversions
-    stringCommands["to.int"] = function (string path, Context context)
+    stringCommands["to.integer"] = function (string path, Context context)
     {
         foreach (item; context.items)
         {

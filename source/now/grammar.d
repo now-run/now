@@ -547,7 +547,7 @@ class Parser
         }
 
         if (isEndOfLine && !eof) consumeChar();
-        return new Pipeline(commands);
+        return new Pipeline(commands, line);
     }
 
     CommandCall consumeCommandCall()

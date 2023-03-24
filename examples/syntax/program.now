@@ -62,3 +62,182 @@ parameters {
 try {
     wd $directory | { print }
 }
+
+
+[commands/run]
+description "General syntax tests"
+
+scope "value_of" {
+    dict (a = 10) (b = 20) | value_of a | as x
+    assert ($x == 10)
+}
+
+scope "stack juggling" {
+    stack.push a b c | list | join "-" | as x
+    assert ($x == "a-b-c")
+
+    stack.push 321
+    stack.pop | as x
+    assert ($x == 321)
+
+    stack.push 1
+    stack.push 2
+    stack.push 3
+    stack | list | join "-" | as x
+    assert ($x == "3-2-1")
+}
+
+scope "type identification" {
+    assert ((123 typeof) == "integer")
+    assert (("123" typeof) == "string")
+    assert ((1.23 typeof) == "float")
+    assert (([dict] typeof) == "dict")
+}
+
+scope "type coercion" {
+    assert ((123 to.string) == "123")
+    assert ((1.23 to.string) == "1.23")
+    assert (("123" to.int) == 123)
+    assert ((1 to.bool) == true)
+    assert ((0 to.bool) == false)
+
+    scope "floating point type conversion" {
+        # Now has a GAMBIARRA to work with floats
+        # and equals operation: it multiplies both
+        # sides by 1000, so most day-to-day operations
+        # can work okay-ish without worrying too much
+        # about implementation details of floating point
+        # numbers.
+        assert (("1.23" to.float) == 1.23)
+        # It's kinda convenient when you want to compare
+        # small fractions, like 1.25, but terrible when
+        # working with great precision:
+        #
+        # This SEEMS fine:
+        assert (("2.2345678901234567893" to.float) == 2.2345678901234567893)
+        # But is actually not that fine:
+        assert (("1.2345" to.float) == 1.23459999999)
+        # Now tries to be CONVENIENT. Besides, using direct "equals"
+        # comparisons between floats is a bad idea in any language,
+        # se I assume whoever is using this is NOT that interested
+        # in great precision anyways.
+    }
+}
+
+scope "loops" {
+    scope "breaking a loop" {
+        range 1 10 | foreach x {
+            if ($x == 5) { break }
+        }
+        assert ($x == 5)
+    }
+    scope "continuing a loop" {
+        range 1 10 | foreach x {
+            continue
+            set x 100
+        }
+        assert ($x == 10)
+    }
+    scope "skipping in a loop" {
+        set sum 0
+        range 1 10 | transform x {
+            if ($x > 1) {
+                skip
+            } else {
+                return $x
+            }
+        } | foreach x {
+            set sum ($sum + $x)
+        }
+        assert ($sum == 1)
+    }
+    scope "returning from inside a loop" {
+        set x [
+            range 1 10 | foreach x {
+                return $x
+            }
+        ]
+        assert ($x == 1)
+    }
+}
+
+scope "uplevel" {
+    set x 10
+    # Look, we're tricking the language!
+    set y [set x 20] 20
+    assert ($x == 10)
+    assert ($y == 20)
+
+    set y [uplevel set x 30] 40
+    assert ($x == 30)
+    assert ($y == 40)
+}
+
+scope "with" {
+    set x 1
+    with $x {
+        # x will become 3:
+        sum 2 | as x
+        # x will become 4:
+        sum 3 | as x
+        # See, the reference is to the value, not
+        # to the name of the variable.
+    }
+    assert ($x == 4)
+}
+
+scope "sleep and timer" {
+    timer {
+        assert ($seconds > 0)
+        assert ($seconds < 1)
+    }
+    sleep 500
+}
+
+scope "val" {
+    set name "NOT A VALID ATOM AT ALL!"
+    set $name 123
+    val $name | as x
+    assert ($x == 123)
+}
+
+scope "vars" {
+    set x 1
+    set y 2
+    vars | as v
+    contains $v x | assert
+    contains $v "x" | assert
+    contains $v y | assert
+    contains $v "y" | assert
+}
+
+scope "when" {
+    set x 1
+    set y [
+        when ($x == 0) { return zero }
+        when ($x == 1) { return one }
+        default { return other }
+    ]
+    assert ($y == one)
+}
+scope "default" {
+    set x 100
+    set y [
+        when ($x == 0) { return zero }
+        when ($x == 1) { return one }
+        default { return other }
+    ]
+    assert ($y == other)
+}
+
+scope "collect" {
+    range 1 10 | collect | as l
+    assert (($l length) == 10)
+    assert (($l . 0) == 1)
+    assert (($l . 9) == 10)
+}
+
+scope "call" {
+    call set x 10
+    assert ($x == 10)
+}

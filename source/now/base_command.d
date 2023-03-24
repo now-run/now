@@ -288,21 +288,25 @@ class BaseCommand
             Event handlers are not procedures or
             commands, but simple SubProgram.
             */
-            auto newScope = new Escopo(context.escopo);
-            // Avoid calling on.error recursively:
-            newScope.rootCommand = null;
-            // We still want to share variables:
-            newScope.variables = context.escopo.variables;
+
+            Escopo newScope = context.escopo;
 
             if (event == "error")
             {
+                newScope = new Escopo(context.escopo);
+                // Avoid calling on.error recursively:
+                newScope.rootCommand = null;
+                // We still want to share variables:
+                newScope.variables = context.escopo.variables;
+
                 if (context.peek().type == ObjectType.Error)
                 {
                     newScope["error"] = context.pop();
                 }
             }
 
-            auto newContext = Context(context.process, newScope);
+            // auto newContext = Context(context.process, newScope);
+            auto newContext = context.next(newScope);
 
             newContext = context.process.run(handler, newContext);
             debug {stderr.writeln(" returned context:", newContext);}
