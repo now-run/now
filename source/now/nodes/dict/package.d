@@ -269,7 +269,7 @@ class SectionDict : Dict
     this()
     {
         super();
-        this.typeName = "secion_dict";
+        this.typeName = "section_dict";
     }
     this(Item[string] values)
     {

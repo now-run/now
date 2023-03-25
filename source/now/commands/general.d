@@ -10,6 +10,7 @@ import std.algorithm.mutation : stripRight;
 import now.nodes;
 import now.commands;
 import now.commands.iterators;
+import now.grammar;
 
 
 static this()
@@ -309,12 +310,60 @@ static this()
         stdout.writeln();
         return context;
     };
-    commands["print.stderr"] = function (string path, Context context)
+    commands["log"] = function (string path, Context context)
     {
+        /*
+        [logging/formats/default]
+        include {
+            - timestamp
+            - hostname
+        }
+
+        get $program directory | as pd
+        return '{"timestamp":$timestamp, "hostname":"$hostname", "path":$pd, "message":$message}'
+        */
+        string formatName;
+        if (context.size == 1)
+        {
+            formatName = "default";
+        }
+        else if (context.size == 2)
+        {
+            formatName = context.pop!string();
+        }
+        else
+        {
+            return context.error(
+                path ~ " must receive 1 or 2 arguments.",
+                ErrorCode.InvalidSyntax,
+                ""
+            );
+        }
+
+        auto format = context.program.get!Dict(
+            ["logging", "formats", formatName],
+            delegate (Dict d) {
+                return cast(Dict)null;
+            }
+        );
+
+        if (format !is null)
+        {
+            auto body = format["body"];
+            auto parser = new Parser(body.toString());
+            // TODO: cache it:
+            auto subprogram = parser.consumeSubProgram();
+
+            auto newScope = new Escopo(context.escopo);
+            newScope["message"] = context.pop!String();
+            context = context.process.run(subprogram, context.next(newScope));
+        }
+
         while(context.size) stderr.write(context.pop!string());
         stderr.writeln();
         return context;
     };
+    commands["print.sameline"] = commands["print"];
 
     commands["read"] = function (string path, Context context)
     {
@@ -520,7 +569,6 @@ static this()
     };
 
     // TYPES
-    // dict
     commands["dict"] = function (string path, Context context)
     {
         /*
@@ -547,7 +595,6 @@ static this()
         }
         return context.push(dict);
     };
-    // list
     commands["list"] = function (string path, Context context)
     {
         /*
@@ -603,6 +650,11 @@ static this()
             return context.push(vector);
         };
     }
+    commands["path"] = function (string name, Context context)
+    {
+        string path = context.pop!string;
+        return context.push(new Path(path));
+    };
 
     addVectorCommands!(byte, ByteVector);
     addVectorCommands!(float, FloatVector);

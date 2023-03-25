@@ -20,6 +20,8 @@ public import now.shell_script;
 
 // Items
 public import now.nodes.item;
+public import now.nodes.strings;
+public import now.nodes.atom;
 
 public import now.nodes.baselist;
 public import now.nodes.list;
@@ -28,17 +30,17 @@ public import now.nodes.execlist;
 public import now.nodes.dict;
 public import now.nodes.vectors;
 
+public import now.nodes.path;
+
 public import now.nodes.error;
 
-
+// Program execution
 public import now.nodes.program;
 public import now.nodes.subprogram;
 public import now.nodes.pipeline;
 public import now.nodes.command_call;
-public import now.nodes.strings;
 
-public import now.nodes.atom;
-
+// Useful aliases
 alias Items = Item[];
 alias Command = Context function(string, Context);
 alias CommandsMap = Command[string];
@@ -104,6 +106,8 @@ enum ObjectType
     Numerical,
     Vector,
     Range,
+
+    Path,
 
     Program,
     SystemProcess,

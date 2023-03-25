@@ -95,4 +95,13 @@ static this()
         }
     };
     dictCommands["."] = dictCommands["get"];
+    dictCommands["keys"] = function (string path, Context context)
+    {
+        Dict dict = context.pop!Dict();
+        return context.push(new List(
+            cast(Items)(dict.order
+            .map!(x => new String(x))
+            .array)
+        ));
+    };
 }

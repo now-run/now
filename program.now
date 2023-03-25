@@ -474,7 +474,7 @@ try {
     make $target | foreach line {
         print "> $line"
     }
-    print.stderr "Made successfully."
+    log "Made successfully."
 } {
     print $error
     get $error subject | as process

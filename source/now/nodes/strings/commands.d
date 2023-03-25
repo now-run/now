@@ -379,16 +379,4 @@ static this()
         }
         return context;
     };
-
-    stringCommands["glob"] = function (string path, Context context)
-    {
-        auto directory = context.pop!string();
-        auto pattern = context.pop!string();
-
-        String[] items = directory
-            .dirEntries(pattern, SpanMode.depth)
-            .map!(x => new String(x))
-            .array;
-        return context.push(new List(cast(Items)items));
-    };
 }

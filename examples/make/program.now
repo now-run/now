@@ -22,29 +22,6 @@ parameters {
 rm $file
 
 
-[shells/bash/scripts/is_newer]
-parameters {
-    file1 {
-        type string
-    }
-    file2 {
-        type string
-    }
-}
-
-\[ $file1 -nt $file2 ]
-
-
-[shells/bash/scripts/exists]
-parameters {
-    file {
-        type string
-    }
-}
-
-\[ -f $file ]
-
-
 [procedures/needs_recompilation]
 parameters {
     output_filepath {
@@ -55,16 +32,16 @@ parameters {
     }
 }
 
-if [exists $output_filepath | success] {
+if [path $output_filepath | exists] {
     range $files | foreach file {
-        if [is_newer $file $output_filepath | success] {
-            print.stderr "$file is newer than ${output_filepath}."
+        if (($file time) > ($output_filepath time)) {
+            log "$file is newer than ${output_filepath}."
             return
         }
     }
     # If no input file is newer than output, no need to
     # compile again:
-    print.stderr "-- No need to compile $output_filepath again. Skipping."
+    log "-- No need to compile $output_filepath again. Skipping."
     skip
 }
 
@@ -164,7 +141,7 @@ if $debug {
     push $extra "-fdebug"
 }
 
-print.stderr "compile: gdc $files $output_filepath (extra = $extra)"
+log "compile: gdc $files $output_filepath (extra = $extra)"
 gdc $files $output_filepath (extra = $extra)
 
 
@@ -175,7 +152,7 @@ parameters {
     }
 }
 
-print.stderr "making $target_name"
+log "making $target_name"
 set target ($targets . $target_name)
 
 scope "resolve dependencies" {
@@ -189,17 +166,17 @@ scope "compile" {
     set source_files [list]
 
     range ($target . source_files) | foreach pair {
-        set directory ($pair . directory)
-        set pattern ($pair . pattern)
+        get $pair directory | path | as directory
+        get $pair pattern | as pattern
 
-        glob $directory $pattern | range | foreach file {
+        glob.depth $directory $pattern | range | foreach file {
             push $source_files $file
         }
     }
 
-    set output_filepath ($target . output_filepath)
+    get $target output_filepath | path | as output_filepath
     if ($compilation . force) {
-        print.stderr "-- deleting $output_filepath (forcing a recompilation)"
+        log "-- deleting $output_filepath (forcing a recompilation)"
         delete_file $output_filepath
     }
     try {
@@ -208,19 +185,19 @@ scope "compile" {
             . $output_filepath
             . (debug = ($target . debug))
             | foreach line {
-                print.stderr "$command: $line"
+                log "$command: $line"
             }
     } {
-        print.stderr ">>>>> ERROR: $error"
+        log ">>>>> ERROR: $error"
         get $error subject | as process
-        get $process error | { print.stderr }
-        print.stderr ""
+        get $process error | { log }
+        log ""
         return $error
     }
-    print.stderr "compilation finished."
+    log "compilation finished."
 }
 
-print.stderr "make $target_name finished."
+log "make $target_name finished."
 
 [commands/build/on.call]
 description "Verify if the user is running from inside the examples directory."
