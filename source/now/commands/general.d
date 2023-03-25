@@ -2,6 +2,7 @@ module now.commands.general;
 
 
 import std.array;
+import std.datetime;
 import std.file : read;
 import std.stdio;
 import std.string : toLower;
@@ -390,6 +391,11 @@ static this()
             }
         }
         return context;
+    };
+    commands["unixtime"] = function (string path, Context context)
+    {
+        SysTime today = Clock.currTime();
+        return context.push(today.toUnixTime!long());
     };
     // ---------------------------------------------
     // Errors
