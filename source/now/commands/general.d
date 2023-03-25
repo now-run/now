@@ -9,6 +9,7 @@ import std.algorithm.mutation : stripRight;
 
 import now.nodes;
 import now.commands;
+import now.commands.json;
 import now.commands.iterators;
 import now.grammar;
 
@@ -1043,9 +1044,12 @@ static this()
 
         return context;
     };
-
     commands["call"] = function (string path, Context context)
     {
+        /*
+        > call print "something"
+        something
+        */
         auto name = context.pop!string();
 
         if (context.size)
@@ -1062,4 +1066,6 @@ static this()
         }
         return context;
     };
+
+    loadJsonCommands(commands);
 }

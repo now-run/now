@@ -1,0 +1,24 @@
+[program]
+name "JSON Examples"
+description "Show examples of JSON encoding and decoding"
+
+
+[commands/run]
+
+
+scope "encode a dict" {
+    dict (a = [dict (b = [dict (c = 1)])]) | json.encode | as obj
+}
+scope "decode an object" {
+    json.decode $obj | as dict
+    assert (($dict . a . b . c) == 1)
+}
+scope "encode a list" {
+    list 1 2 3 4 5 | json.encode | as list_str
+}
+scope "decode an list" {
+    json.decode $list_str | as list
+    assert (($list . 0) == 1)
+    assert (($list length) == 5)
+    assert (($list . 4) == 5)
+}
