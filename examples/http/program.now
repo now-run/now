@@ -3,10 +3,47 @@ name "HTTP Example"
 description "Show how to make HTTP requests"
 
 
+[procedures/post_with_error]
+
+
+print "--------- POST with error --------"
+try {
+    http.post "https://httpbin.org/status/404"
+        . (authorization = "bearer 1111")
+        . [dict (alfa = 1) (beta = 2)]
+        | print
+} {
+    print "Error (expected): " $error
+}
+
+
+[procedures/get]
+
+print "-------- GET ---------"
+http.get "http://example.com" | print
+
+
+[procedures/post]
+
+print "--------- POST --------"
+http.post "https://httpbin.org/anything"
+    . (authorization = "bearer 1111")
+    . [dict (alfa = 1) (beta = 2)]
+    | print
+
+
+[procedures/put]
+
+print "--------- PUT --------"
+http.put "https://httpbin.org/anything"
+    . (authorization = "bearer 2222")
+    . [dict (gama = 3) (delta = 4)]
+    | print
+
+
 [commands/run]
 
-http.get "http://example.com" | print
-print "-----------------"
-http.post "https://httpbin.org/anything"
-    . (authorization = "bearer 1234")
-    . [dict (alfa = 1) (beta = 2)]
+get
+post
+put
+post_with_error

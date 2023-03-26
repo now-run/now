@@ -1,0 +1,19 @@
+[program]
+name "Signals Example"
+description "Show how to handle POSIX signals."
+
+
+[signals/quit]
+
+print "received signal QUIT"
+
+
+[signals/term]
+
+print "received signals TERM"
+
+
+[commands/run]
+
+print "Sleeping for one minute..."
+range 1 60 | { sleep 1000 }

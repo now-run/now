@@ -1,0 +1,59 @@
+[program]
+name "YAML Reader and Writer"
+description "Implement basic reading from and writing to YAML strings"
+
+
+[procedures/nest]
+parameters {
+    what {
+        type any
+    }
+    nesting_level {
+        type integer
+    }
+}
+
+range.silent ($nesting_level * 4) | { stack.push " " } | collect | join "" | as spacer
+return "$spacer$what"
+
+
+[procedures/to.yaml]
+parameters {
+    node {
+        type any
+    }
+    nesting_level {
+        type integer
+        default 0
+    }
+}
+
+typeof $node | as t
+
+when (($t == integer) || ($t == float)) {
+    nest $node $nesting_level
+}
+when ($t == string) {
+    nest '"$node"' $nesting_level
+}
+when ($t == dict) {
+    keys $node | range | foreach key {
+        get $node $key | as value
+        nest "${key}: $value" $nesting_level
+        to.yaml ($node . $key) ($nesting_level + 1)
+    }
+}
+default {
+    return "unknown type: $node ($t)"
+}
+
+
+[commands/run]
+
+dict (a = [
+    dict (b = [
+        dict (c = [
+            dict (d = (1 , 2 , 3 , 4))
+        ])
+    ])
+]) (e = 2) | to.yaml | print
