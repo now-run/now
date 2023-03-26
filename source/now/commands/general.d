@@ -10,6 +10,7 @@ import std.algorithm.mutation : stripRight;
 
 import now.nodes;
 import now.commands;
+import now.commands.http;
 import now.commands.json;
 import now.commands.iterators;
 import now.grammar;
@@ -1074,4 +1075,5 @@ static this()
     };
 
     loadJsonCommands(commands);
+    loadHttpCommands(commands);
 }

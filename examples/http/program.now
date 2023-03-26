@@ -1,0 +1,12 @@
+[program]
+name "HTTP Example"
+description "Show how to make HTTP requests"
+
+
+[commands/run]
+
+http.get "http://example.com" | print
+print "-----------------"
+http.post "https://httpbin.org/anything"
+    . (authorization = "bearer 1234")
+    . [dict (alfa = 1) (beta = 2)]

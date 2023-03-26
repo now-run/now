@@ -487,9 +487,14 @@ description "Run all the examples."
 
 try {
     list_dir "examples" | foreach directory {
-        if ($directory == "make") { continue }
-        print "Testing examples/${directory}..."
-        now "examples/$directory"
+        run {
+            when ($directory == "make") { continue }
+            when ($directory == "http") { continue }
+            default {
+                print "Testing examples/${directory}..."
+                now "examples/$directory"
+            }
+        }
     }
 }
 
