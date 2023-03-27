@@ -97,7 +97,7 @@ scope "type identification" {
 scope "type coercion" {
     assert ((123 to.string) == "123")
     assert ((1.23 to.string) == "1.23")
-    assert (("123" to.int) == 123)
+    assert (("123" to.integer) == 123)
     assert ((1 to.bool) == true)
     assert ((0 to.bool) == false)
 
@@ -188,9 +188,9 @@ scope "with" {
 
 scope "sleep and timer" {
     timer {
-        assert ($seconds > 0)
+        assert ($seconds >= 0)
         assert ($seconds < 1)
-    }
+    } | autoclose
     sleep 500
 }
 

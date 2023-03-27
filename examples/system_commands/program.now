@@ -39,3 +39,8 @@ parameters {
 
 print "It is not supposed to print the output of ls..."
 ls $path | check
+
+
+[commands/run]
+
+ls . | check

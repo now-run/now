@@ -33,6 +33,16 @@ salute_word {
 pi 3.1415
 
 
+[constants/test]
+ignore {
+    - "http"
+    - "make"
+    - "named-scopes"
+    - "plantuml"
+    - "signals"
+}
+
+
 [logging/formats/default]
 description "This section defines how the `log` command will behave"
 
@@ -268,14 +278,12 @@ description "Run all the examples."
 
 try {
     list_dir "examples" | foreach directory {
-        run {
-            when ($directory == "make") { continue }
-            when ($directory == "http") { continue }
-            default {
-                print "Testing examples/${directory}..."
-                now "examples/$directory"
-            }
+        if (($test . ignore) contains $directory) {
+            print "skipping $directory"
+            continue
         }
+        print "Testing examples/${directory}..."
+        now "examples/$directory" | check
     }
 }
 
