@@ -1,4 +1,4 @@
-module now.commands.time;
+module now.commands.timer;
 
 import std.datetime.stopwatch;
 
@@ -40,7 +40,12 @@ class Timer : Item
         newScope["microseconds"] = new FloatAtom(usecs);
         newScope["nanoseconds"] = new FloatAtom(nsecs);
 
-        return context.process.run(this.callback, context.next(newScope));
+        // XXX: this operation definitely could be a nice subroutine for
+        // us (me) language developers (developer):
+        Items items = context.items;
+        context = context.process.run(this.callback, context.next(newScope));
+        context.push(items);
+        return context;
     }
     override string toString()
     {
@@ -49,7 +54,7 @@ class Timer : Item
 }
 
 
-static this()
+void loadTimerCommands(CommandsMap commands)
 {
     commands["timer"] = function (string path, Context context)
     {
@@ -63,8 +68,6 @@ static this()
         auto callback = context.pop!SubProgram();
         return context.push(new Timer(callback));
     };
-
-
     timerCommands["open"] = function (string path, Context context)
     {
         auto timer = context.pop!Timer();

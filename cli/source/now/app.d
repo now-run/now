@@ -236,6 +236,7 @@ int main(string[] args)
     debug {
         stderr.writeln(" end of program; context: ", context);
     }
+
     if (context.exitCode == ExitCode.Failure)
     {
         // Global error handler:
@@ -250,10 +251,8 @@ int main(string[] args)
             auto localParser = new Parser(handlerString.toString());
             SubProgram handler = localParser.consumeSubProgram();
 
-            // XXX: can't it be the SAME scope???
-            auto newScope = new Escopo(context.escopo);
-
             // Avoid calling on.error recursively:
+            auto newScope = new Escopo(context.escopo);
             newScope.rootCommand = null;
 
             auto error = context.peek();

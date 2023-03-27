@@ -37,8 +37,7 @@ pi 3.1415
 description "This section defines how the `log` command will behave"
 
 
-unixtime | as timestamp
-return '{"timestamp":$timestamp, "message":$message}'
+dict (timestamp = [unixtime]) (message = $message) | json.encode | return
 
 
 [system_commands/list_dir]
@@ -236,6 +235,13 @@ parameters {
 cat examples/make/program.now | now :stdin build $target
 
 
+[commands/make/on.call]
+
+timer {
+    print "Made successfully in $msec miliseconds."
+} | autoclose
+
+
 [commands/make]
 description "Compiles Now"
 parameters {
@@ -254,10 +260,6 @@ try {
         print "> $line"
     }
     log "Made successfully."
-} {
-    print $error
-    get $error subject | as process
-    get $process error | { print }
 }
 
 
@@ -276,6 +278,18 @@ try {
         }
     }
 }
+
+
+[shells/bash/scripts/list_test]
+parameters {
+    x {
+        type sequence
+    }
+}
+
+echo "x=$x"
+echo "args=$args"
+echo "args.count=${args.count}"
 
 
 [commands/run]

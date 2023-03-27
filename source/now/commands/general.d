@@ -3,6 +3,7 @@ module now.commands.general;
 
 import std.array;
 import std.datetime;
+import std.digest.md;
 import std.file : read;
 import std.stdio;
 import std.string : toLower;
@@ -13,6 +14,7 @@ import now.commands;
 import now.commands.http;
 import now.commands.json;
 import now.commands.iterators;
+import now.commands.timer;
 import now.grammar;
 
 
@@ -360,6 +362,10 @@ static this()
             auto newScope = new Escopo(context.escopo);
             newScope["message"] = context.pop!String();
             context = context.process.run(subprogram, context.next(newScope));
+            if (context.exitCode != ExitCode.Failure)
+            {
+                context.exitCode = ExitCode.Success;
+            }
         }
 
         while(context.size) stderr.write(context.pop!string());
@@ -1034,15 +1040,7 @@ static this()
                         if (error.subject.type == ObjectType.SystemProcess)
                         {
                             auto subject = cast(SystemProcess)(error.subject);
-                            while (!subject.pipes.stderr.eof)
-                            {
-                                stderr.writeln(
-                                    "error> ",
-                                    subject.pipes.stderr
-                                        .readln()
-                                        .stripRight('\n')
-                                );
-                            }
+                            stderr.writeln("Command line: ", subject.cmdline);
                         }
                     }
                 }
@@ -1074,6 +1072,15 @@ static this()
         return context;
     };
 
+    // Hashes
+    commands["md5"] = function (string path, Context context)
+    {
+        string target = context.pop!string();
+        char[] digest = target.hexDigest!MD5;
+        return context.push(digest.to!string);
+    };
+
     loadJsonCommands(commands);
     loadHttpCommands(commands);
+    loadTimerCommands(commands);
 }

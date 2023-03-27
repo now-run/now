@@ -125,7 +125,6 @@ static this()
         catch (FileException)
         {
             // pass
-
         }
         return context;
     };

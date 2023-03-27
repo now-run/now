@@ -31,9 +31,6 @@ static this()
                 target.wait();
                 context.push(target.returnCode);
                 break;
-            case "error":
-                context.push(new SystemProcessError(target));
-                break;
             default:
                 break;
         }

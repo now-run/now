@@ -4,89 +4,6 @@ name "Now as an alternative to Make"
 description "A very convoluted way of doing the same a Makefile would do much more easily."
 focal_point "constants/targets/release"
 
-[configuration/compilation]
-force {
-    type bool
-    default false
-    description "Wheter you want to force a rebuild or not."
-}
-
-
-[shells/bash/scripts/delete_file]
-parameters {
-    file {
-        type string
-    }
-}
-
-rm $file
-
-
-[procedures/needs_recompilation]
-parameters {
-    output_filepath {
-        type string
-    }
-    files {
-        type list
-    }
-}
-
-if [path $output_filepath | exists] {
-    range $files | foreach file {
-        if (($file time) > ($output_filepath time)) {
-            log "$file is newer than ${output_filepath}."
-            return
-        }
-    }
-    # If no input file is newer than output, no need to
-    # compile again:
-    log "-- No need to compile $output_filepath again. Skipping."
-    skip
-}
-
-
-[system_commands/gdc/on.call]
-
-needs_recompilation $output_filepath $files
-
-
-[system_commands/gdc]
-parameters {
-    files {
-        type any
-    }
-    output_filepath {
-        type string
-    }
-    optimization {
-        type int
-        min 0
-        max 3
-        default 2
-    }
-    extra {
-        type list
-        default {
-        }
-    }
-}
-key_value_separator ""
-option_prefix "-"
-command {
-    - "gdc"
-    - $extra
-    - "-static-libphobos"
-    - "-static-libgcc"
-    - "-Isource"
-    - "-Icli/source"
-    - "-O$optimization"
-    - {
-        o $output_filepath
-    }
-    - $files
-}
-
 
 [constants/targets/release]
 description "now binary, release"
@@ -122,6 +39,126 @@ debug true
 command compile
 
 
+[logging/formats/default]
+
+# dict (timestamp = [unixtime]) (message = $message) | json.encode | return
+unixtime | as timestamp
+return "$timestamp> $message"
+
+
+[system_commands/hash]
+parameters {
+    files {
+        type list
+    }
+}
+command {
+    - "md5sum"
+    - $files
+}
+
+[system_commands/hash/on.return]
+
+stack.pop | transform entry {
+    # filename  hash
+    split " " $entry | range | transform part {
+        if (($part length) == 0) {
+            skip
+        } else {
+            return $part
+        }
+    } | collect | return
+}
+
+
+[system_commands/gdc_bin]
+parameters {
+    files {
+        type {
+            - list
+            - path
+        }
+    }
+    output_filepath {
+        type string
+    }
+    optimization {
+        type int
+        min 0
+        max 3
+        default 2
+    }
+    extra {
+        type list
+        default {
+        }
+    }
+}
+key_value_separator ""
+option_prefix "-"
+command {
+    - "gdc"
+    - $extra
+    - "-static-libphobos"
+    - "-static-libgcc"
+    - "-O$optimization"
+    - {
+        o $output_filepath
+    }
+    - $files
+}
+
+
+[system_commands/gdc_obj/on.call]
+
+timer {
+    log "$file was compiled in $microseconds microseconds."
+} | autoclose
+
+[system_commands/gdc_obj]
+parameters {
+    file {
+        type path
+    }
+    output_filepath {
+        type string
+    }
+    optimization {
+        type int
+        min 0
+        max 3
+        default 2
+    }
+    extra {
+        type list
+        default {
+        }
+    }
+}
+key_value_separator ""
+option_prefix "-"
+command {
+    - "gdc"
+    - "-c"
+    - $extra
+    - "-static-libphobos"
+    - "-static-libgcc"
+    - "-Isource"
+    - "-Icli/source"
+    - "-O$optimization"
+    - {
+        o $output_filepath
+    }
+    - $file
+}
+
+
+[procedures/compile/on.call]
+
+timer {
+    log "$output_filepath was compiled in $miliseconds miliseconds."
+} | autoclose
+
 [procedures/compile]
 parameters {
     files {
@@ -141,8 +178,40 @@ if $debug {
     push $extra "-fdebug"
 }
 
-log "compile: gdc $files $output_filepath (extra = $extra)"
-gdc $files $output_filepath (extra = $extra)
+json.encode $extra | md5 | as options_hash
+
+scope "generate object files" {
+    list | as object_files
+    set has_new_files false
+    try {
+        hash $files | foreach pair {
+            set (hash , input_file) $pair
+            path "build/${hash}-${options_hash}.o" | as obj_file
+            if (($obj_file exists) == false) {
+                log "compiling $input_file into $obj_file"
+                gdc_obj $input_file $obj_file (extra = $extra) | check
+                set has_new_files true
+            }
+            push $object_files $obj_file
+        }
+    }
+
+}
+
+scope "clean old files" {
+    if $has_new_files {
+        glob [path "build"] "*.o" | range | foreach filename {
+            if (($object_files contains $filename) == false) {
+                log "Deleting $filename ..."
+                delete $filename
+            }
+        }
+    }
+}
+
+scope "generate binary" {
+    gdc_bin $object_files $output_filepath (extra = $extra) | { print }
+}
 
 
 [procedures/make]
@@ -152,8 +221,8 @@ parameters {
     }
 }
 
-log "making $target_name"
-set target ($targets . $target_name)
+log "Making $target_name ..."
+get $targets $target_name | as target
 
 scope "resolve dependencies" {
     try { get $target depends_on } { list } | range | foreach dependency {
@@ -162,10 +231,10 @@ scope "resolve dependencies" {
 }
 
 scope "compile" {
-    set command ($target . command)
-    set source_files [list]
+    get $target command | as command
+    list | as source_files
 
-    range ($target . source_files) | foreach pair {
+    get $target source_files | range | foreach pair {
         get $pair directory | path | as directory
         get $pair pattern | as pattern
 
@@ -175,10 +244,6 @@ scope "compile" {
     }
 
     get $target output_filepath | path | as output_filepath
-    if ($compilation . force) {
-        log "-- deleting $output_filepath (forcing a recompilation)"
-        delete_file $output_filepath
-    }
     try {
         call $command
             . $source_files
@@ -189,15 +254,13 @@ scope "compile" {
             }
     } {
         log ">>>>> ERROR: $error"
-        get $error subject | as process
-        get $process error | { log }
-        log ""
         return $error
     }
     log "compilation finished."
 }
 
 log "make $target_name finished."
+
 
 [commands/build/on.call]
 description "Verify if the user is running from inside the examples directory."
@@ -225,13 +288,11 @@ parameters {
             - "debug"
         }
     }
-    force {
-        type bool
-        default false
-    }
 }
 
-
-set $compilation (force = $force)
-
 make $target
+
+
+[commands/clean]
+
+glob [path "dist/*"] | foreach file { print delete $file }

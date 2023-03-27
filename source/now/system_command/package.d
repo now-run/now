@@ -264,7 +264,7 @@ class SystemProcess : Item
         {
             pipes = pipeProcess(
                 cmdline,
-                Redirect.stdout | Redirect.stderr,
+                Redirect.stdout,
                 this.env,
                 Config(),
                 workdir
@@ -274,7 +274,7 @@ class SystemProcess : Item
         {
             pipes = pipeProcess(
                 cmdline,
-                Redirect.all,
+                Redirect.stdin | Redirect.stdout,
                 this.env,
                 Config(),
                 workdir
@@ -409,55 +409,5 @@ class SystemProcess : Item
     void wait()
     {
         returnCode = pid.wait();
-    }
-}
-
-class SystemProcessError : Item
-{
-    SystemProcess parent;
-    ProcessPipes pipes;
-    this(SystemProcess parent)
-    {
-        this.parent = parent;
-        this.pipes = parent.pipes;
-        this.type = ObjectType.SystemProcessError;
-        this.typeName = "system_process_error";
-    }
-
-    override string toString()
-    {
-        return "error stream for " ~ this.parent.toString();
-    }
-
-    override Context next(Context context)
-    {
-        // For the output:
-        string line = null;
-
-        while (true)
-        {
-            if (!pipes.stderr.eof)
-            {
-                line = pipes.stderr.readln();
-                if (line is null)
-                {
-                    context.exitCode = ExitCode.Skip;
-                    return context;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            else
-            {
-                context.exitCode = ExitCode.Break;
-                return context;
-            }
-        }
-
-        context.push(line.stripRight('\n'));
-        context.exitCode = ExitCode.Continue;
-        return context;
     }
 }

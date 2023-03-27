@@ -138,8 +138,6 @@ class BaseCommand
         }
 
         auto newContext = context.next(newScope, context.size);
-        // TESTE: see context.d / next
-        // newContext.inputSize = context.inputSize;
 
         debug {
             stderr.writeln("xxx newContext.size: ", newContext.size);
