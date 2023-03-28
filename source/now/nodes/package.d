@@ -37,7 +37,7 @@ public import now.nodes.error;
 // Program execution
 public import now.nodes.program;
 public import now.nodes.subprogram;
-public import now.nodes.pipeline;
+public import now.pipeline;
 public import now.nodes.command_call;
 
 // Useful aliases

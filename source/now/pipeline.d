@@ -1,4 +1,4 @@
-module now.nodes.pipeline;
+module now.pipeline;
 
 import core.exception : RangeError;
 
