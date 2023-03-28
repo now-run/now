@@ -303,5 +303,5 @@ echo "args.count=${args.count}"
 [commands/run]
 description "Show some help text."
 
-print "Try running `now` without any arguments to see"
-print "a list of available subcommands for this project."
+print.yellow "Try running `now` without any arguments to see"
+print.yellow "a list of available subcommands for this project."
