@@ -11,6 +11,7 @@ bool isTTY()
 }
 
 
+auto reverseVideo = "\033[7m";
 auto fgPrefix = "\033[38;2;";
 auto bgPrefix = "\033[48;2;";
 auto ansiResetCode = "\033[0m";
@@ -60,5 +61,19 @@ void loadTerminalCommands(CommandsMap commands)
     commands["print.yellow"] = function (string path, Context context)
     {
         return printColor(255, 255, 0, context);
+    };
+    commands["print.emphasis"] = function (string path, Context context)
+    {
+        if (isTTY)
+        {
+            stdout.write(reverseVideo);
+        }
+        while(context.size) stdout.write(context.pop!string());
+        if (isTTY)
+        {
+            stdout.write(ansiResetCode);
+        }
+        stdout.writeln();
+        return context;
     };
 }

@@ -188,10 +188,11 @@ scope "with" {
 
 scope "sleep and timer" {
     timer {
+        sleep 500
+    } {
         assert ($seconds >= 0)
         assert ($seconds < 1)
-    } | autoclose
-    sleep 500
+    }
 }
 
 scope "val" {

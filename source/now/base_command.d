@@ -225,13 +225,6 @@ class BaseCommand
             stderr.writeln("xxx   doRun.context.inputSize: ", newContext.inputSize);
         }
 
-        // close context managers
-        newContext = context.process.closeCMs(newContext);
-        if (newContext.exitCode == ExitCode.Failure)
-        {
-            return newContext;
-        }
-
         // on.return
         newContext = this.handleEvent(newContext, "return");
         if (newContext.exitCode == ExitCode.Failure)

@@ -3,6 +3,7 @@ module now.commands.general;
 
 import std.array;
 import std.datetime;
+import std.datetime.stopwatch : StopWatch;
 import std.digest.md;
 import std.file : read;
 import std.stdio;
@@ -15,7 +16,6 @@ import now.commands.http;
 import now.commands.json;
 import now.commands.iterators;
 import now.commands.terminal;
-import now.commands.timer;
 import now.grammar;
 
 
@@ -174,41 +174,9 @@ static this()
         auto returnedContext = context.process.run(
             body, context.next(newScope)
         );
-        // XXX: do we still have to close cms by hand?
-        returnedContext = context.process.closeCMs(returnedContext);
 
         context.size = returnedContext.size;
         context.exitCode = returnedContext.exitCode;
-        return context;
-    };
-    commands["autoclose"] = function (string path, Context context)
-    {
-        /*
-        > scope "update sqlite" {
-            db.connect $connection_string | autoclose | as db
-            ...
-          }
-        */
-        auto contextManager = context.peek();
-        debug {stderr.writeln("contextManager:", contextManager);}
-        auto escopo = context.escopo;
-
-        context = contextManager.runCommand("open", context);
-        debug {stderr.writeln(" cmContext:", context);}
-
-        if (context.exitCode == ExitCode.Failure)
-        {
-            return context;
-        }
-        escopo.contextManagers ~= contextManager;
-
-        // Make sure the stack is okay:
-        debug {stderr.writeln(" cleaning the stack...");}
-        context.items();
-        debug {stderr.writeln(" pushing ", contextManager);}
-        context.push(contextManager);
-
-        context.exitCode = ExitCode.Success;
         return context;
     };
     commands["uplevel"] = function (string path, Context context)
@@ -362,10 +330,17 @@ static this()
 
             auto newScope = new Escopo(context.escopo);
             newScope["message"] = context.pop!String();
-            context = context.process.run(subprogram, context.next(newScope));
-            if (context.exitCode != ExitCode.Failure)
+            auto newContext = context.process.run(
+                subprogram, context.next(newScope)
+            );
+            if (newContext.exitCode == ExitCode.Failure)
+            {
+                return newContext;
+            }
+            else
             {
                 context.exitCode = ExitCode.Success;
+                context.size = newContext.size;
             }
         }
 
@@ -385,8 +360,6 @@ static this()
     // Time
     integerCommands["sleep"] = function (string path, Context context)
     {
-        import std.datetime.stopwatch;
-
         auto ms = context.pop!long();
 
         auto sw = StopWatch(AutoStart.yes);
@@ -404,6 +377,51 @@ static this()
     {
         SysTime today = Clock.currTime();
         return context.push(today.toUnixTime!long());
+    };
+    commands["timer"] = function (string path, Context context)
+    {
+        /*
+        scope "test the timer" {
+            timer {
+                sleep 5000
+            } {
+                print "This scope ran for $seconds seconds"
+            }
+        }
+        # stderr> This scope ran for 5 seconds
+        */
+        auto subprogram = context.pop!SubProgram();
+        auto callback = context.pop!SubProgram();
+
+        auto sw = StopWatch(AutoStart.yes);
+        context = context.process.run(subprogram, context);
+        sw.stop();
+
+        auto seconds = sw.peek().total!"seconds";
+        debug {stderr.writeln("  seconds: ", seconds);}
+        auto msecs = sw.peek().total!"msecs";
+        auto usecs = sw.peek().total!"usecs";
+        auto nsecs = sw.peek().total!"nsecs";
+
+        auto newScope = new Escopo(context.escopo);
+        newScope["seconds"] = new FloatAtom(seconds);
+        newScope["miliseconds"] = new FloatAtom(msecs);
+        newScope["microseconds"] = new FloatAtom(usecs);
+        newScope["nanoseconds"] = new FloatAtom(nsecs);
+
+        // Save info about the context in order to restore it later:
+        Items items = context.items;
+        auto exitCode = context.exitCode;
+        // Run the callback:
+        context = context.process.run(callback, context.next(newScope));
+        // Restore previous context info:
+        context.push(items);
+        if (context.exitCode != ExitCode.Failure)
+        {
+            // Restore the previous exit code:
+            context.exitCode = exitCode;
+        }
+        return context;
     };
     // ---------------------------------------------
     // Errors
@@ -1083,6 +1101,5 @@ static this()
 
     loadJsonCommands(commands);
     loadHttpCommands(commands);
-    loadTimerCommands(commands);
     loadTerminalCommands(commands);
 }

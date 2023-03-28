@@ -46,9 +46,10 @@ description "PlantUML only works with files, so we create one here."
 
 scope "time it!" {
     timer {
+        create_plantuml_file "${script_name}.uml" $script_body
+    } {
         print "generating the file took $microseconds microseconds, or $miliseconds miliseconds."
-    } | autoclose
-    create_plantuml_file "${script_name}.uml" $script_body
+    }
 }
 
 

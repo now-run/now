@@ -109,12 +109,6 @@ command {
 }
 
 
-[system_commands/gdc_obj/on.call]
-
-timer {
-    log "$file was compiled in $microseconds microseconds."
-} | autoclose
-
 [system_commands/gdc_obj]
 parameters {
     file {
@@ -153,12 +147,6 @@ command {
 }
 
 
-[procedures/compile/on.call]
-
-timer {
-    log "$output_filepath was compiled in $miliseconds miliseconds."
-} | autoclose
-
 [procedures/compile]
 parameters {
     files {
@@ -189,7 +177,12 @@ scope "generate object files" {
             path "build/${hash}-${options_hash}.o" | as obj_file
             if (($obj_file exists) == false) {
                 log "compiling $input_file into $obj_file"
-                gdc_obj $input_file $obj_file (extra = $extra) | check
+
+                timer {
+                    gdc_obj $input_file $obj_file (extra = $extra) | check
+                } {
+                    log "$input_file was compiled in $microseconds microseconds."
+                }
                 set has_new_files true
             }
             push $object_files $obj_file
@@ -245,13 +238,17 @@ scope "compile" {
 
     get $target output_filepath | path | as output_filepath
     try {
-        call $command
-            . $source_files
-            . $output_filepath
-            . (debug = ($target . debug))
-            | foreach line {
-                log "$command: $line"
-            }
+        timer {
+            call $command
+                . $source_files
+                . $output_filepath
+                . (debug = ($target . debug))
+                | foreach line {
+                    log "$command: $line"
+                }
+        } {
+            log "$output_filepath was compiled in $miliseconds miliseconds."
+        }
     } {
         log ">>>>> ERROR: $error"
         return $error

@@ -15,7 +15,7 @@ description "Show the basics of the syntax"
 [commands/hello]
 parameters {
     name {
-        type strint
+        type string
         default "World"
     }
 }

@@ -87,31 +87,6 @@ class Process
         return context;
     }
 
-    Context closeCMs(Context context)
-    {
-        bool hasFailures = false;
-        auto cmList = context.escopo.contextManagers;
-        foreach (contextManager; cmList)
-        {
-            context = contextManager.runMethod("close", context);
-            if (context.exitCode == ExitCode.Failure)
-            {
-                /*
-                Each failure when closing a context manager pushes
-                a new Error into the stack. It's a specially difficult
-                case to handle, so here we'll count that the user will
-                try to empty the stack when handling errors.
-                */
-                hasFailures = true;
-            }
-        }
-        if (hasFailures)
-        {
-            context.exitCode = ExitCode.Failure;
-        }
-        return context;
-    }
-
     int unixExitStatus(Context context)
     {
         // Search for errors:

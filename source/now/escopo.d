@@ -9,7 +9,6 @@ class Escopo
     Program program;
     Escopo parent;
     Items[string] variables;
-    Items contextManagers;
     string description;
     BaseCommand rootCommand;
 

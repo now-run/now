@@ -245,13 +245,6 @@ parameters {
 cat examples/make/program.now | now :stdin build $target
 
 
-[commands/make/on.call]
-
-timer {
-    print "Made successfully in $msec miliseconds."
-} | autoclose
-
-
 [commands/make]
 description "Compiles Now"
 parameters {
@@ -265,11 +258,15 @@ parameters {
     }
 }
 
-try {
-    make $target | foreach line {
-        print "> $line"
+timer {
+    try {
+        make $target | foreach line {
+            print "> $line"
+        }
+        log "Made successfully."
     }
-    log "Made successfully."
+} {
+    print "Made successfully in $miliseconds miliseconds."
 }
 
 
@@ -286,18 +283,6 @@ try {
         now "examples/$directory" | check
     }
 }
-
-
-[shells/bash/scripts/list_test]
-parameters {
-    x {
-        type sequence
-    }
-}
-
-echo "x=$x"
-echo "args=$args"
-echo "args.count=${args.count}"
 
 
 [commands/run]
