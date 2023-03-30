@@ -14,9 +14,6 @@ class Item
     string typeName;
     CommandsMap commands;
 
-    // For third-party modules encapsulating other classes:
-    Variant content;
-
     // Operators:
     template opUnary(string operator)
     {

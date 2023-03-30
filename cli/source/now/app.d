@@ -75,6 +75,8 @@ int main(string[] args)
                     filepath = null;
                     subCommandName = null;
                     break;
+                case "repl":
+                    return repl();
                 case "help":
                     return now_help();
                 default:
@@ -365,5 +367,96 @@ int now_help()
     stdout.writeln("  - No arguments: run ./program.now");
     stdout.writeln("  :stdin - reads a program from standard input");
     stdout.writeln("  :help - displays this help message");
+    return 0;
+}
+
+int repl()
+{
+    string filepath = "program.now";
+    Program program;
+
+    if (filepath.exists)
+    {
+        auto parser = new Parser(read(filepath).to!string);
+        program = parser.run();
+        stderr.writeln("Loaded ", filepath);
+    }
+    else
+    {
+        program = new Program();
+        program["name"] = new String("repl");
+        program["description"] = new String("Read Eval Print Loop");
+    }
+
+    // Repetition:
+    auto envVars = new Dict();
+    foreach(key, value; environment.toAA())
+    {
+        envVars[key] = new String(value);
+    }
+    program.initialize(commands, envVars);
+
+    auto process = new Process("repl");
+    auto escopo = new Escopo(program);
+    auto context = Context(process, escopo);
+
+    stderr.writeln("Starting REPL...");
+
+    string line;
+    string prompt = "> ";
+    while (true)
+    {
+        stderr.write(prompt);
+        line = readln();
+        if (line is null)
+        {
+            break;
+        }
+        else if (line == "R\n")
+        {
+            if (filepath.exists)
+            {
+                auto parser = new Parser(read(filepath).to!string);
+                program = parser.run();
+                stderr.writeln("Loaded ", filepath);
+            }
+            else
+            {
+                stderr.writeln(filepath, " not found.");
+            }
+            continue;
+        }
+        else if (line == "Q\n")
+        {
+            break;
+        }
+
+        auto parser = new Parser(line);
+        Pipeline pipeline;
+        try
+        {
+            pipeline = parser.consumePipeline();
+        }
+        catch (Exception ex)
+        {
+            stderr.writeln("Exception: ", ex);
+            stderr.writeln("----------");
+            continue;
+        }
+        context = pipeline.run(context);
+        if (context.exitCode == ExitCode.Failure)
+        {
+            auto error = context.pop!Erro();
+            stderr.writeln(error.toString());
+            stderr.writeln("----------");
+        }
+        else
+        {
+            if (context.exitCode != ExitCode.Success)
+            {
+                stderr.writeln(context.exitCode.to!string);
+            }
+        }
+    }
     return 0;
 }

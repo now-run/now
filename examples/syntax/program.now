@@ -16,6 +16,18 @@ command {
 workdir $directory
 
 
+[commands/uuid]
+
+uuid.sha1 "now" | print "uuid.sha1 now="
+uuid.sha1 "now" "run" | print "uuid.sha1 now run="
+uuid.sha1 "run" | print "uuid.sha1 run="
+
+uuid.random | print "uuid.random="
+
+[commands/random]
+
+random 1 5 | print "random 0 5="
+
 [commands/list_generation]
 description "Equivalent to 'list comprehensions' but without any special syntax."
 reference "http://xahlee.info/comp/list_comprehension.html"

@@ -1,14 +1,16 @@
 module now.commands.general;
 
 
+import std.algorithm.mutation : stripRight;
 import std.array;
 import std.datetime;
 import std.datetime.stopwatch : StopWatch;
 import std.digest.md;
 import std.file : read;
+import std.random : uniform;
 import std.stdio;
 import std.string : toLower;
-import std.algorithm.mutation : stripRight;
+import std.uuid : sha1UUID, randomUUID;
 
 import now.nodes;
 import now.commands;
@@ -1098,7 +1100,56 @@ static this()
         char[] digest = target.hexDigest!MD5;
         return context.push(digest.to!string);
     };
+    commands["uuid.sha1"] = function (string path, Context context)
+    {
+        string source = context.pop!string();
+        string result;
+        if (context.size)
+        {
+            auto namespace = sha1UUID(context.pop!string());
+            result = sha1UUID(source, namespace).to!string;
+        }
+        else
+        {
+            result = sha1UUID(source).to!string;
+        }
+        return context.push(result);
+    };
+    commands["uuid.random"] = function (string path, Context context)
+    {
+        return context.push(randomUUID().to!string);
+    };
 
+    // Random
+    commands["random"] = function (string path, Context context)
+    {
+        auto a = context.pop();
+        auto b = context.pop();
+
+        if (a.type == ObjectType.Float || b.type == ObjectType.Float)
+        {
+            /*
+            > random 0.1 0.5
+            # A random number greater or equal to 0.1
+            # and lower than 0.5.
+            */
+            auto af = cast(FloatAtom)a;
+            auto bf = cast(FloatAtom)b;
+            return context.push(uniform(af.toFloat(), bf.toFloat()));
+        }
+        else
+        {
+            /*
+            > random 1 3
+            # A random number between 1 and 3.
+            */
+            auto ai = cast(IntegerAtom)a;
+            auto bi = cast(IntegerAtom)b;
+            return context.push(uniform(ai.toInt(), bi.toInt() + 1));
+        }
+    };
+
+    // Others
     loadJsonCommands(commands);
     loadHttpCommands(commands);
     loadTerminalCommands(commands);
