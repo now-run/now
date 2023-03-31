@@ -22,6 +22,15 @@ use all the power not only of a POSIX shell but of any
 other tool available in your system in a well-organized
 manner!
 
+
+## Extras
+
+In the `extras/` directory you'll find:
+
+- A **vim syntax file**;
+- A **bash completion function** (`source extras/completions/bash_now.sh`).
+
+
 ## Syntax
 
 ```ini

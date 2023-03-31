@@ -7,20 +7,8 @@ description "Show how the document syntax works."
 [program/on.error]
 
 print "The program terminated with some error."
-# The program will LIE to the user by not returning the (or an) error:
 return $error
 
-
-[# About this document]
-
-This is a document, but also a program. You can both use `now` as a
-document definition language (just like JSON, YAML or TOML) and as a
-programming language (just like Tcl or Python).
-
-
-Now see the rest of this document to learn more by seeing the examples!
-
------
 
 [configuration/hello]
 salute_word {

@@ -1,7 +1,7 @@
 module now.cli;
 
 
-import std.algorithm.searching : canFind;
+import std.algorithm.searching : canFind, startsWith;
 import std.array : array, join, replace, split;
 import std.datetime.stopwatch;
 import std.file;
@@ -18,6 +18,19 @@ import now.grammar;
 import now.nodes;
 import now.process;
 
+
+Dict envVars;
+
+static this()
+{
+    envVars = new Dict();
+    foreach(key, value; environment.toAA())
+    {
+        envVars[key] = new String(value);
+    }
+}
+
+
 int main(string[] args)
 {
     Parser parser;
@@ -25,11 +38,6 @@ int main(string[] args)
     auto argumentsList = new List(
         cast(Items)args.map!(x => new String(x)).array
     );
-    auto envVars = new Dict();
-    foreach(key, value; environment.toAA())
-    {
-        envVars[key] = new String(value);
-    }
 
     debug
     {
@@ -77,6 +85,8 @@ int main(string[] args)
                     break;
                 case "repl":
                     return repl();
+                case "bash-complete":
+                    return bashAutoComplete();
                 case "help":
                     return now_help();
                 default:
@@ -364,9 +374,11 @@ int show_program_help(string filepath, string[] args, Program program)
 int now_help()
 {
     stdout.writeln("now");
-    stdout.writeln("  - No arguments: run ./program.now");
-    stdout.writeln("  :stdin - reads a program from standard input");
-    stdout.writeln("  :help - displays this help message");
+    stdout.writeln("  No arguments: run ./program.now if present");
+    stdout.writeln("  :repl - enter interactive mode");
+    stdout.writeln("  :stdin - read a program from standard input");
+    stdout.writeln("  :complete - shell autocompletion");
+    stdout.writeln("  :help - display this help message");
     return 0;
 }
 
@@ -388,12 +400,6 @@ int repl()
         program["description"] = new String("Read Eval Print Loop");
     }
 
-    // Repetition:
-    auto envVars = new Dict();
-    foreach(key, value; environment.toAA())
-    {
-        envVars[key] = new String(value);
-    }
     program.initialize(commands, envVars);
 
     auto process = new Process("repl");
@@ -457,6 +463,55 @@ int repl()
                 stderr.writeln(context.exitCode.to!string);
             }
         }
+    }
+    return 0;
+}
+
+int bashAutoComplete()
+{
+    string filepath = "program.now";
+    Program program;
+
+    if (filepath.exists)
+    {
+        auto parser = new Parser(read(filepath).to!string);
+        program = parser.run();
+    }
+    else
+    {
+        return 0;
+    }
+
+    auto words = envVars["COMP_LINE"].toString().split(" ");
+    string lastWord = null;
+    auto ignore = 0;
+    foreach (word; words.retro)
+    {
+        if (word.length)
+        {
+            lastWord = word;
+            break;
+        }
+        ignore++;
+    }
+    auto n = words.length - ignore;
+
+    program.initialize(null, envVars);
+
+    if (n == 1)
+    {
+        stdout.writeln(program.subCommands.keys.join(" "));
+    }
+    else {
+        string[] commands;
+        foreach (name; program.subCommands.keys)
+        {
+            if (name.startsWith(lastWord))
+            {
+                commands ~= name;
+            }
+        }
+        stdout.writeln(commands.join(" "));
     }
     return 0;
 }
