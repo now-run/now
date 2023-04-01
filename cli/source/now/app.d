@@ -86,6 +86,8 @@ int main(string[] args)
                     break;
                 case "repl":
                     return repl();
+                case "cmd":
+                    return cmd(args);
                 case "bash-complete":
                     return bashAutoComplete();
                 case "help":
@@ -376,9 +378,10 @@ int now_help()
 {
     stdout.writeln("now");
     stdout.writeln("  No arguments: run ./program.now if present");
+    stdout.writeln("  :bash-complete - shell autocompletion");
+    stdout.writeln("  :cmd - run commands passed as arguments");
     stdout.writeln("  :repl - enter interactive mode");
     stdout.writeln("  :stdin - read a program from standard input");
-    stdout.writeln("  :complete - shell autocompletion");
     stdout.writeln("  :help - display this help message");
     return 0;
 }
@@ -517,6 +520,56 @@ int bashAutoComplete()
             }
         }
         stdout.writeln(commands.join(" "));
+    }
+    return 0;
+}
+
+int cmd(string[] args)
+{
+    string filepath = "program.now";
+    Program program;
+
+    if (filepath.exists)
+    {
+        auto parser = new Parser(read(filepath).to!string);
+        program = parser.run();
+        stderr.writeln("Loaded ", filepath);
+    }
+    else
+    {
+        program = new Program();
+        program["name"] = new String("cmd");
+        program["description"] = new String("Run commands passed as arguments");
+    }
+
+    program.initialize(commands, envVars);
+
+    auto process = new Process("cmd");
+    auto escopo = new Escopo(program);
+    auto context = Context(process, escopo);
+
+    foreach (line; args[2..$])
+    {
+        Pipeline pipeline;
+
+        auto parser = new Parser(line);
+        pipeline = parser.consumePipeline();
+
+        context = pipeline.run(context);
+        if (context.exitCode == ExitCode.Failure)
+        {
+            auto error = context.pop!Erro();
+            stderr.writeln(error.toString());
+            stderr.writeln("----------");
+            return error.code;
+        }
+        else
+        {
+            if (context.exitCode != ExitCode.Success)
+            {
+                stderr.writeln(context.exitCode.to!string);
+            }
+        }
     }
     return 0;
 }
