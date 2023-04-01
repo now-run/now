@@ -68,7 +68,7 @@ class Process
                     Wheter we called errorHandler or not,
                     we ARE going to exit the current
                     scope right now. The idea of
-                    a errorHandler is NOT to
+                    an errorHandler is NOT to
                     allow continuing in the
                     same scope.
                     */

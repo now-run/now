@@ -104,4 +104,14 @@ static this()
             .array)
         ));
     };
+    dictCommands["pairs"] = function (string path, Context context)
+    {
+        Dict dict = context.pop!Dict();
+        foreach (key; dict.order)
+        {
+            auto value = dict[key];
+            context.push(new Pair([new String(key), value]));
+        }
+        return context;
+    };
 }

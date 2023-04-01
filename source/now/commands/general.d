@@ -3,7 +3,6 @@ module now.commands.general;
 
 import std.algorithm.mutation : stripRight;
 import std.array;
-import std.base64;
 import std.datetime;
 import std.datetime.stopwatch : StopWatch;
 import std.digest.md;
@@ -15,6 +14,7 @@ import std.uuid : sha1UUID, randomUUID;
 
 import now.nodes;
 import now.commands;
+import now.commands.base64;
 import now.commands.http;
 import now.commands.json;
 import now.commands.iterators;
@@ -1122,54 +1122,6 @@ static this()
         return context.push(randomUUID().to!string);
     };
 
-    // Encodings
-    commands["base64.encode"] = function (string path, Context context)
-    {
-        foreach (item; context.items)
-        {
-            ubyte[] data;
-            switch (item.type)
-            {
-                case ObjectType.String:
-                    auto s = cast(String)item;
-                    data = cast(ubyte[])(s.toString());
-                    break;
-                case ObjectType.Name:
-                    auto s = cast(NameAtom)item;
-                    data = cast(ubyte[])(s.toString());
-                    break;
-                case ObjectType.Vector:
-                    if (item.typeName == "byte_vector")
-                    {
-                        auto s = cast(ByteVector)item;
-                        data = cast(ubyte[])(s.values);
-                        break;
-                    }
-                    goto default;
-                default:
-                    return context.error(
-                        "Invalid input for " ~ path
-                        ~ ": " ~ item.type.to!string(),
-                        ErrorCode.InvalidArgument,
-                        ""
-                    );
-            }
-            auto result = Base64URL.encode(data);
-            context.push(result.to!string);
-        }
-        return context;
-    };
-    commands["base64.decode"] = function (string path, Context context)
-    {
-        foreach (item; context.items)
-        {
-            auto s = item.toString();
-            ubyte[] result = Base64URL.decode(s);
-            context.push(cast(string)result);
-        }
-        return context;
-    };
-
     // Random
     commands["random"] = function (string path, Context context)
     {
@@ -1200,6 +1152,7 @@ static this()
     };
 
     // Others
+    loadBase64Commands(commands);
     loadJsonCommands(commands);
     loadHttpCommands(commands);
     loadTerminalCommands(commands);

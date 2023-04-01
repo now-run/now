@@ -157,4 +157,13 @@ class Pair : List
         this.type = ObjectType.Pair;
         this.typeName = "pair";
     }
+
+    // -----------------------------
+    // Utilities and operators:
+    override string toString()
+    {
+        return "(" ~ to!string(this.items
+            .map!(x => to!string(x))
+            .join(" = ")) ~ ")";
+    }
 }
