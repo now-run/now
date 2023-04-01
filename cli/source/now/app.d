@@ -1,5 +1,6 @@
 module now.cli;
 
+extern(C) int isatty(int);
 
 import std.algorithm.searching : canFind, startsWith;
 import std.array : array, join, replace, split;
@@ -408,11 +409,15 @@ int repl()
 
     stderr.writeln("Starting REPL...");
 
+    auto istty = cast(bool)isatty(stdout.fileno);
     string line;
     string prompt = "> ";
     while (true)
     {
-        stderr.write(prompt);
+        if (istty)
+        {
+            stderr.write(prompt);
+        }
         line = readln();
         if (line is null)
         {
