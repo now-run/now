@@ -19,6 +19,7 @@ import now.commands.http;
 import now.commands.json;
 import now.commands.iterators;
 import now.commands.terminal;
+import now.commands.url;
 import now.grammar;
 
 
@@ -1202,4 +1203,5 @@ static this()
     loadJsonCommands(commands);
     loadHttpCommands(commands);
     loadTerminalCommands(commands);
+    loadUrlCommands(commands);
 }
