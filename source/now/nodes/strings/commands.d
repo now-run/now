@@ -25,7 +25,7 @@ static this()
         auto code = context.pop!string();
         SubProgram subprogram;
 
-        auto parser = new Parser(code);
+        auto parser = new NowParser(code);
         try
         {
             subprogram = parser.consumeSubProgram();

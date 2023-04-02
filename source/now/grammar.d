@@ -2,19 +2,13 @@ module now.grammar;
 
 
 import std.algorithm : among, canFind;
-import std.conv : to;
 import std.math : pow;
 
 import now.conv;
 import now.exceptions;
 import now.nodes;
+import now.parser;
 
-
-const EOL = '\n';
-const SPACE = ' ';
-const TAB = '\t';
-const PIPE = '|';
-const STOPPERS = [')', '>', ']', '}'];
 
 // Integers units:
 uint[char] units;
@@ -26,31 +20,13 @@ static this()
     units['G'] = 3;
 }
 
-class IncompleteInputException : Exception
+
+class NowParser : Parser
 {
-    this(string msg)
-    {
-        super(msg);
-    }
-}
-
-class Parser
-{
-    size_t index = 0;
-    string code;
-    bool eof = false;
-
-    size_t line = 1;
-    size_t col = 0;
-
-    string[] stack;
-
     this(string code)
     {
-        this.code = code;
+        super(code);
     }
-
-    // --------------------------------------------
     Program run()
     {
         try
@@ -69,136 +45,6 @@ class Parser
         }
     }
 
-    char currentChar()
-    {
-        return code[index];
-    }
-    char lastChar()
-    {
-        return code[index - 1];
-    }
-    char consumeChar()
-    {
-        if (eof)
-        {
-            throw new IncompleteInputException(
-                "Code input already ended."
-                ~ " Last char: " ~ currentChar.to!string
-            );
-        }
-        debug {
-            if (code[index] == EOL)
-            {
-                stderr.writeln("consumed: eol");
-            }
-            else
-            {
-                stderr.writeln("consumed: '", code[index], "'");
-            }
-        }
-        auto result = code[index++];
-        col++;
-
-        if (result == EOL)
-        {
-            col = 0;
-            line++;
-            debug {stderr.writeln("== line ", line, " ==");}
-        }
-
-        if (index >= code.length)
-        {
-            debug {stderr.writeln("CODE ENDED");}
-            this.eof = true;
-            index--;
-        }
-
-        return result;
-    }
-
-    // --------------------------------------------
-    void consumeWhitespaces()
-    {
-        if (eof) return;
-
-        int counter = 0;
-
-        bool consumed = true;
-
-        while (consumed && !eof)
-        {
-            consumed = false;
-            // Common whitespaces:
-            while (isWhitespace && !eof)
-            {
-                consumeChar();
-                consumed = true;
-                counter++;
-            }
-            // Comments:
-            if (currentChar == '#')
-            {
-                consumeLine();
-                consumed = true;
-                counter++;
-            }
-        }
-        debug {
-            if (counter)
-            {
-                stderr.writeln("whitespaces (" ~ counter.to!string ~ ")");
-            }
-        }
-    }
-    void consumeLine()
-    {
-        do
-        {
-            consumeChar();
-        }
-        while (currentChar != EOL);
-        consumeChar();  // consume the eol.
-    }
-    void consumeWhitespace()
-    {
-        //assert(isWhitespace);
-        if (!isWhitespace)
-        {
-            throw new Exception(
-                "Expecting whitespace, found " ~ currentChar.to!string
-            );
-        }
-        debug {stderr.writeln("whitespace");}
-        consumeChar();
-    }
-    void consumeSpace()
-    {
-        debug {stderr.writeln("  SPACE");}
-        assert(currentChar == SPACE);
-        consumeChar();
-    }
-    bool isWhitespace()
-    {
-        return cast(bool)currentChar.among!(SPACE, TAB, EOL);
-    }
-    bool isSignificantChar()
-    {
-        if (this.eof) return false;
-        return !isWhitespace();
-    }
-    bool isEndOfLine()
-    {
-        return eof || currentChar == EOL;
-    }
-    bool isStopper()
-    {
-        return (eof
-                || currentChar == '}' || currentChar == ']'
-                || currentChar == ')' || currentChar == '>');
-    }
-
-    // --------------------------------------------
-    // Nodes
     Program consumeProgram()
     {
         auto p = new Program();
@@ -758,7 +604,7 @@ class Parser
         return new List(items);
     }
 
-    String consumeString(char opener)
+    override String consumeString(char opener)
     {
         char[] token;
         StringPart[] parts;

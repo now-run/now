@@ -34,7 +34,7 @@ static this()
 
 int main(string[] args)
 {
-    Parser parser;
+    NowParser parser;
 
     auto argumentsList = new List(
         cast(Items)args.map!(x => new String(x)).array
@@ -80,7 +80,7 @@ int main(string[] args)
             switch (keyword)
             {
                 case "stdin":
-                    parser = new Parser(stdin.byLine.join("\n").to!string);
+                    parser = new NowParser(stdin.byLine.join("\n").to!string);
                     filepath = null;
                     subCommandName = null;
                     break;
@@ -108,7 +108,7 @@ int main(string[] args)
     {
         try
         {
-            parser = new Parser(read(filepath).to!string);
+            parser = new NowParser(read(filepath).to!string);
         }
         catch (FileException ex)
         {
@@ -225,7 +225,7 @@ int main(string[] args)
             // alfa-beta=1=2=3 -> alfa_beta = "1=2=3"
             auto value = pair[1..$].join("=");
 
-            auto p = new Parser(value);
+            auto p = new NowParser(value);
 
             context.push(new Pair([
                 new String(key),
@@ -263,7 +263,7 @@ int main(string[] args)
         );
         if (handlerString !is null)
         {
-            auto localParser = new Parser(handlerString.toString());
+            auto localParser = new NowParser(handlerString.toString());
             SubProgram handler = localParser.consumeSubProgram();
 
             // Avoid calling on.error recursively:
@@ -393,7 +393,7 @@ int repl()
 
     if (filepath.exists)
     {
-        auto parser = new Parser(read(filepath).to!string);
+        auto parser = new NowParser(read(filepath).to!string);
         program = parser.run();
         stderr.writeln("Loaded ", filepath);
     }
@@ -430,7 +430,7 @@ int repl()
         {
             if (filepath.exists)
             {
-                auto parser = new Parser(read(filepath).to!string);
+                auto parser = new NowParser(read(filepath).to!string);
                 program = parser.run();
                 stderr.writeln("Loaded ", filepath);
             }
@@ -445,7 +445,7 @@ int repl()
             break;
         }
 
-        auto parser = new Parser(line);
+        auto parser = new NowParser(line);
         Pipeline pipeline;
         try
         {
@@ -482,7 +482,7 @@ int bashAutoComplete()
 
     if (filepath.exists)
     {
-        auto parser = new Parser(read(filepath).to!string);
+        auto parser = new NowParser(read(filepath).to!string);
         program = parser.run();
     }
     else
@@ -531,7 +531,7 @@ int cmd(string[] args)
 
     if (filepath.exists)
     {
-        auto parser = new Parser(read(filepath).to!string);
+        auto parser = new NowParser(read(filepath).to!string);
         program = parser.run();
         stderr.writeln("Loaded ", filepath);
     }
@@ -552,7 +552,7 @@ int cmd(string[] args)
     {
         Pipeline pipeline;
 
-        auto parser = new Parser(line);
+        auto parser = new NowParser(line);
         pipeline = parser.consumePipeline();
 
         context = pipeline.run(context);

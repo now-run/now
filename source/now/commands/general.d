@@ -328,7 +328,7 @@ static this()
         if (format !is null)
         {
             auto body = format["body"];
-            auto parser = new Parser(body.toString());
+            auto parser = new NowParser(body.toString());
             // TODO: cache it:
             auto subprogram = parser.consumeSubProgram();
 

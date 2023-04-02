@@ -48,7 +48,7 @@ class ShellScript : SystemCommand
         if (expandVariables)
         {
             // XXX: will it work properly???
-            auto parser = new Parser(this.body.toString());
+            auto parser = new NowParser(this.body.toString());
             auto substString = parser.consumeString(cast(char)null);
             context = substString.evaluate(context);
             body = context.pop!String();

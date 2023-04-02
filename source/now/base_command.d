@@ -27,7 +27,7 @@ class BaseCommand
         info.order.filter!(x => x[0..3] == "on.").each!((k) {
             auto v = cast(Dict)(info[k]);
             auto body = cast(String)v["body"];
-            auto parser = new Parser(body.toString());
+            auto parser = new NowParser(body.toString());
             this.eventHandlers[k] = parser.consumeSubProgram();
         });
 

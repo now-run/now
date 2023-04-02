@@ -17,7 +17,7 @@ class Procedure : BaseCommand
         super(name, info);
 
         auto bodyString = info["body"];
-        auto parser = new Parser(bodyString.toString());
+        auto parser = new NowParser(bodyString.toString());
         this.body = parser.consumeSubProgram();
     }
 
