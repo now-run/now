@@ -170,7 +170,6 @@ class NowParser : Parser
     }
     SectionDict consumeSection()
     {
-
         debug {
             stderr.writeln("consumeSection");
         }

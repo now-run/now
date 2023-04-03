@@ -1,6 +1,6 @@
 module now.parser;
 
-import std.algorithm : among, canFind;
+public import std.algorithm : among, canFind;
 import std.math : pow;
 
 import now.conv;
@@ -88,38 +88,63 @@ class Parser
     }
 
     // --------------------------------------------
-    void consumeWhitespaces()
+    long consumeWhitespaces()
     {
-        if (eof) return;
+        if (eof) return 0;
 
-        int counter = 0;
+        long counter = 0;
 
-        bool consumed = true;
-
-        while (consumed && !eof)
+        while (!eof)
         {
-            consumed = false;
             // Common whitespaces:
             while (isWhitespace && !eof)
             {
                 consumeChar();
-                consumed = true;
                 counter++;
             }
             // Comments:
             if (currentChar == '#')
             {
                 consumeLine();
-                consumed = true;
-                counter++;
+            }
+            else {
+                break;
             }
         }
+
         debug {
             if (counter)
             {
                 stderr.writeln("whitespaces (" ~ counter.to!string ~ ")");
             }
         }
+        return counter;
+    }
+    long consumeBlankspaces()
+    {
+        if (eof) return 0;
+
+        long counter = 0;
+
+        // Common whitespaces:
+        while (!eof && currentChar == SPACE)
+        {
+            consumeChar();
+            counter++;
+        }
+        // Comments:
+        if (currentChar == '#')
+        {
+            consumeLine();
+        }
+
+        debug {
+            if (counter)
+            {
+                stderr.writeln("whitespaces (" ~ counter.to!string ~ ")");
+            }
+        }
+        return counter;
     }
     void consumeLine()
     {
@@ -132,7 +157,6 @@ class Parser
     }
     void consumeWhitespace()
     {
-        //assert(isWhitespace);
         if (!isWhitespace)
         {
             throw new Exception(
@@ -170,7 +194,7 @@ class Parser
 
     // --------------------------------------------
     // Nodes
-    String consumeString(char opener)
+    string consume_string(char opener)
     {
         char[] token;
 
@@ -213,7 +237,12 @@ class Parser
             }
         }
 
-        return new String(token.to!string);
+        return token.to!string;
+    }
+    String consumeString(char opener)
+    {
+        string s = consume_string(opener);
+        return new String(s);
     }
 
     Item consumeNumber()

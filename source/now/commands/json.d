@@ -112,8 +112,6 @@ JSONValue ItemToJson(Item item, bool strict=false)
 
 void loadJsonCommands(CommandsMap commands)
 {
-    // ---------------------------------------------
-    // Stack
     commands["json.decode"] = function (string path, Context context)
     {
         foreach (arg; context.items)

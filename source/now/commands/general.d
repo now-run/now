@@ -20,6 +20,7 @@ import now.commands.json;
 import now.commands.iterators;
 import now.commands.terminal;
 import now.commands.url;
+import now.commands.yaml;
 import now.grammar;
 
 
@@ -1157,4 +1158,5 @@ static this()
     loadHttpCommands(commands);
     loadTerminalCommands(commands);
     loadUrlCommands(commands);
+    loadYamlCommands(commands);
 }
