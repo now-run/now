@@ -1,11 +1,16 @@
 module now.commands.yaml;
 
+import std.string : rightJustify, tr;
 
 import now.nodes;
 import now.parser;
 
 
 /*
+REFERENCES:
+1. https://noyaml.com
+2. https://yaml.org
+
 YAML can be read node-by-node, as long as you keep
 control of indentation! Each node can be:
 - key
@@ -29,6 +34,7 @@ There's no "document". The document is a block.
   composed of a string.
 */
 
+string DOUBLE_QUOTE = "\"";
 
 enum YamlNodeType
 {
@@ -203,11 +209,11 @@ class YamlParser : Parser
     Dict consumeDict()
     {
         auto dict = new Dict();
-        while (!eof && currentNode.type != YamlNodeType.CloseBlock)
+        while (!eof && !currentNode.type.among(YamlNodeType.CloseBlock, YamlNodeType.Bullet))
         {
             auto key = consumeCurrentNode;
             debug{stderr.writeln("  consumeDict.key:", key);}
-            assert (key.type == YamlNodeType.Key);
+            assert (key.type == YamlNodeType.Key, key.type.to!string);
             dict[key.value] = consumeBlock();
         }
         return dict;
@@ -368,12 +374,101 @@ class YamlParser : Parser
     }
 }
 
+string ItemToYaml(Item item, long indentLevel=0, Item parent=null, bool strict=false)
+{
+    string spacer = rightJustify("", indentLevel * 4, ' ');
+
+    switch (item.type)
+    {
+        case ObjectType.Boolean:
+            return " " ~ item.toBool().to!string();
+
+        case ObjectType.Integer:
+            return " " ~ item.toInt().to!string();
+
+        case ObjectType.Float:
+            return " " ~ item.toFloat().to!string();
+
+        case ObjectType.Atom:
+        case ObjectType.String:
+            auto s = item.toString();
+            if (s == "<NULL>")
+            {
+                return " null";
+            }
+            else
+            {
+                if (s.canFind(DOUBLE_QUOTE))
+                {
+                    s = s.tr(DOUBLE_QUOTE, "\\\"");
+                }
+                return " \"" ~ s ~ "\"";
+            }
+        case ObjectType.List:
+            List list = cast(List)item;
+            string s = "\n";
+            foreach (subItem; list.items)
+            {
+                s ~= spacer
+                    ~ "-" ~ ItemToYaml(subItem, indentLevel, item, strict)
+                    ~ "\n";
+            }
+            return s;
+        case ObjectType.Dict:
+            Dict dict = cast(Dict)item;
+            auto s = "";
+            bool parentIsList = (parent !is null && parent.type == ObjectType.List);
+            if (parent !is null && !parentIsList)
+            {
+                s ~= "\n";
+            }
+            foreach (index, key; dict.order)
+            {
+                if (index == 0 && parentIsList)
+                {
+                    s ~= " " ~ key ~ ":";
+                }
+                else if (parentIsList)
+                {
+                    s ~= spacer ~ "  " ~ key ~ ":";
+                }
+                else
+                {
+                    s ~= spacer ~ key ~ ":";
+                }
+                s ~= ItemToYaml(dict[key], indentLevel+1, item, strict) ~ "\n";
+            }
+            return s;
+        // case ObjectType.Vector:
+        // item.typeName = {byte_vector|int_vector|long_vector|...}
+        default:
+            if (strict)
+            {
+                throw new Exception("Cannot decode type " ~ to!string(item.type));
+            }
+            return item.toString();
+    }
+}
+
+
 void loadYamlCommands(CommandsMap commands)
 {
     commands["yaml.decode"] = function (string path, Context context)
     {
-        auto s = context.pop!string();
-        auto parser = new YamlParser(s);
-        return context.push(parser.run());
+        foreach (item; context.items)
+        {
+            auto s = item.toString();
+            auto parser = new YamlParser(s);
+            context.push(parser.run());
+        }
+        return context;
+    };
+    commands["yaml.encode"] = function (string path, Context context)
+    {
+        foreach (item; context.items)
+        {
+            context.push(ItemToYaml(item));
+        }
+        return context;
     };
 }
