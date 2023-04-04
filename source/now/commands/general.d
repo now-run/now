@@ -357,8 +357,11 @@ static this()
 
     commands["read"] = function (string path, Context context)
     {
-        // read a line from std.stdin
-        return context.push(new String(stdin.readln().stripRight('\n')));
+        /*
+        Read the entire stdin.
+        */
+        string content = stdin.byLine.join("\n").to!string;
+        return context.push(content);
     };
 
     // ---------------------------------------------
