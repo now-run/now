@@ -52,16 +52,11 @@ int main(string[] args)
     string filepath = "program.now";
     string subCommandName = null;
     Procedure subCommand = null;
-    int programArgsIndex;
+    int programArgsIndex = 2;
 
     if (args.length >= 2)
     {
         subCommandName = args[1];
-        programArgsIndex = 2;
-    }
-    else
-    {
-        programArgsIndex = 1;
     }
 
     debug {stderr.writeln("subCommandName:", subCommandName);}
@@ -80,9 +75,15 @@ int main(string[] args)
             switch (keyword)
             {
                 case "stdin":
-                    parser = new NowParser(stdin.byLine.join("\n").to!string);
                     filepath = null;
                     subCommandName = null;
+                    parser = new NowParser(stdin.byLine.join("\n").to!string);
+                    break;
+                case "f":
+                    filepath = args[programArgsIndex];
+                    programArgsIndex++;
+                    subCommandName = null;
+                    parser = new NowParser(filepath.read.to!string);
                     break;
                 case "repl":
                     return repl();
@@ -98,17 +99,16 @@ int main(string[] args)
             }
         }
     }
-    if (subCommandName is null && args.length >= 3)
+    if (subCommandName is null && args.length > programArgsIndex)
     {
-        subCommandName = args[2];
-        programArgsIndex = 3;
+        subCommandName = args[programArgsIndex++];
     }
 
     if (parser is null)
     {
         try
         {
-            parser = new NowParser(read(filepath).to!string);
+            parser = new NowParser(filepath.read.to!string);
         }
         catch (FileException ex)
         {

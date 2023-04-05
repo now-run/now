@@ -110,15 +110,15 @@ parameters {
         description "How many times the procedure should salute"
         default 1
     }
+    salute_word {
+        type string
+        default ($hello . salute_word)
+    }
 }
 
-# Configuration variables are global, so you only
-# need to specify the full "path" when really needed:
-# print ($configuration . hello . salute_word) ", $name!"
 print "# hello"
 print "arguments: name=$name times=$times"
 print "configuration: hello . salute_word: " ($hello . salute_word)
-get $hello salute_word | as salute_word
 range.silent 1 $times | {
     print ">>> $salute_word, $name!"
 }

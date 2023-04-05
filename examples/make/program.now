@@ -1,3 +1,5 @@
+#!now :f
+
 [program]
 # vim: syntax=toml
 name "Now as an alternative to Make"

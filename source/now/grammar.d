@@ -49,8 +49,15 @@ class NowParser : Parser
     {
         auto p = new Program();
 
-        // There can't be any whitespaces before
-        // the first section!
+        /*
+        hashbang line...
+        */
+        while (currentChar == '#')
+        {
+            consumeLine();
+        }
+        consumeWhitespaces();
+
         auto section_path = consumeSectionHeader();
         if (section_path.length != 1)
         {
