@@ -89,6 +89,16 @@ parameters {
 /bin/ls -lh /dev | grep "$name"
 
 
+[shells/bash/scripts/make]
+parameters {
+    target {
+        type string
+    }
+}
+
+cat examples/make/program.now | now :stdin build $target
+
+
 [procedures/hello]
 parameters {
     name {
@@ -125,6 +135,49 @@ print "The following error occurred and was handled:"
 print "    $error"
 
 
+[commands/e]
+description "Shows how errors can be handled."
+
+error_handling
+
+
+[commands/exit]
+description "Exits the program with an error code."
+parameters {
+    code {
+        type int
+        default 123
+    }
+}
+
+to.int $code | as n
+if (($n > 127) || ($n < 0)) {
+    error "The exit code should be between zero and 127"
+}
+
+print "Exiting the program with code ${n}..."
+exit $n
+
+
+[commands/find_device/on.call]
+
+print "Starting find_device..."
+
+[commands/find_device]
+description "Scans /dev for devices matching a name."
+parameters {
+    name {
+        type string
+    }
+}
+
+find_device $name | { print }
+
+[commands/find_device/on.return]
+
+print "find_device finished."
+
+
 [commands/hello]
 description "Say hello to someone."
 parameters {
@@ -157,37 +210,6 @@ print "calling hello with times = 3 and a different salute word..."
 hello $name (times = 3) (salute_word = "hi")
 
 
-[commands/pi]
-description "Tells the value of pi using program contants."
-parameters {}
-
-print "math/pi is " ($math . pi)
-
-
-[commands/e]
-description "Shows how errors can be handled."
-
-error_handling
-
-
-[commands/exit]
-description "Exits the program with an error code."
-parameters {
-    code {
-        type int
-        default 123
-    }
-}
-
-to.int $code | as n
-if (($n > 127) || ($n < 0)) {
-    error "The exit code should be between zero and 127"
-}
-
-print "Exiting the program with code ${n}..."
-exit $n
-
-
 [commands/ls/on.error]
 
 print "list-dir returned an error: $error"
@@ -203,35 +225,6 @@ parameters {
 }
 
 list_dir $path | { print }
-
-
-[commands/find_device/on.call]
-
-print "Starting find_device..."
-
-[commands/find_device]
-description "Scans /dev for devices matching a name."
-parameters {
-    name {
-        type string
-    }
-}
-
-find_device $name | { print }
-
-[commands/find_device/on.return]
-
-print "find_device finished."
-
-
-[shells/bash/scripts/make]
-parameters {
-    target {
-        type string
-    }
-}
-
-cat examples/make/program.now | now :stdin build $target
 
 
 [commands/make]
@@ -259,6 +252,20 @@ timer {
 }
 
 
+[commands/pi]
+description "Tells the value of pi using program contants."
+parameters {}
+
+print "math/pi is " ($math . pi)
+
+
+[commands/run]
+description "Show some help text."
+
+print.yellow "Try running `now` without any arguments to see"
+print.yellow "a list of available subcommands for this project."
+
+
 [commands/test]
 description "Run all the examples."
 
@@ -272,10 +279,3 @@ try {
         now "examples/$directory" | check
     }
 }
-
-
-[commands/run]
-description "Show some help text."
-
-print.yellow "Try running `now` without any arguments to see"
-print.yellow "a list of available subcommands for this project."
