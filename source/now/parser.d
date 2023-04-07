@@ -54,7 +54,7 @@ class Parser
         {
             throw new IncompleteInputException(
                 "Code input already ended."
-                ~ " Last char: " ~ currentChar.to!string
+                ~ " Last char: [" ~ currentChar.to!string ~ "]"
             );
         }
         debug {
@@ -146,14 +146,18 @@ class Parser
         }
         return counter;
     }
-    void consumeLine()
+    string consumeLine()
     {
-        do
+        string result;
+
+        while (!eof && currentChar != EOL)
         {
+            result ~= consumeChar();
+        }
+        if (currentChar == EOL) {
             consumeChar();
         }
-        while (currentChar != EOL);
-        consumeChar();  // consume the eol.
+        return result;
     }
     void consumeWhitespace()
     {

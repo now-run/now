@@ -1,0 +1,52 @@
+[program]
+# vim: syntax=now
+name "Now Document Example"
+description "Show how the document syntax works."
+
+
+[templates/html_base]
+description "Basic HTML structure."
+
+<html>
+<head>
+    <title>$page_title</title>
+</head>
+<body>
+    $body
+</body>
+</html>
+
+[templates/htmls]
+description "Display a list of files in HTML format."
+extends html_base
+
+<div class="files-list">
+% body %
+    <h2>Files in $directory</h2>
+    <ul>
+    % file %
+        <li>$file</li>
+    % --- %
+    </ul>
+% --- %
+</div>
+
+[commands/run]
+description "Show how templates work."
+
+# New Template object.
+# Templates are just like Dicts.
+template htmls (page_title = "Directory Listings Example") | as tpl
+
+typeof $tpl | print "typeof tpl="
+
+list "/home" "/opt" | range | foreach directory {
+    print "directory=$directory"
+    emit $tpl "body"
+    glob [path $directory] "*" | range | foreach file {
+        print "    file=$file"
+        emit $tpl "file"
+    }
+}
+print "------------------"
+render $tpl | print

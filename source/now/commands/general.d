@@ -18,6 +18,7 @@ import now.commands.base64;
 import now.commands.http;
 import now.commands.json;
 import now.commands.iterators;
+import now.commands.simpletemplate;
 import now.commands.terminal;
 import now.commands.url;
 import now.commands.yaml;
@@ -1159,6 +1160,7 @@ static this()
     loadBase64Commands(commands);
     loadJsonCommands(commands);
     loadHttpCommands(commands);
+    loadTemplateCommands(commands);
     loadTerminalCommands(commands);
     loadUrlCommands(commands);
     loadYamlCommands(commands);

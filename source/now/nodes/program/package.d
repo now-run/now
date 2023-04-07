@@ -116,6 +116,14 @@ class Program : Dict {
             }
         }
 
+        debug {stderr.writeln("Adjusting templates");}
+        auto templates = this.getOrCreate!Dict("templates");
+        foreach (templateName, infoItem; templates.values)
+        {
+            auto templateInfo = cast(Dict)infoItem;
+            templates[templateName] = parseTemplate(templateName, templateInfo);
+        }
+
         debug {stderr.writeln("Adjusting shells");}
         auto shells = this.getOrCreate!Dict("shells");
         foreach (shellName, infoItem; shells.values)

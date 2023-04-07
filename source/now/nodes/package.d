@@ -31,6 +31,7 @@ public import now.nodes.dict;
 public import now.nodes.vectors;
 
 public import now.nodes.path;
+public import now.nodes.simpletemplate;
 
 public import now.nodes.error;
 
@@ -108,6 +109,7 @@ enum ObjectType
     Range,
 
     Path,
+    Template,
 
     Program,
     SystemProcess,
