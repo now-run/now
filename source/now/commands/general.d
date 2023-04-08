@@ -16,6 +16,7 @@ import now.nodes;
 import now.commands;
 import now.commands.base64;
 import now.commands.http;
+import now.commands.ini;
 import now.commands.json;
 import now.commands.iterators;
 import now.commands.simpletemplate;
@@ -1158,6 +1159,7 @@ static this()
 
     // Others
     loadBase64Commands(commands);
+    loadIniCommands(commands);
     loadJsonCommands(commands);
     loadHttpCommands(commands);
     loadTemplateCommands(commands);

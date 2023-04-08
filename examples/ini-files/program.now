@@ -1,0 +1,12 @@
+[program]
+# vim: syntax=now
+name "INI file decoding example"
+description "Show how to decode INI files."
+
+
+[commands/run]
+
+path "test.ini" | read | ini.decode | as d
+get $d "ini file" | as subd
+get $subd with | as with
+assert ($with == "comments inline")
