@@ -1,0 +1,11 @@
+[program]
+name "CSV Files Example"
+description "Show how to work with CSV files"
+
+
+[commands/run]
+
+path "test.csv" | read | csv.decode | as lista
+assert (($lista length) == 6)
+get $lista 0 | as first
+assert (($first length) == 5)

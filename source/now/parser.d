@@ -198,13 +198,15 @@ class Parser
 
     // --------------------------------------------
     // Nodes
-    string consume_string(char opener)
+    string consume_string(char opener, bool limit_to_eol=false)
     {
         char[] token;
 
         ulong index = 0;
         while (!eof && currentChar != opener)
         {
+            if (limit_to_eol && currentChar == EOL) break;
+
             if (currentChar == '\\')
             {
                 // Discard the escape charater:
@@ -243,9 +245,9 @@ class Parser
 
         return token.to!string;
     }
-    String consumeString(char opener)
+    String consumeString(char opener, bool limit_to_eol=false)
     {
-        string s = consume_string(opener);
+        string s = consume_string(opener, limit_to_eol);
         return new String(s);
     }
 

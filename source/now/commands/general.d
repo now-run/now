@@ -15,6 +15,7 @@ import std.uuid : sha1UUID, randomUUID;
 import now.nodes;
 import now.commands;
 import now.commands.base64;
+import now.commands.csv;
 import now.commands.http;
 import now.commands.ini;
 import now.commands.json;
@@ -1159,6 +1160,7 @@ static this()
 
     // Others
     loadBase64Commands(commands);
+    loadCsvCommands(commands);
     loadIniCommands(commands);
     loadJsonCommands(commands);
     loadHttpCommands(commands);

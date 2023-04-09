@@ -610,7 +610,7 @@ class NowParser : Parser
         return new List(items);
     }
 
-    override String consumeString(char opener)
+    override String consumeString(char opener, bool limit_to_eol=false)
     {
         char[] token;
         StringPart[] parts;
