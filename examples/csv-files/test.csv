@@ -1,6 +1,6 @@
 Name,Compiled?,Has VM?,Description,Website
 Tcl,yes,yes,"A dialogue, not Math formulas",tcl.tk
-Python,yes,yes,"Lots of syntax",python.org
+Python,yes,yes,"It's a lot of syntax",python.org
 Java,yes,yes,"Lots of XML",java.com
 C,yes,no,"Reference for speed",null
-OCaml,yes,maybe,"Kinda weird, but cool",ocaml.org
+OCaml,yes,maybe,"Kinda \"weird\", but cool",ocaml.org

@@ -9,3 +9,7 @@ path "test.csv" | read | csv.decode | as lista
 assert (($lista length) == 6)
 get $lista 0 | as first
 assert (($first length) == 5)
+
+print $lista
+print "------------"
+csv.encode $lista | print

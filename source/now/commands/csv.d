@@ -1,6 +1,7 @@
 module now.commands.csv;
 
 import std.algorithm.mutation : stripRight;
+import std.array : replace;
 
 import now.commands;
 import now.nodes;
@@ -61,10 +62,35 @@ void loadCsvCommands(CommandsMap commands)
     };
     commands["csv.encode"] = function (string path, Context context)
     {
-        return context.error(
-            "Not implemented",
-            ErrorCode.NotImplemented,
-            ""
-        );
+        auto source = context.pop!List();
+        string s;
+
+        foreach (lineItem; source.items)
+        {
+            auto line = cast(List)lineItem;
+            string[] items;
+            foreach (item; line.items)
+            {
+                if (item.type == ObjectType.String)
+                {
+                    auto S = cast(String)item;
+                    auto value = S.toString();
+
+                    if (value.canFind("\""))
+                    {
+                        value = value.replace("\"", "\\\"");
+                    }
+                    items ~= "\"" ~ value ~ "\"";
+                }
+                else
+                {
+                    items ~= item.toString();
+                }
+            }
+            s ~= items.join(",");
+            s ~= "\n";
+        }
+
+        return context.push(s);
     };
 }
