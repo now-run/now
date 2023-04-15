@@ -35,11 +35,10 @@ reference "http://xahlee.info/comp/list_comprehension.html"
 # Ruby:
 # (0..9).select{|n| n.even?}.map{|n| 2*n}
 range 0 8 | transform x {
-    if ($x % 2 == 0) {
-        return ($x * 2)
-    } else {
+    if ($x % 2 != 0) {
         skip
     }
+    return ($x * 2)
 } | collect | as result
 print $result
 assert ($result == (0 , 4 , 8 , 12 , 16))
@@ -153,9 +152,8 @@ scope "loops" {
         range 1 10 | transform x {
             if ($x > 1) {
                 skip
-            } else {
-                return $x
             }
+            return $x
         } | foreach x {
             set sum ($sum + $x)
         }

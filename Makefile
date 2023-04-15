@@ -10,6 +10,7 @@ dist/now: ${SOURCE_CODE}
 
 release: dist/now
 	strip $^
+	ls -l dist/
 
 dist/now.debug: ${SOURCE_CODE}
 	gdc -fdebug \

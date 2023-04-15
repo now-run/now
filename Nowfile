@@ -32,7 +32,6 @@ ignore {
 [logging/formats/default]
 description "This section defines how the `log` command will behave"
 
-
 dict (timestamp = [unixtime]) (message = $message) | json.encode | return
 
 

@@ -58,9 +58,8 @@ stack.pop | transform entry {
     split " " $entry | range | transform part {
         if (($part length) == 0) {
             skip
-        } else {
-            return $part
         }
+        return $part
     } | collect | return
 }
 

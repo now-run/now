@@ -55,10 +55,11 @@ scope "time it!" {
 description "After generating a diagram, open it for visualization."
 
 wait $process | as return_code
-if ($return_code == 0) {
+when ($return_code == 0) {
     set filepath "${script_name}.png"
     visualize $filepath
-} else {
+}
+default {
     print "PlantUML returned $return_code"
 }
 

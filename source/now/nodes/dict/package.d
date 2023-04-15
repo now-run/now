@@ -22,19 +22,21 @@ class Dict : Item
     this(Item[string] values)
     {
         this();
-        this.values = values;
-        order ~= values.keys;
+        foreach (key, value; values)
+        {
+            this[key] = value;
+        }
     }
 
     // ------------------
     // Conversions
     override string toString()
     {
-        string s = "dict("
-            ~ to!string(
-                values.keys.map!(key => key ~ "=" ~ values[key].toString()).join(" ")
-            )
-            ~ ")";
+        string s = "dict " ~ to!string(
+            order
+                .map!(key => "(" ~ key ~ " = " ~ values[key].toString() ~ ")")
+                .join(" ")
+        );
         return s;
     }
 
@@ -232,7 +234,7 @@ class Dict : Item
 
     override Context evaluate(Context context)
     {
-        if (values.length > 0 && isNumeric)
+        if (order.length > 0 && isNumeric)
         {
             return evaluateAsList(context);
         }

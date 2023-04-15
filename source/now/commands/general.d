@@ -714,35 +714,16 @@ static this()
     // CONDITIONALS
     commands["if"] = function (string path, Context context)
     {
-        auto isConditionTrue = context.pop!bool();
+        bool isConditionTrue = true;
+        while (context.size > 1)
+        {
+            isConditionTrue = isConditionTrue && context.pop!bool();
+        }
         auto thenBody = context.pop!SubProgram();
 
         if (isConditionTrue)
         {
-            // Consume eventual "else":
-            context.items();
-            // Run body:
             context = context.process.run(thenBody, context.next());
-        }
-        // When there's no else clause:
-        else if (context.size == 0)
-        {
-            context.exitCode = ExitCode.Success;
-        }
-        // else {...}
-        // else if {...}
-        else
-        {
-            auto elseWord = context.pop!string();
-            if (elseWord != "else" || context.size != 1)
-            {
-                auto msg = "Invalid format for if/then/else clause:"
-                           ~ " elseWord found was " ~ elseWord  ~ ".";
-                return context.error(msg, ErrorCode.InvalidSyntax, "");
-            }
-
-            auto elseBody = context.pop!SubProgram();
-            context = context.process.run(elseBody, context.next());
         }
 
         return context;
