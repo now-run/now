@@ -1,8 +1,6 @@
-[program]
-# vim: syntax=toml
-name "System Commands"
-description "Show various forms of calling system commands"
+[System Commands]
 
+Show various forms of calling system commands.
 
 [system_commands/ls]
 parameters {

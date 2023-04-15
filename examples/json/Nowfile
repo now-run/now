@@ -1,7 +1,6 @@
-[program]
-name "JSON Examples"
-description "Show examples of JSON encoding and decoding"
+[JSON Examples]
 
+Show examples of JSON encoding and decoding
 
 [commands/run]
 

@@ -111,6 +111,6 @@ enum ObjectType
     Path,
     Template,
 
-    Program,
+    Document,
     SystemProcess,
 }

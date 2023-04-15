@@ -1,9 +1,7 @@
-[program]
-# vim: syntax=toml
-name "PlantUML Example"
-description "Show how to encapsulate a diagram definition inside a Now program"
+[PlantUML Example]
 focal_point "shells/plantuml/scripts/sequence_diagram"
 
+Show how to encapsulate a diagram definition inside a Now program.
 
 [shells/bash/scripts/create_plantuml_file]
 description "Given a PlantUML content, creates a file with both startuml and enduml markers"

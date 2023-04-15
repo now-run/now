@@ -1,7 +1,6 @@
-[program]
-name "HTTP Example"
-description "Show how to make HTTP requests"
+[HTTP Example]
 
+Show how to make HTTP requests
 
 [procedures/post_with_error]
 

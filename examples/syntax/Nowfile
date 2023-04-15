@@ -1,8 +1,6 @@
-[program]
-# vim: syntax=now
-name "Now's syntax examples"
-description "Illustrate some aspects of Now's syntax."
+[Now's syntax examples]
 
+Illustrate some aspects of Now's syntax.
 
 [system_commands/wd]
 parameters {

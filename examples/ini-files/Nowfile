@@ -1,8 +1,6 @@
-[program]
-# vim: syntax=now
-name "INI file decoding example"
-description "Show how to decode INI files."
+[INI file decoding example]
 
+Show how to decode INI files.
 
 [commands/run]
 

@@ -113,6 +113,17 @@ static this()
         }
         return context;
     };
+    stringCommands["indent"] = function (string path, Context context)
+    {
+        auto s = context.pop!string();
+        long level = 1;
+        if (context.size)
+        {
+            level = context.pop!long();
+        }
+        string spacer = rightJustify("", level * 4, ' ');
+        return context.push(new String(spacer ~ s));
+    };
     stringCommands["join"] = function (string path, Context context)
     {
         string joiner = context.pop!string();

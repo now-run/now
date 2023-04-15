@@ -3,11 +3,11 @@ module now.cli;
 extern(C) int isatty(int);
 
 import std.algorithm.searching : canFind, startsWith;
-import std.array : array, join, replace, split;
+// import std.array : array, join, replace, split;
 import std.datetime.stopwatch;
 import std.file;
 import std.process : environment;
-import std.range : retro;
+// import std.range : retro;
 import std.stdio;
 import std.string;
 
@@ -21,6 +21,9 @@ import now.process;
 
 
 Dict envVars;
+
+const defaultFilepath = "Nowfile";
+
 
 static this()
 {
@@ -49,7 +52,7 @@ int main(string[] args)
     // Potential small speed-up:
     commands.rehash;
 
-    string filepath = "program.now";
+    string filepath = defaultFilepath;
     string subCommandName = null;
     Procedure subCommand = null;
     int programArgsIndex = 2;
@@ -61,47 +64,54 @@ int main(string[] args)
 
     debug {stderr.writeln("subCommandName:", subCommandName);}
 
-    if (subCommandName.canFind(":"))
+    while (true)
     {
-        auto parts = subCommandName.split(":");
-        debug {stderr.writeln("  parts:", parts);}
-        auto prefix = parts[0];
-        debug {stderr.writeln("  prefix:", prefix);}
-
-        // ":stdin".split(":") -> ["", "stdin"];
-        if (prefix == "")
+        if (subCommandName.canFind(":"))
         {
-            auto keyword = parts[1];
-            switch (keyword)
+            auto parts = subCommandName.split(":");
+            debug {stderr.writeln("  parts:", parts);}
+            auto prefix = parts[0];
+            debug {stderr.writeln("  prefix:", prefix);}
+
+            // ":stdin".split(":") -> ["", "stdin"];
+            if (prefix == "")
             {
-                case "stdin":
-                    filepath = null;
-                    subCommandName = null;
-                    parser = new NowParser(stdin.byLine.join("\n").to!string);
-                    break;
-                case "f":
-                    filepath = args[programArgsIndex];
-                    programArgsIndex++;
-                    subCommandName = null;
-                    parser = new NowParser(filepath.read.to!string);
-                    break;
-                case "repl":
-                    return repl();
-                case "cmd":
-                    return cmd(args);
-                case "bash-complete":
-                    return bashAutoComplete();
-                case "help":
-                    return now_help();
-                default:
-                    stderr.writeln("Unknown command: ", filepath);
-                    return 1;
+                auto keyword = parts[1];
+                switch (keyword)
+                {
+                    case "stdin":
+                        filepath = null;
+                        subCommandName = null;
+                        parser = new NowParser(stdin.byLine.join("\n").to!string);
+                        break;
+                    case "f":
+                        filepath = args[programArgsIndex];
+                        programArgsIndex++;
+                        subCommandName = null;
+                        parser = new NowParser(filepath.read.to!string);
+                        break;
+                    case "repl":
+                        return repl(filepath, parser);
+                    case "cmd":
+                        return cmd(parser, args);
+                    case "bash-complete":
+                        return bashAutoComplete(parser);
+                    case "help":
+                        return now_help();
+                    default:
+                        stderr.writeln("Unknown command: ", filepath);
+                        return 1;
+                }
             }
         }
-    }
-    if (subCommandName is null && args.length > programArgsIndex)
-    {
-        subCommandName = args[programArgsIndex++];
+        if (subCommandName is null && args.length > programArgsIndex)
+        {
+            subCommandName = args[programArgsIndex++];
+        }
+        else
+        {
+            break;
+        }
     }
 
     if (parser is null)
@@ -207,7 +217,7 @@ int main(string[] args)
         }
     }
     ---
-    $ now program.now Fulano
+    $ now Fulano
     Hello, Fulano!
 
     No need to cast, here. Leave it to
@@ -256,7 +266,7 @@ int main(string[] args)
     {
         // Global error handler:
         auto handlerString = program.get!String(
-            ["program", "on.error", "body"],
+            ["document", "on.error", "body"],
             delegate (Dict d) {
                 return null;
             }
@@ -298,7 +308,7 @@ int main(string[] args)
 int show_program_help(string filepath, string[] args, Program program)
 {
     auto programName = program.get!String(
-        ["program", "name"],
+        ["document", "title"],
         delegate (Dict d) {
             if (filepath)
             {
@@ -313,7 +323,7 @@ int show_program_help(string filepath, string[] args, Program program)
     stdout.writeln(programName.toString());
 
     auto programDescription = program.get!String(
-        ["program", "description"],
+        ["document", "description"],
         delegate (Dict d) {
             return null;
         }
@@ -377,7 +387,7 @@ int show_program_help(string filepath, string[] args, Program program)
 int now_help()
 {
     stdout.writeln("now");
-    stdout.writeln("  No arguments: run ./program.now if present");
+    stdout.writeln("  No arguments: run ./", defaultFilepath, " if present");
     stdout.writeln("  :bash-complete - shell autocompletion");
     stdout.writeln("  :cmd - run commands passed as arguments");
     stdout.writeln("  :repl - enter interactive mode");
@@ -386,22 +396,33 @@ int now_help()
     return 0;
 }
 
-int repl()
+int repl(string filepath, NowParser parser)
 {
-    string filepath = "program.now";
     Program program;
 
-    if (filepath.exists)
+    if (filepath is null)
     {
-        auto parser = new NowParser(read(filepath).to!string);
+        filepath = defaultFilepath;
+    }
+
+    if (parser !is null)
+    {
         program = parser.run();
-        stderr.writeln("Loaded ", filepath);
     }
     else
     {
-        program = new Program();
-        program["name"] = new String("repl");
-        program["description"] = new String("Read Eval Print Loop");
+        if (filepath.exists)
+        {
+            parser = new NowParser(read(filepath).to!string);
+            program = parser.run();
+            stderr.writeln("Loaded ", filepath);
+        }
+        else
+        {
+            program = new Program();
+            program["title"] = new String("repl");
+            program["description"] = new String("Read Eval Print Loop");
+        }
     }
 
     program.initialize(commands, envVars);
@@ -430,7 +451,7 @@ int repl()
         {
             if (filepath.exists)
             {
-                auto parser = new NowParser(read(filepath).to!string);
+                parser = new NowParser(read(filepath).to!string);
                 program = parser.run();
                 stderr.writeln("Loaded ", filepath);
             }
@@ -445,7 +466,7 @@ int repl()
             break;
         }
 
-        auto parser = new NowParser(line);
+        parser = new NowParser(line);
         Pipeline pipeline;
         try
         {
@@ -475,19 +496,27 @@ int repl()
     return 0;
 }
 
-int bashAutoComplete()
+int bashAutoComplete(NowParser parser)
 {
-    string filepath = "program.now";
     Program program;
 
-    if (filepath.exists)
+    if (parser !is null)
     {
-        auto parser = new NowParser(read(filepath).to!string);
         program = parser.run();
     }
     else
     {
-        return 0;
+        string filepath = defaultFilepath;
+
+        if (filepath.exists)
+        {
+            parser = new NowParser(read(filepath).to!string);
+            program = parser.run();
+        }
+        else
+        {
+            return 0;
+        }
     }
 
     auto words = envVars["COMP_LINE"].toString().split(" ");
@@ -524,22 +553,30 @@ int bashAutoComplete()
     return 0;
 }
 
-int cmd(string[] args)
+int cmd(NowParser parser, string[] args)
 {
-    string filepath = "program.now";
     Program program;
 
-    if (filepath.exists)
+    if (parser !is null)
     {
-        auto parser = new NowParser(read(filepath).to!string);
         program = parser.run();
-        stderr.writeln("Loaded ", filepath);
     }
     else
     {
-        program = new Program();
-        program["name"] = new String("cmd");
-        program["description"] = new String("Run commands passed as arguments");
+        string filepath = defaultFilepath;
+
+        if (filepath.exists)
+        {
+            parser = new NowParser(read(filepath).to!string);
+            program = parser.run();
+            stderr.writeln("Loaded ", filepath);
+        }
+        else
+        {
+            program = new Program();
+            program["title"] = new String("cmd");
+            program["description"] = new String("Run commands passed as arguments");
+        }
     }
 
     program.initialize(commands, envVars);
@@ -552,7 +589,7 @@ int cmd(string[] args)
     {
         Pipeline pipeline;
 
-        auto parser = new NowParser(line);
+        parser = new NowParser(line);
         pipeline = parser.consumePipeline();
 
         context = pipeline.run(context);

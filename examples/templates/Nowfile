@@ -1,8 +1,6 @@
-[program]
-# vim: syntax=now
-name "Now Document Example"
-description "Show how the document syntax works."
+[Now Document Example]
 
+Show how the document syntax works.
 
 [templates/html_base]
 description "Basic HTML structure."

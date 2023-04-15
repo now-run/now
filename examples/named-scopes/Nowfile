@@ -1,7 +1,6 @@
-[program]
-# vim: syntax=toml
-name "Scopes Example"
-description "Shows how named scopes help to debug some errors."
+[Scopes Example]
+
+Shows how named scopes help to debug some errors.
 
 [procedures/example]
 

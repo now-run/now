@@ -1,7 +1,6 @@
-[program]
-name "File Operations"
-description "Exemplify operations with files."
+[File Operations]
 
+Exemplify operations with files.
 
 [logging/formats/default]
 

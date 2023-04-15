@@ -1,7 +1,6 @@
-[program]
-name "YAML Reader and Writer"
-description "Implement basic reading from and writing to YAML strings"
+[YAML Reader and Writer]
 
+Implement basic reading from and writing to YAML strings.
 
 [procedures/nest]
 parameters {

@@ -58,28 +58,18 @@ class NowParser : Parser
         }
         consumeWhitespaces();
 
-        auto section_path = consumeSectionHeader();
-        if (section_path.length != 1)
-        {
-            throw new Exception(
-                "Invalid syntax: expecting 'program' section header"
-            );
-        }
-        if (section_path[0].toString() != "program")
-        {
-            throw new Exception(
-                "Invalid syntax: expecting 'program' section header"
-            );
-        }
+        auto title = consumeSectionHeaderAsTitle();
         auto metadataSection = consumeSection();
-        p["program"] = metadataSection;
+        metadataSection["title"] = title;
+        metadataSection["description"] = metadataSection["body"];
+        p["document"] = metadataSection;
 
         consumeWhitespaces();
 
         // Now read the other sections:
         while (!eof)
         {
-            section_path = consumeSectionHeader();
+            auto section_path = consumeSectionHeader();
             if (section_path[0].toString()[0] == '#')
             {
                 // Consume the section ignoring it completely
@@ -123,10 +113,31 @@ class NowParser : Parser
         }
 
         debug {
-            stderr.writeln("p[program]: ", p["program"]);
+            stderr.writeln("p[document]: ", p["document"]);
         }
 
         return p;
+    }
+    String consumeSectionHeaderAsTitle()
+    {
+        auto opener = consumeChar();
+        if (opener != '[')
+        {
+            throw new Exception(
+                "Invalid syntax: expecting section header"
+            );
+        }
+        string title = consume_string(']');
+        auto closer = consumeChar();
+        if (closer != ']')
+        {
+            throw new Exception(
+                "Invalid section header ("
+                ~ closer.to!string
+                ~ ")"
+            );
+        }
+        return new String(title);
     }
     Items consumeSectionHeader()
     {
@@ -173,7 +184,7 @@ class NowParser : Parser
         auto closer = consumeChar();
         auto newline = consumeChar();
 
-        return items;
+       return items;
     }
     SectionDict consumeSection()
     {
@@ -612,8 +623,8 @@ class NowParser : Parser
 
     override String consumeString(char opener, bool limit_to_eol=false)
     {
-        char[] token;
-        StringPart[] parts;
+        string token;
+        Items parts;
         bool hasSubstitution = false;
 
         ulong index = 0;
@@ -623,7 +634,7 @@ class NowParser : Parser
             {
                 if (token.length)
                 {
-                    parts ~= new StringPart(token, false);
+                    parts ~= new String(token);
                     token = new char[0];
                 }
 
@@ -631,8 +642,19 @@ class NowParser : Parser
                 consumeChar();
 
                 // Current part:
-                bool enclosed = (currentChar == '{');
-                if (enclosed) consumeChar();
+                if (currentChar.among('(', '['))
+                {
+                    parts ~= consumeItem();
+                    hasSubstitution = true;
+                    continue;
+                }
+
+                bool enclosed;
+                if (currentChar == '{')
+                {
+                    enclosed = true;
+                    consumeChar();
+                }
 
                 while ((currentChar >= 'a' && currentChar <= 'z')
                         || (currentChar >= '0' && currentChar <= '9')
@@ -649,7 +671,7 @@ class NowParser : Parser
                         consumeChar();
                     }
 
-                    parts ~= new StringPart(token, true);
+                    parts ~= new SubstAtom(token);
                     hasSubstitution = true;
                 }
                 else
@@ -704,7 +726,7 @@ class NowParser : Parser
         // the first part, always:
         if (token.length)
         {
-            parts ~= new StringPart(token, false);
+            parts ~= new String(token);
         }
 
         if (hasSubstitution)
@@ -715,7 +737,7 @@ class NowParser : Parser
         else if (parts.length == 1)
         {
             debug {stderr.writeln("new String: ", parts);}
-            return new String(parts[0].value);
+            return cast(String)(parts[0]);
         }
         else
         {

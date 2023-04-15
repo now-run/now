@@ -71,29 +71,13 @@ class String : Item
     }
 }
 
-// Part of a SubstString
-class StringPart
-{
-    string value;
-    bool isName;
-    this(string value, bool isName)
-    {
-        this.value = value;
-        this.isName = isName;
-    }
-    this(char[] chr, bool isName)
-    {
-        this(cast(string)chr, isName);
-    }
-}
-
 
 // A string with substitutions:
 class SubstString : String
 {
-    StringPart[] parts;
+    Items parts;
 
-    this(StringPart[] parts)
+    this(Items parts)
     {
         super("");
         this.parts = parts;
@@ -115,38 +99,12 @@ class SubstString : String
 
         foreach(part; parts)
         {
-            if (part.isName)
+            context = part.evaluate(context);
+            if (context.exitCode == ExitCode.Failure)
             {
-                Items values;
-                try
-                {
-                    values = context.escopo[part.value];
-                }
-                catch (NotFoundException)
-                {
-                    auto msg = "Variable " ~ to!string(part.value) ~ " is not set";
-                    return context.error(msg, ErrorCode.InvalidArgument, "");
-                }
-
-                foreach (v; values)
-                {
-                    auto newContext = v.runMethod(
-                        "to.string", context.next()
-                    );
-                    if (newContext.exitCode == ExitCode.Failure)
-                    {
-                        return newContext;
-                    }
-                    auto resultItems = newContext.items;
-                    result ~= to!string(resultItems
-                        .map!(x => to!string(x))
-                        .join(" "));
-                    }
+                return context;
             }
-            else
-            {
-                result ~= part.value;
-            }
+            result ~= context.pop().toString();
         }
 
         return context.push(new String(result));

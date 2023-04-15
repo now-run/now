@@ -1,7 +1,6 @@
-[program]
-name "CSV Files Example"
-description "Show how to work with CSV files"
+[CSV Files Example]
 
+Show how to work with CSV files
 
 [commands/run]
 

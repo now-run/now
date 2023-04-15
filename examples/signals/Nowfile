@@ -1,6 +1,8 @@
-[program]
-name "Signals Example"
-description "Show how to handle POSIX signals."
+[Signals Example]
+
+Show how to handle POSIX signals.
+
+(One day we may have it working. Handling signals is usually a pain in the ass...)
 
 
 [signals/quit]

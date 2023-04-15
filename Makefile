@@ -3,10 +3,10 @@ SOURCE_CODE = source/now/*.d source/now/commands/*.d source/now/system_command/*
 dist/now: ${SOURCE_CODE}
 	gdc \
 		-static-libphobos -static-libgcc \
-		cli/source/now/app.d \
+		cli/source/now/now.d \
 		$^ \
 		-Isource -Icli/source \
-		-O3 -o dist/now
+		-O2 -o dist/now
 
 release: dist/now
 	strip $^
@@ -14,7 +14,7 @@ release: dist/now
 dist/now.debug: ${SOURCE_CODE}
 	gdc -fdebug \
 		-static-libphobos -static-libgcc \
-		cli/source/now/app.d \
+		cli/source/now/now.d \
 		$^ \
 		-Isource -Icli/source \
 		-O1 -o dist/now.debug

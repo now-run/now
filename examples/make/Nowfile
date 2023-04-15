@@ -1,10 +1,9 @@
 #!now :f
 
-[program]
-# vim: syntax=toml
-name "Now as an alternative to Make"
-description "A very convoluted way of doing the same a Makefile would do much more easily."
+[Now as an alternative to Make]
 focal_point "constants/targets/release"
+
+A very convoluted way of doing the same a Makefile would do much more easily.
 
 
 [constants/targets/release]
@@ -13,7 +12,7 @@ output_filepath "dist/now"
 source_files {
     - {
         directory "cli/source/now"
-        pattern "app.d"
+        pattern "now.d"
     }
     - {
         directory "source/now"
@@ -39,13 +38,6 @@ source_files {
 }
 debug true
 command compile
-
-
-[logging/formats/default]
-
-# dict (timestamp = [unixtime]) (message = $message) | json.encode | return
-unixtime | as timestamp
-return "$timestamp> $message"
 
 
 [system_commands/hash]

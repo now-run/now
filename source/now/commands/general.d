@@ -609,6 +609,11 @@ static this()
         }
         while (escopo !is null);
 
+        foreach (varName; context.program.order)
+        {
+            varsList.items ~= new String(varName);
+        }
+
         return context.push(varsList);
     };
 

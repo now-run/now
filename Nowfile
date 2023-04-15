@@ -1,10 +1,8 @@
-[program]
-# vim: syntax=now
-name "Now Document Example"
-description "Show how the document syntax works."
+[Now Document Example]
 
+Show how the document syntax works.
 
-[program/on.error]
+[on.error]
 
 print "The program terminated with some error."
 return $error
@@ -36,23 +34,6 @@ description "This section defines how the `log` command will behave"
 
 
 dict (timestamp = [unixtime]) (message = $message) | json.encode | return
-
-
-[system_commands/list_dir]
-parameters {
-    path {
-        type string
-    }
-    options {
-        type string
-        default "-1"
-    }
-}
-command {
-    - "ls"
-    - $options
-    - $path
-}
 
 
 [system_commands/now]
@@ -89,15 +70,19 @@ parameters {
 /bin/ls -lh /dev | grep "$name"
 
 
-[shells/bash/scripts/make]
+[system_commands/make]
 parameters {
     target {
         type string
     }
 }
-
-cat examples/make/program.now | now :stdin build $target
-
+command {
+    - "now"
+    - ":f"
+    - "examples/make/Nowfile"
+    - "build"
+    - $target
+}
 
 [procedures/hello]
 parameters {
@@ -224,7 +209,7 @@ parameters {
     }
 }
 
-list_dir $path | { print }
+glob [path $path] "*" | range | {print}
 
 
 [commands/make]
@@ -270,12 +255,12 @@ print.yellow "a list of available subcommands for this project."
 description "Run all the examples."
 
 try {
-    list_dir "examples" | foreach directory {
-        if (($test . ignore) contains $directory) {
+    glob [path "examples"] "*" | range | foreach directory {
+        if (($test . ignore) contains ($directory basename)) {
             print "skipping $directory"
             continue
         }
-        print "Testing examples/${directory}..."
-        now "examples/$directory" | check
+        print "Testing ${directory}..."
+        now "$directory" | check
     }
 }

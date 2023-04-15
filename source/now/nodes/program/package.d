@@ -17,9 +17,9 @@ class Program : Dict {
 
     this()
     {
-        this.type = ObjectType.Program;
+        this.type = ObjectType.Document;
         this.commands = dictCommands;
-        this.typeName = "program";
+        this.typeName = "document";
     }
 
     void initialize(CommandsMap commands, Dict environmentVariables)
@@ -205,13 +205,24 @@ class Program : Dict {
             // syscmdcalls in the same place???
             this.procedures[name] = new SystemCommand(name, info);
         }
+
+        debug {stderr.writeln("Collecting Text");}
+        auto text = this.getOrCreate!Dict("text");
+        foreach (name; this.order)
+        {
+            if (name[0] >= 'A' && name[0] <= 'Z')
+            {
+                text[name] = this[name];
+                this.remove(name);
+            }
+        }
     }
 
     // Conversions
     override string toString()
     {
-        return "program " ~ this.get!String(
-            ["program","name"],
+        return "document " ~ this.get!String(
+            ["document","name"],
             delegate (Dict d) {
                 return new String("PROGRAM WITHOUT A NAME");
             }
