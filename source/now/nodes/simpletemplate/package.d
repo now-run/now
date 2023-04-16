@@ -66,7 +66,7 @@ class TemplateParser : Parser
 
         while (!eof)
         {
-            auto blanksCount = consumeBlankspaces();
+            auto blanksCount = consumeBlankspaces(false);
             if (eof) break;
 
             if (currentChar == '%')

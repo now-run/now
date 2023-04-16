@@ -83,6 +83,8 @@ enum ErrorCode
 
     AssertionError,
     RuntimeError,
+
+    FilesystemError,
 }
 
 enum ObjectType

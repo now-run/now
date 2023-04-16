@@ -23,6 +23,7 @@ Context glob(Context context, SpanMode mode)
 
 static this()
 {
+    // About whatever the path points to:
     pathCommands["is.file"] = function (string name, Context context)
     {
         auto path = context.pop!Path();
@@ -44,6 +45,7 @@ static this()
         return context.push(path.path.exists());
     };
 
+    // Operations:
     pathCommands["read"] = function (string name, Context context)
     {
         auto path = context.pop!Path();
@@ -72,7 +74,7 @@ static this()
         auto path = context.pop!Path();
         foreach (item; context.items)
         {
-            auto content = context.pop!string();
+            auto content = item.toString();
             std.file.write(path.path, content);
         }
         return context;
@@ -135,20 +137,7 @@ static this()
         return context;
     };
 
-    // ---------------------------
-    // Directories (generally)
-    pathCommands["glob"] = function (string name, Context context)
-    {
-        return glob(context, SpanMode.shallow);
-    };
-    pathCommands["glob.depth"] = function (string name, Context context)
-    {
-        return glob(context, SpanMode.depth);
-    };
-    pathCommands["glob.breadth"] = function (string name, Context context)
-    {
-        return glob(context, SpanMode.breadth);
-    };
+    // On the path itself:
     pathCommands["absolute"] = function (string name, Context context)
     {
         auto path = context.pop!Path();
@@ -174,5 +163,40 @@ static this()
         auto path = context.pop!Path();
         auto n = path.path.asNormalizedPath();
         return context.push(n.to!string);
+    };
+
+    // ---------------------------
+    // Directories (generally)
+    pathCommands["glob"] = function (string name, Context context)
+    {
+        return glob(context, SpanMode.shallow);
+    };
+    pathCommands["glob.depth"] = function (string name, Context context)
+    {
+        return glob(context, SpanMode.depth);
+    };
+    pathCommands["glob.breadth"] = function (string name, Context context)
+    {
+        return glob(context, SpanMode.breadth);
+    };
+    pathCommands["mkdir"] = function (string name, Context context)
+    {
+        while (context.size)
+        {
+            auto path = context.pop!Path();
+            try
+            {
+                path.path.mkdirRecurse();
+            }
+            catch (FileException)
+            {
+                return context.error(
+                    "Could not create directory",
+                    ErrorCode.FilesystemError,
+                    ""
+                );
+            }
+        }
+        return context;
     };
 }

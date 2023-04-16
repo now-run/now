@@ -91,7 +91,7 @@ class Parser
     }
 
     // --------------------------------------------
-    long consumeWhitespaces()
+    long consumeWhitespaces(bool ignoreComments=true)
     {
         if (eof) return 0;
 
@@ -106,7 +106,7 @@ class Parser
                 counter++;
             }
             // Comments:
-            if (currentChar == '#')
+            if (ignoreComments && currentChar == '#')
             {
                 consumeLine();
             }
@@ -123,7 +123,7 @@ class Parser
         }
         return counter;
     }
-    long consumeBlankspaces()
+    long consumeBlankspaces(bool ignoreComments=true)
     {
         if (eof) return 0;
 
@@ -136,7 +136,7 @@ class Parser
             counter++;
         }
         // Comments:
-        if (currentChar == '#')
+        if (ignoreComments && currentChar == '#')
         {
             consumeLine();
         }
