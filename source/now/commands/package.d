@@ -16,7 +16,6 @@ import now.nodes.atom.commands.name;
 import now.nodes.dict.commands;
 import now.nodes.error.commands;
 import now.nodes.list.commands;
-import now.nodes.simpletemplate.commands;
 import now.nodes.strings.commands;
 import now.nodes.subprogram.commands;
 import now.nodes.vectors.commands;

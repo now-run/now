@@ -70,15 +70,21 @@ static this()
     pathCommands["write"] = function (string name, Context context)
     {
         auto path = context.pop!Path();
-        auto content = context.pop!string();
-        std.file.write(path.path, content);
+        foreach (item; context.items)
+        {
+            auto content = context.pop!string();
+            std.file.write(path.path, content);
+        }
         return context;
     };
     pathCommands["append"] = function (string name, Context context)
     {
         auto path = context.pop!Path();
-        auto content = context.pop!string();
-        path.path.append(content);
+        foreach (item; context.items)
+        {
+            auto content = item.toString();
+            path.path.append(content);
+        }
         return context;
     };
     pathCommands["append.lines"] = function (string name, Context context)

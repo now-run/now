@@ -61,7 +61,13 @@ class NowParser : Parser
         auto title = consumeSectionHeaderAsTitle();
         auto metadataSection = consumeSection();
         metadataSection["title"] = title;
-        metadataSection["description"] = metadataSection["body"];
+        metadataSection["description"] = metadataSection.get!String(
+            "body",
+            delegate (Dict d)
+            {
+                return new String("");
+            }
+        );
         p["document"] = metadataSection;
 
         consumeWhitespaces();
@@ -291,6 +297,7 @@ class NowParser : Parser
                 auto valueDict = consumeSectionDict();
                 if (valueDict.order.length && valueDict.isNumeric)
                 {
+                    // XXX: is it correct???
                     value = valueDict.asList();
                 }
                 else
@@ -656,9 +663,9 @@ class NowParser : Parser
                     consumeChar();
                 }
 
-                while ((currentChar >= 'a' && currentChar <= 'z')
+                while (!eof && ((currentChar >= 'a' && currentChar <= 'z')
                         || (currentChar >= '0' && currentChar <= '9')
-                        || currentChar == '.' || currentChar == '_')
+                        || currentChar == '.' || currentChar == '_'))
                 {
                     token ~= consumeChar();
                 }

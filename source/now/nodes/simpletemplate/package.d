@@ -62,9 +62,13 @@ class TemplateParser : Parser
         string[] text;
         Block[] blocks;
 
+        debug{stderr.writeln("> consumeBlock ", name);}
+
         while (!eof)
         {
             auto blanksCount = consumeBlankspaces();
+            if (eof) break;
+
             if (currentChar == '%')
             {
                 if (text.length)
@@ -79,6 +83,7 @@ class TemplateParser : Parser
                 string blockName = consume_string(SPACE);
                 assert(consumeChar() == SPACE, currentChar.to!string);
                 assert(consumeChar() == '%', currentChar.to!string);
+                consumeLine();
 
                 bool isEnd = true;
                 foreach (c; blockName)
@@ -91,6 +96,7 @@ class TemplateParser : Parser
                 }
                 if (isEnd)
                 {
+                    debug{stderr.writeln("BLOCK END");}
                     break;
                 }
                 else
@@ -126,6 +132,7 @@ class Block : Item
     this(string text)
     {
         auto parser = new NowParser(text);
+        debug{stderr.writeln(" new Block, parsing: ", text);}
         this.text = parser.consumeString(cast(char)null);
     }
     this(string name, Block[] children)

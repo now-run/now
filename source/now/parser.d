@@ -55,6 +55,9 @@ class Parser
             throw new IncompleteInputException(
                 "Code input already ended."
                 ~ " Last char: [" ~ currentChar.to!string ~ "]"
+                ~ " line=" ~ line.to!string
+                ~ " char=" ~ col.to!string
+                ~ " code:\n" ~ code
             );
         }
         debug {
