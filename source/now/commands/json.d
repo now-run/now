@@ -98,8 +98,6 @@ JSONValue ItemToJson(Item item, bool strict=false)
                 json[key] = ItemToJson(dict[key], strict);
             }
             return JSONValue(json);
-        // case ObjectType.Vector:
-        // item.typeName = {byte_vector|int_vector|long_vector|...}
         default:
             if (strict)
             {

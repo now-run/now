@@ -22,14 +22,6 @@ void loadBase64Commands(CommandsMap commands)
                     auto s = cast(NameAtom)item;
                     data = cast(ubyte[])(s.toString());
                     break;
-                case ObjectType.Vector:
-                    if (item.typeName == "byte_vector")
-                    {
-                        auto s = cast(ByteVector)item;
-                        data = cast(ubyte[])(s.values);
-                        break;
-                    }
-                    goto default;
                 default:
                     return context.error(
                         "Invalid input for " ~ path

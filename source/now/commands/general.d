@@ -675,41 +675,11 @@ static this()
         }
         return context.push(new Pair([key, value]));
     };
-    void addVectorCommands(T, C)()
-    {
-        auto typeName = T.stringof ~ "_vector";
-
-        commands[typeName] = function (string path, Context context)
-        {
-            auto vector = new C();
-
-            foreach (item; context.items)
-            {
-                static if (__traits(isFloating, T))
-                {
-                    auto x = item.toFloat();
-                }
-                else
-                {
-                    auto x = item.toInt();
-                }
-                vector.values ~= cast(T)x;
-            }
-
-            return context.push(vector);
-        };
-    }
     commands["path"] = function (string name, Context context)
     {
         string path = context.pop!string;
         return context.push(new Path(path));
     };
-
-    addVectorCommands!(byte, ByteVector);
-    addVectorCommands!(float, FloatVector);
-    addVectorCommands!(int, IntVector);
-    addVectorCommands!(long, LongVector);
-    addVectorCommands!(double, DoubleVector);
 
     // CONDITIONALS
     commands["if"] = function (string path, Context context)

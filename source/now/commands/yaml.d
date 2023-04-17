@@ -439,8 +439,6 @@ string ItemToYaml(Item item, long indentLevel=0, Item parent=null, bool strict=f
                 s ~= ItemToYaml(dict[key], indentLevel+1, item, strict) ~ "\n";
             }
             return s;
-        // case ObjectType.Vector:
-        // item.typeName = {byte_vector|int_vector|long_vector|...}
         default:
             if (strict)
             {

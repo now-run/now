@@ -381,13 +381,4 @@ static this()
         }
         return context;
     };
-    stringCommands["to.byte_vector"] = function (string path, Context context)
-    {
-        foreach (item; context.items)
-        {
-            auto s = cast(String)item;
-            context.push(new ByteVector(s.toBytes()));
-        }
-        return context;
-    };
 }

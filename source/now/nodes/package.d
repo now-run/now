@@ -28,7 +28,6 @@ public import now.nodes.list;
 public import now.nodes.execlist;
 
 public import now.nodes.dict;
-public import now.nodes.vectors;
 
 public import now.nodes.path;
 public import now.nodes.simpletemplate;
