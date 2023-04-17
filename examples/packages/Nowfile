@@ -4,7 +4,10 @@ Show how to use packages.
 
 [packages]
 - "procedures.now"
+- "hello.now.so"
 
 [commands/run]
+description "Run some procedures and commands from other packages."
 
-hello "Mundo"
+hello "Now-written packages"
+hellow "shared libraries world"

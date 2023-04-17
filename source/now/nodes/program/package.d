@@ -322,6 +322,7 @@ class Program : Dict {
                 key,
                 delegate (Item localValue)
                 {
+                    // Found both locally and in library:
                     this.merge(key, localValue, value);
                 },
                 delegate ()
@@ -368,7 +369,7 @@ class Program : Dict {
         }
 
         // Initialize the package:
-        auto initFunction = cast(void function(Program))dlsym(
+        auto initPackage = cast(CommandsMap function(Program))dlsym(
             lh, "init"
         );
 
@@ -377,6 +378,6 @@ class Program : Dict {
         {
             throw new Exception("dlsym error: " ~ to!string(error));
         }
-        initFunction(this);
+        initPackage(this);
     }
 }

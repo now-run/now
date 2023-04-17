@@ -81,7 +81,18 @@ class Dict : Item
         }
         debug {stderr.writeln(" dict[", k, "] = ", to!string(v));}
         values[k] = v;
-        order ~= k;
+
+        // XXX: this seems kinda expensive:
+        string[] newOrder;
+        foreach (key; order)
+        {
+            if (key != k)
+            {
+                newOrder ~= key;
+            }
+        }
+        newOrder ~= k;
+        this.order = newOrder;
     }
     void opIndexAssign(Item v, string[] keys)
     {
