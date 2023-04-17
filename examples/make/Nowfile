@@ -185,8 +185,9 @@ scope "generate object files" {
 }
 
 scope "clean old files" {
+    print "has_new_files=$has_new_files"
     if $has_new_files {
-        glob [path "build"] "*.o" | range | foreach filename {
+        path "build" | .glob "*.o" | range | foreach filename {
             if (($object_files contains $filename) == false) {
                 log "Deleting $filename ..."
                 delete $filename

@@ -1,0 +1,12 @@
+[Example Library]
+
+A library written as another Now document.
+
+[procedures/hello]
+parameters {
+    name {
+        type string
+    }
+}
+
+print "Hello, $name"

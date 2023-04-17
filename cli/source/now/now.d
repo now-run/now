@@ -3,15 +3,12 @@ module now.cli;
 extern(C) int isatty(int);
 
 import std.algorithm.searching : canFind, startsWith;
-// import std.array : array, join, replace, split;
 import std.datetime.stopwatch;
 import std.file;
 import std.process : environment;
-// import std.range : retro;
 import std.stdio;
 import std.string;
 
-// import now.lib;
 import now.commands;
 import now.context;
 import now.conv;
@@ -50,7 +47,7 @@ int main(string[] args)
     }
 
     // Potential small speed-up:
-    commands.rehash;
+    commands.rehash();
 
     string filepath = defaultFilepath;
     string subCommandName = null;
@@ -389,7 +386,8 @@ int now_help()
     stdout.writeln("now");
     stdout.writeln("  No arguments: run ./", defaultFilepath, " if present");
     stdout.writeln("  :bash-complete - shell autocompletion");
-    stdout.writeln("  :cmd - run commands passed as arguments");
+    stdout.writeln("  :cmd <command> - run commands passed as arguments");
+    stdout.writeln("  :f <file> - run a specific file");
     stdout.writeln("  :repl - enter interactive mode");
     stdout.writeln("  :stdin - read a program from standard input");
     stdout.writeln("  :help - display this help message");

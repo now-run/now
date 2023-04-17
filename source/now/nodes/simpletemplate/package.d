@@ -28,13 +28,15 @@ CommandsMap templateCommands;
 </html>
 */
 
-Block parseTemplate(string name, Dict info)
+Block parseTemplate(string name, Dict info, Dict templates)
 {
     auto tpl = parseTemplate(name, info["body"].toString());
     info.on(
         "extends",
         delegate (item) {
-            tpl.extends = item.toString();
+            string parentName = item.toString();
+            auto parentBlock = cast(Block)(templates[parentName]);
+            tpl.extends = parentBlock;
         }, delegate () { }
     );
     return tpl;
@@ -73,7 +75,7 @@ class TemplateParser : Parser
             {
                 if (text.length)
                 {
-                    blocks ~= new Block(text.join(EOL));
+                    blocks ~= new Block(text.join());
                     text.length = 0;
                 }
 
@@ -107,12 +109,12 @@ class TemplateParser : Parser
             else
             {
                 string spacer = rightJustify("", blanksCount);
-                text ~= spacer ~ consumeLine();
+                text ~= spacer ~ consumeLine(false);
             }
         }
         if (text.length)
         {
-            blocks ~= new Block(text.join(EOL));
+            blocks ~= new Block(text.join());
             text.length = 0;
         }
         return new Block(name, blocks);
@@ -127,7 +129,7 @@ class Block : Item
     // For text blocks:
     String text;
 
-    string extends;
+    Block extends;
 
     this(string text)
     {
@@ -178,31 +180,48 @@ class TemplateInstance : Item
     TemplateInstances[string] emittedBlocks;
     Block[string] expandableBlocks;
 
-    this(Block tpl)
+    this(Block tpl, bool expandParent=true)
     {
         this.type = ObjectType.Template;
         this.typeName = "template";
         this.commands = templateCommands;
 
-        this.tpl = tpl;
         this.name = tpl.name;
 
-        foreach (block; tpl.children)
+        if (tpl.extends is null || !expandParent)
+        {
+            this.tpl = tpl;
+        }
+        else if (expandParent)
+        {
+            this.tpl = tpl.extends;
+        }
+
+        foreach (block; this.tpl.children)
         {
             if (block.isExpandable)
             {
                 expandableBlocks[block.name] = block;
             }
         }
+
+        if (tpl.extends !is null && expandParent)
+        {
+            foreach (block; tpl.children)
+            {
+                expandableBlocks[block.name] = block;
+            }
+        }
     }
-    this(Block tpl, Item[string] variables)
+    this(Block tpl, Item[string] variables, bool expandParent=true)
     {
-        this(tpl);
         this.variables = variables;
+        this(tpl, expandParent);
     }
 
-    void emit(string blockName, Item[string] variables)
+    bool emit(string blockName, Item[string] variables)
     {
+        // Try to emit directly:
         auto blockPtr = (blockName in expandableBlocks);
         if (blockPtr !is null)
         {
@@ -210,14 +229,19 @@ class TemplateInstance : Item
             emittedBlocks[blockName] ~= new TemplateInstance(
                 expandableBlock, variables
             );
+            return true;
         }
-        else
+
+        // Try every child:
+        foreach (emittedBlock; emittedBlocks.byValue)
         {
-            foreach (emittedBlock; emittedBlocks.byValue)
+            if (emittedBlock[$-1].emit(blockName, variables))
             {
-                emittedBlock[$-1].emit(blockName, variables);
+                return true;
             }
         }
+
+        return false;
     }
 
     string render(Context context)
@@ -251,16 +275,6 @@ class TemplateInstance : Item
                     }
                 }
             }
-        }
-
-        if (tpl.extends !is null)
-        {
-            auto templates = context.program.getOrCreate!Dict("templates");
-            auto parent = cast(Block)(templates[tpl.extends]);
-
-            variables["body"] = new String(s);
-            auto parentInstance = new TemplateInstance(parent, variables);
-            return parentInstance.render(context);
         }
 
         return s;

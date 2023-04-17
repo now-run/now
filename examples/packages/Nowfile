@@ -1,0 +1,10 @@
+[Packages Example]
+
+Show how to use packages.
+
+[packages]
+- "procedures.now"
+
+[commands/run]
+
+hello "Mundo"

@@ -149,7 +149,7 @@ class Parser
         }
         return counter;
     }
-    string consumeLine()
+    string consumeLine(bool eliminateEol=true)
     {
         string result;
 
@@ -158,7 +158,11 @@ class Parser
             result ~= consumeChar();
         }
         if (currentChar == EOL) {
-            consumeChar();
+            auto eol = consumeChar();
+            if (!eliminateEol)
+            {
+                result ~= eol;
+            }
         }
         return result;
     }

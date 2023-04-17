@@ -1,9 +1,14 @@
 module now.nodes.program;
 
-
+import core.sys.posix.dlfcn;
 import std.algorithm : each;
+import std.algorithm.searching : endsWith;
+import std.file : isFile, read;
+import std.path : buildPath;
+import std.string : toStringz;
 import std.uni : toUpper;
 
+import now.grammar;
 import now.nodes;
 
 
@@ -14,6 +19,8 @@ class Program : Dict {
     BaseCommand[string] procedures;
     // Global commands:
     CommandsMap globalCommands;
+
+    string[] nowPath;
 
     this()
     {
@@ -27,7 +34,42 @@ class Program : Dict {
         debug {stderr.writeln("Initializing program");}
         this.globalCommands = commands;
 
+        debug {stderr.writeln("Setting nowPath");}
+        auto nowPath = environmentVariables.get!String(
+            "NOW_PATH",
+            delegate (Dict d)
+            {
+                auto pwd = d["PWD"].toString();
+                return new String(pwd ~ "/now");
+            }
+        ).toString();
+        this.nowPath = nowPath.split(":");
+
         // TODO: break all these sections in methods
+        debug {stderr.writeln("Importing packages");}
+        auto packages = this.getOrCreate!Dict("packages");
+        foreach (index, filenameItem; packages.values)
+        {
+            bool success = false;
+            string filename = filenameItem.toString();
+            foreach (basedir; this.nowPath)
+            {
+                auto path = buildPath([basedir.to!string, filename]);
+                if (path.isFile)
+                {
+                    this.importPackage(path);
+                    success = true;
+                    break;
+                }
+            }
+            if (!success)
+            {
+                throw new Exception(
+                    "Could not load package " ~ filename ~ "."
+                );
+            }
+        }
+
         debug {stderr.writeln("Adjusting configuration");}
         /*
         About [configuration]:
@@ -121,7 +163,9 @@ class Program : Dict {
         foreach (templateName, infoItem; templates.values)
         {
             auto templateInfo = cast(Dict)infoItem;
-            templates[templateName] = parseTemplate(templateName, templateInfo);
+            templates[templateName] = parseTemplate(
+                templateName, templateInfo, templates
+            );
         }
 
         debug {stderr.writeln("Adjusting shells");}
@@ -256,14 +300,83 @@ class Program : Dict {
     }
 
     // Packages
-    string[] getDependenciesPath()
+    void importPackage(string path)
     {
-        // TODO: the correct is $program_dir/.now!
+        if (path.endsWith(".so"))
+        {
+            return importSharedLibrary(path);
+        }
+        else
+        {
+            return importNowLibrary(path);
+        }
+    }
+    void importNowLibrary(string path)
+    {
+        auto parser = new NowParser(path.read().to!string);
+        auto library = parser.run();
+        // Merge the library into the program:
+        foreach (key, value; library.values)
+        {
+            this.on(
+                key,
+                delegate (Item localValue)
+                {
+                    this.merge(key, localValue, value);
+                },
+                delegate ()
+                {
+                    // Found in library, not found locally:
+                    this[key] = value;
+                }
+            );
+        }
+    }
+    void merge(string key, Item localValue, Item otherValue)
+    {
+        if (otherValue.type != ObjectType.Dict)
+        {
+            this[key] = otherValue;
+        }
+        else if (localValue.type != ObjectType.Dict)
+        {
+            this[key] = otherValue;
+        }
+        else
+        {
+            auto localDict = cast(Dict)localValue;
+            auto otherDict = cast(Dict)otherValue;
+            foreach (otherKey, value; otherDict.values)
+            {
+                localDict[otherKey] = value;
+            }
+        }
+    }
+    void importSharedLibrary(string path)
+    {
+        // Clean up any old error messages:
+        dlerror();
 
-        // For now...
-        // $current_dir/.now
-        return [".now"];
+        // lh = "library handler"
+        void* lh = dlopen(path.toStringz, RTLD_LAZY);
 
-        // TODO: check for $program . dependencies . path
+        auto error = dlerror();
+        if (error !is null)
+        {
+            // lastError = cast(char *)error;
+            throw new Exception(" dlerror: " ~ error.to!string);
+        }
+
+        // Initialize the package:
+        auto initFunction = cast(void function(Program))dlsym(
+            lh, "init"
+        );
+
+        error = dlerror();
+        if (error !is null)
+        {
+            throw new Exception("dlsym error: " ~ to!string(error));
+        }
+        initFunction(this);
     }
 }
