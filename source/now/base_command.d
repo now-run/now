@@ -24,14 +24,18 @@ class BaseCommand
         this.info = info;
 
         // event handlers:
+        this.loadEventHandlers(info);
+
+        this.workdir = info.getOrNull("workdir");
+    }
+    void loadEventHandlers(Dict info)
+    {
         info.order.filter!(x => x[0..3] == "on.").each!((k) {
             auto v = cast(Dict)(info[k]);
             auto body = cast(String)v["body"];
             auto parser = new NowParser(body.toString());
             this.eventHandlers[k] = parser.consumeSubProgram();
         });
-
-        this.workdir = info.getOrNull("workdir");
     }
 
     Context run(string name, Context context)
@@ -307,6 +311,7 @@ class BaseCommand
         {
             debug {
                 stderr.writeln("proc ", name, " has no ", event, " handler.");
+                stderr.writeln("handlers:", this.eventHandlers);
             }
             return context;
         }

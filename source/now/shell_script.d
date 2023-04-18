@@ -18,6 +18,7 @@ class ShellScript : SystemCommand
         // It's going to have no "parameters", since
         // we are passing the SHELL definition:
         super(name, shellInfo);
+
         // So we fix it now:
         this.parameters = info.getOrCreate!Dict("parameters");
 
@@ -39,6 +40,8 @@ class ShellScript : SystemCommand
             }
         ).toBool();
 
+        // Local event handlers:
+        this.loadEventHandlers(info);
     }
     override Context preRun(string name, Context context)
     {

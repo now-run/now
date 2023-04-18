@@ -59,9 +59,8 @@ static this()
     };
     pathCommands["read.lines"] = function (string name, Context context)
     {
-        // TODO
         auto path = context.pop!Path();
-        return context.error("Not implemented yet", ErrorCode.NotImplemented, "", path);
+        return context.push(new PathFileRange(path));
     };
     pathCommands["write.lines"] = function (string name, Context context)
     {
