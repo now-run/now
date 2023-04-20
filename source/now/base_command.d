@@ -170,11 +170,11 @@ class BaseCommand
         }
         if (argsLength > 0)
         {
-            newScope["args"] = remaining[0..argsLength];
+            newScope["args"] = new List(remaining[0..argsLength]);
         }
         else
         {
-            newScope["args"] = [];
+            newScope["args"] = new List([]);
         }
 
         debug {
