@@ -30,6 +30,9 @@ class PathFileRange : Item
     File.ByLine!(char, char) range;
     this(Path path)
     {
+        this.type = ObjectType.Range;
+        this.typeName = "path_file_range";
+
         this.file = File(path.path);
         this.range = file.byLine();
     }
@@ -43,13 +46,13 @@ class PathFileRange : Item
         if (line is null)
         {
             context.exitCode = ExitCode.Break;
+            return context;
         }
         else
         {
-            range.popFront;
-
             context.push(line.to!string);
             context.exitCode = ExitCode.Continue;
+            range.popFront;
         }
         return context;
     }

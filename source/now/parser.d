@@ -82,7 +82,9 @@ class Parser
 
         if (index >= code.length)
         {
-            debug {stderr.writeln("CODE ENDED");}
+            debug{stderr.writeln(
+                "CODE ENDED; length=", code.length, "; index=", index
+            );}
             this.eof = true;
             index--;
         }
@@ -207,7 +209,7 @@ class Parser
     // Nodes
     string consume_string(char opener, bool limit_to_eol=false)
     {
-        char[] token;
+        string token;
 
         ulong index = 0;
         while (!eof && currentChar != opener)
@@ -250,7 +252,7 @@ class Parser
             }
         }
 
-        return token.to!string;
+        return token;
     }
     String consumeString(char opener, bool limit_to_eol=false)
     {

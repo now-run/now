@@ -22,6 +22,9 @@ class Transformer : Item
         Context context
     )
     {
+        this.type = ObjectType.Range;
+        this.typeName = "range";
+
         this.targets = targets;
         this.varName = varName;
         this.body = body;

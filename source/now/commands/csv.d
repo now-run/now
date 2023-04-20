@@ -42,7 +42,8 @@ class CsvParser : Parser
                 opener = consumeChar();
                 isEnclosed = true;
             }
-            items ~= consumeString(opener, true);
+            auto item = consumeString(opener, true);
+            items ~= item;
             if (isEnclosed) consumeChar();
             if (currentChar == separator) consumeChar();
         }

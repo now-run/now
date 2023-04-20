@@ -293,7 +293,7 @@ class Program : Dict {
 
         context.error(
             "Command `" ~ path ~ "` not found.",
-            ErrorCode.CommandNotFound.to!int,
+            ErrorCode.CommandNotFound,
             ""
         );
         return context;
