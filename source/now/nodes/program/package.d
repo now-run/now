@@ -291,6 +291,9 @@ class Program : Dict {
             return cmd(path, context);
         }
 
+        // Or a system command:
+        // TODO
+
         context.error(
             "Command `" ~ path ~ "` not found.",
             ErrorCode.CommandNotFound,

@@ -2,6 +2,7 @@ module now.cli;
 
 extern(C) int isatty(int);
 
+import std.algorithm : among;
 import std.algorithm.searching : canFind, startsWith;
 import std.datetime.stopwatch;
 import std.file;
@@ -61,17 +62,14 @@ int main(string[] args)
 
     debug {stderr.writeln("subCommandName:", subCommandName);}
 
+    // Parse command line arguments starting with ":":
     while (true)
     {
         if (subCommandName.canFind(":"))
         {
             auto parts = subCommandName.split(":");
-            debug {stderr.writeln("  parts:", parts);}
-            auto prefix = parts[0];
-            debug {stderr.writeln("  prefix:", prefix);}
-
             // ":stdin".split(":") -> ["", "stdin"];
-            if (prefix == "")
+            if (parts[0] == "")
             {
                 auto keyword = parts[1];
                 switch (keyword)
@@ -477,19 +475,43 @@ int repl(string filepath, NowParser parser)
             continue;
         }
         context = pipeline.run(context);
-        if (context.exitCode == ExitCode.Failure)
+
+        if (context.exitCode != ExitCode.Success)
         {
-            auto error = context.pop!Erro();
-            stderr.writeln(error.toString());
-            stderr.writeln("----------");
+            stderr.writeln(context.exitCode.to!string);
         }
-        else
+
+        // Print whatever is still in the stack:
+        foreach (item; context.items)
         {
-            if (context.exitCode != ExitCode.Success)
+            debug{stderr.writeln(item.type.to!string, " ");}
+            if (item.type == ObjectType.SystemProcess)
             {
-                stderr.writeln(context.exitCode.to!string);
+                auto p = cast(SystemProcess)item;
+                do
+                {
+                    context = p.next(context);
+                    if (context.exitCode == ExitCode.Continue)
+                    {
+                        foreach (output; context.items)
+                        {
+                            // XXX: stderr or stdout?
+                            stdout.writeln(output.toString());
+                        }
+                    }
+                }
+                while (context.exitCode == ExitCode.Continue);
+                if (!context.exitCode.among(ExitCode.Success, ExitCode.Skip))
+                {
+                    stderr.writeln(">> ", context.exitCode.to!string);
+                }
+            }
+            else
+            {
+                stderr.writeln(">>> ", item.toString());
             }
         }
+        debug{stderr.writeln("% ", context.size, "/", context.inputSize);}
     }
     return 0;
 }
@@ -593,7 +615,7 @@ int cmd(NowParser parser, string[] args)
         context = pipeline.run(context);
         if (context.exitCode == ExitCode.Failure)
         {
-            auto error = context.pop!Erro();
+            auto error = context.pop!Erro("CLI :cmd error check");
             stderr.writeln(error.toString());
             stderr.writeln("----------");
             return error.code;

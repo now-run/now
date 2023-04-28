@@ -125,17 +125,16 @@ parameters {
 key_value_separator ""
 option_prefix "-"
 command {
-    - "gdc"
-    - "-c"
+    - gdc
+    - -c
     - $extra
-    - "-static-libphobos"
-    - "-static-libgcc"
+    - -static-libphobos
+    - -static-libgcc
     - "-Isource"
     - "-Icli/source"
     - "-O$optimization"
-    - {
-        o $output_filepath
-    }
+    - "-o"
+    - $output_filepath
     - $file
 }
 

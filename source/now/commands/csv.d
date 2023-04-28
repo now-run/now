@@ -57,6 +57,9 @@ void loadCsvCommands(CommandsMap commands)
 {
     commands["csv.decode"] = function (string path, Context context)
     {
+        // TODO:
+        // 1- accept multiple arguments;
+        // 2- if argument is Path, use a CsvReader class.
         string content = context.pop!string();
         auto parser = new CsvParser(content);
         return context.push(parser.run());

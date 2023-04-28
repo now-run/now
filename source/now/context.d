@@ -79,55 +79,59 @@ struct Context
     }
 
     // Stack-related things:
-    Item peek(uint index=1)
+    Item peek(string semantics)
     {
-        return process.stack.peek(index);
+        return this.peek(1, semantics);
+    }
+    Item peek(uint index=1, string semantics=null)
+    {
+        return process.stack.peek(index, semantics);
     }
     template pop(T : Item)
     {
-        T pop()
+        T pop(string semantics=null)
         {
             auto info = typeid(T);
-            auto value = this.pop();
+            auto value = this.pop(semantics);
             return cast(T)value;
         }
     }
     template pop(T : long)
     {
-        T pop()
+        T pop(string semantics=null)
         {
-            auto value = this.pop();
+            auto value = this.pop(semantics);
             return value.toInt;
         }
     }
     template pop(T : float)
     {
-        T pop()
+        T pop(string semantics=null)
         {
-            auto value = this.pop();
+            auto value = this.pop(semantics);
             return value.toFloat;
         }
     }
     template pop(T : bool)
     {
-        T pop()
+        T pop(string semantics=null)
         {
-            auto value = this.pop();
+            auto value = this.pop(semantics);
             return value.toBool;
         }
     }
     template pop(T : string)
     {
-        T pop()
+        T pop(string semantics=null)
         {
-            auto value = this.pop();
+            auto value = this.pop(semantics);
             return value.toString;
         }
     }
-    Item pop()
+    Item pop(string semantics=null)
     {
         size--;
-        return process.stack.pop();
+        return process.stack.pop(semantics);
     }
     Item popOrNull()
     {
@@ -141,23 +145,27 @@ struct Context
         }
     }
 
-    Items pop(uint count)
+    Items pop(uint count, string semantics=null)
     {
-        return this.pop(cast(ulong)count);
+        return this.pop(cast(ulong)count, semantics);
     }
-    Items pop(ulong count)
+    Items pop(ulong count, string semantics=null)
     {
         size -= count;
-        return process.stack.pop(count);
+        if (inputSize > size)
+        {
+            inputSize = size;
+        }
+        return process.stack.pop(count, semantics);
     }
     template pop(T)
     {
-        T[] pop(ulong count)
+        T[] pop(ulong count, string semantics=null)
         {
             T[] items;
             foreach(i; 0..count)
             {
-                items ~= pop!T;
+                items ~= pop!T(semantics);
             }
             return items;
         }
@@ -201,11 +209,11 @@ struct Context
 
     template items(T)
     {
-        T[] items()
+        T[] items(string semantics=null)
         {
             if (size > 0)
             {
-                return pop!T(size);
+                return pop!T(size, semantics);
             }
             else
             {
@@ -213,13 +221,14 @@ struct Context
             }
         }
     }
-    Items items()
+    Items items(string semantics=null)
     {
         if (size > 0)
         {
             auto x = size;
             size = 0;
-            return process.stack.pop(x);
+            inputSize = 0;
+            return process.stack.pop(x, semantics);
         }
         else
         {

@@ -84,6 +84,21 @@ command {
     - $target
 }
 
+
+[system_commands/bin_ls]
+description "Just to be able to use ls on :repl."
+parameters {
+    dir {
+        type string
+        default "."
+    }
+}
+command {
+    - ls
+    - $dir
+}
+
+
 [procedures/hello]
 parameters {
     name {

@@ -123,7 +123,7 @@ class CommandCall
         // the "target", when present:
         if (executionContext.size)
         {
-            Item target = executionContext.peek();
+            Item target = executionContext.peek("check for target");
             return target.runCommand(name, executionContext);
         }
         else

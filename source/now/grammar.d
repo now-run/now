@@ -700,6 +700,10 @@ class NowParser : Parser
                 // And add the next char, whatever it is:
                 switch (currentChar)
                 {
+                    /*
+                    Interesting reference:
+                    http://odin-lang.org/docs/overview/#escape-characters
+                    */
                     // XXX: this cases could be written at compile time.
                     case 'b':
                         token ~= '\b';

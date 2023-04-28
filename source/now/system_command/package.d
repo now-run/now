@@ -122,8 +122,9 @@ class SystemCommand : BaseCommand
         }
         if (context.inputSize == 1)
         {
-            arguments = context.pop(context.size - 1).map!(x => to!string(x)).array;
-            inputStream = context.pop();
+            arguments = context.pop(context.size - 1, "SystemCommand arguments")
+                .map!(x => to!string(x)).array;
+            inputStream = context.pop("SystemCommand inputStream");
         }
         else if (context.inputSize > 1)
         {
@@ -132,7 +133,8 @@ class SystemCommand : BaseCommand
         }
         else
         {
-            arguments = context.items.map!(x => to!string(x)).array;
+            arguments = context.items("SystemCommand arguments")
+                .map!(x => to!string(x)).array;
         }
 
         debug {
@@ -153,7 +155,7 @@ class SystemCommand : BaseCommand
         foreach (segment; command.items)
         {
             context = segment.evaluate(context);
-            Item nextItem = context.pop();
+            Item nextItem = context.pop("cmdItem");
             if (nextItem.type == ObjectType.List)
             {
                 // Expand Lists inside the command arguments:
@@ -204,7 +206,7 @@ class SystemCommand : BaseCommand
         if (workdir !is null)
         {
             context = workdir.evaluate(context);
-            workdirStr = context.pop().toString();
+            workdirStr = context.pop("workdir").toString();
         }
 
         try
@@ -343,7 +345,7 @@ class SystemProcess : Item
                     );
                 }
 
-                foreach (item; inputContext.items)
+                foreach (item; inputContext.items("SystemProcess next inputContext"))
                 {
                     string s = item.toString();
                     debug {
@@ -392,6 +394,7 @@ class SystemProcess : Item
 
             if (line is null)
             {
+                // XXX: this Skip is weird...
                 context.exitCode = ExitCode.Skip;
                 return context;
             }

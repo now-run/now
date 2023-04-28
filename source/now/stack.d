@@ -10,35 +10,56 @@ class Stack
     uint stackPointer = 0;
 
     // Stack manipulation:
-    Item peek(uint index=1)
+    Item peek(uint index=1, string semantics=null)
     {
         uint pointer = stackPointer - index;
+        debug{
+            if (semantics is null)
+            {
+                stderr.writeln("? [", pointer, "]");
+            }
+            else
+            {
+                stderr.writeln(semantics, " ? [", pointer, "]");
+            }
+        }
         if (pointer < 0)
         {
             return null;
         }
         return stack[pointer];
     }
-    Item pop()
+    Item pop(string semantics=null)
     {
+        debug{
+            if (semantics is null)
+            {
+                stderr.writeln("<= [", stackPointer-1, "]");
+            }
+            else
+            {
+                stderr.writeln(semantics, " <= [", stackPointer-1, "]");
+            }
+        }
         auto item = stack[--stackPointer];
         return item;
     }
-    Items pop(int count)
+    Items pop(int count, string semantics=null)
     {
-        return this.pop(cast(ulong)count);
+        return this.pop(cast(ulong)count, semantics);
     }
-    Items pop(ulong count)
+    Items pop(ulong count, string semantics=null)
     {
         Items items;
         foreach(i; 0..count)
         {
-            items ~= pop();
+            items ~= pop(semantics);
         }
         return items;
     }
     void push(Item item)
     {
+        debug{stderr.writeln(item.type, " => [", stackPointer, "]");}
         stack[stackPointer++] = item;
     }
     template push(T : int)
