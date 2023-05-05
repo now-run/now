@@ -2,12 +2,11 @@ module now.nodes.simpletemplate;
 
 import std.string : rightJustify;
 
-import now.grammar;
-import now.nodes;
+import now;
 import now.parser;
 
 
-CommandsMap templateCommands;
+MethodsMap templateMethods;
 
 
 /*
@@ -68,7 +67,7 @@ class TemplateParser : Parser
 
         while (!eof)
         {
-            auto blanksCount = consumeBlankspaces(false);
+            auto blanksCount = consumeWhitespaces(false);
             if (eof) break;
 
             if (currentChar == '%')
@@ -168,7 +167,7 @@ class Block : Item
 
 
 alias TemplateInstances = TemplateInstance[];
-
+alias Template = Block;
 
 class TemplateInstance : Item
 {
@@ -184,7 +183,7 @@ class TemplateInstance : Item
     {
         this.type = ObjectType.Template;
         this.typeName = "template";
-        this.commands = templateCommands;
+        this.methods = templateMethods;
 
         this.name = tpl.name;
 
@@ -244,23 +243,18 @@ class TemplateInstance : Item
         return false;
     }
 
-    string render(Context context)
+    string render(Escopo escopo)
     {
         string s;
 
-        auto newScope = new Escopo(context.escopo);
-        foreach (key, value; variables)
-        {
-            newScope[key] = [value];
-        }
-
-        auto newContext = context.next(newScope);
         foreach (block; tpl.children)
         {
             if (block.isText)
             {
-                newContext = block.text.evaluate(newContext);
-                s ~= newContext.pop!string();
+                foreach (item; block.text.evaluate(escopo))
+                {
+                    s ~= item.toString();
+                }
             }
             else
             {
@@ -271,7 +265,7 @@ class TemplateInstance : Item
                     auto blocks = *blockPtr;
                     foreach (emittedBlock; blocks)
                     {
-                        s ~= emittedBlock.render(newContext);
+                        s ~= emittedBlock.render(escopo);
                     }
                 }
             }

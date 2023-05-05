@@ -2,10 +2,10 @@ module now.base_command;
 
 
 import std.algorithm : canFind;
+import std.range : take;
 
+import now;
 import now.exceptions;
-import now.nodes;
-import now.grammar;
 
 
 class BaseCommand
@@ -15,7 +15,7 @@ class BaseCommand
     string name;
     Dict parameters;
     Dict info;
-    Item workdir;
+    String workdir;
 
     this(string name, Dict info)
     {
@@ -26,7 +26,7 @@ class BaseCommand
         // event handlers:
         this.loadEventHandlers(info);
 
-        this.workdir = info.getOrNull("workdir");
+        this.workdir = info.get!String("workdir", null);
     }
     void loadEventHandlers(Dict info)
     {
@@ -38,282 +38,191 @@ class BaseCommand
         });
     }
 
-    Context run(string name, Context context)
+    override string toString()
     {
-        debug {stderr.writeln(">>> running:", name);}
-        auto newScope = new Escopo(context.escopo);
-        // Procedures are always top-level:
-        newScope.parent = null;
-        newScope.rootCommand = this;
-        newScope.description = name;
-
-        string[] parametersAlreadySet;
-
-        // Set every default value in the parameters:
-        foreach (parameterName, info; parameters.values)
+        auto s = name ~ "  ";
+        string[] keys;
+        foreach (key, value; parameters)
         {
-            Item *defaultValuePtr = ("default" in (cast(Dict)info).values);
-            if (defaultValuePtr !is null)
+            auto dict = cast(Dict)value;
+            auto defaultValue = dict.get("default", null);
+            if (defaultValue !is null)
             {
-                auto defaultValue = *defaultValuePtr;
-                newScope[parameterName] = defaultValue;
-                debug {
-                    stderr.writeln(parameterName, "(default) = ", defaultValue);
-                }
-                parametersAlreadySet ~= parameterName;
-            }
-        }
-
-        /*
-        Everything is an argument, including the piped input.
-        But after parsing all of then, if the input was not
-        used as argument for this, then it must be restored
-        so inner commands can read from it.
-        */
-        auto arguments = context.items;
-        auto inputSize = context.inputSize;
-        debug {stderr.writeln("arguments:", arguments);}
-
-        string[] namedParametersAlreadySet;
-        Items positionalArguments;
-
-        // Search for named arguments:
-        bool lookForNamedArguments = true;
-        foreach (argument; arguments)
-        {
-            debug {
-                stderr.writeln(" argument:", argument, "/", argument.type);
-            }
-            if (argument.toString() == "--")
-            {
-                lookForNamedArguments = false;
-                continue;
-            }
-
-            if (lookForNamedArguments && argument.type == ObjectType.Pair)
-            {
-                List pair = cast(List)argument;
-                auto key = pair.items[0].toString();
-                auto value = pair.items[1];
-                newScope[key] = value;
-                debug {stderr.writeln(key, "=", value);}
-                namedParametersAlreadySet ~= key;
-                parametersAlreadySet ~= key;
+                keys ~= key ~ "=" ~ defaultValue.toString();
             }
             else
             {
-                positionalArguments ~= argument;
+                keys ~= key;
+            }
+        }
+        return s ~ "  " ~ keys.join(" ");
+    }
+
+    ExitCode run(string name, Input input, Output output)
+    {
+        log("- run: ", this, " / ", input);
+        // input: Escopo escopo, Items inputs, Args args, KwArgs kwargs
+
+        // Procedures are always top-level:
+        auto newScope = input.escopo.createChild(name);
+        newScope.parent = null;
+
+        auto setParametersCount = 0;
+        string[] namedParametersAlreadySet;
+
+        // Set every default value in the parameters:
+        log("- Default parameters values");
+        foreach (parameterName, info; parameters)
+        {
+            auto parameterDict = cast(Dict)info;
+            auto defaultValue = parameterDict.get("default", null);
+            if (defaultValue !is null)
+            {
+                newScope[parameterName] = defaultValue;
+                namedParametersAlreadySet ~= parameterName;
+                setParametersCount++;
             }
         }
 
-        debug {
-            stderr.writeln("positionalArguments:", positionalArguments);
-            stderr.writeln("namedParametersAlreadySet:", namedParametersAlreadySet);
+        // Named arguments:
+        log("- Named arguments");
+        foreach (key, value; input.kwargs)
+        {
+            newScope[key] = value;
+            if (!namedParametersAlreadySet.canFind(key))
+            {
+                namedParametersAlreadySet ~= key;
+                setParametersCount++;
+            }
         }
 
         // Now iterate positional parameters to
         // find correspondent arguments
-        int currentIndex = 0;
-        foreach (parameterName; parameters.order)
+        log("-- named arguments set: ", namedParametersAlreadySet);
+        log("- Positional arguments");
+        /*
+        Positional parameters always overwrite whatever came first.
+        > cmd a b c -- (first = 1) (second = 2) (third = 3)
+        will end up having
+            first = a
+            second = b
+            third = c
+        */
+        foreach (index, argument; input.args.take(parameters.order.length))
         {
-            if (namedParametersAlreadySet.canFind(parameterName))
-            {
-                continue;
-            }
-
-            else if (currentIndex >= positionalArguments.length)
-            {
-                if (parametersAlreadySet.canFind(parameterName))
-                {
-                    continue;
-                }
-                else
-                {
-                    auto msg = "Not enough arguments passed to command"
-                        ~ " `" ~ name ~ "`.";
-                    return context.error(msg, ErrorCode.InvalidSyntax, "");
-                }
-            }
-            auto argument = positionalArguments[currentIndex++];
-            newScope[parameterName] = argument;
-            debug {
-                stderr.writeln(parameterName, "=", argument);
-            }
+            auto key = parameters.order[index];
+            newScope[key] = argument;
+            setParametersCount++;
         }
 
-        auto newContext = context.next(newScope, context.size);
-
-        debug {
-            stderr.writeln("xxx newContext.size: ", newContext.size);
-            stderr.writeln("xxx newContext.inputSize: ", newContext.inputSize);
-        }
-
-        // Unused arguments go to this "va_list" crude implementation.
-        // Inputs will be pushed back, absent from `args`.
-        auto remaining = positionalArguments[currentIndex..$];
-        auto inputsPushedBack = 0;
-        foreach (unusedArg; remaining.retro)
+        if (setParametersCount < parameters.order.length)
         {
-            if (inputsPushedBack >= inputSize)
-            {
-                break;
-            }
-            debug {stderr.writeln("pushing input back:", unusedArg);}
-            newContext.push(unusedArg);
-            inputsPushedBack++;
+            throw new InvalidArgumentsException(
+                input.escopo,
+                "Not enough arguments for " ~ name
+                ~ ". It should be at least " ~ parameters.order.length.to!string
+                ~ " but only " ~ setParametersCount.to!string ~ " were found."
+            );
         }
-        newContext.inputSize = inputsPushedBack;
-        auto argsLength = remaining.length - inputsPushedBack;
-        debug {
-            stderr.writeln("remaining:", remaining);
-            stderr.writeln("inputsPushedBack:", inputsPushedBack);
-        }
-        if (argsLength > 0)
+
+        // Unused arguments go to the $args variable (List)
+        if (input.args.length > parameters.order.length)
         {
-            newScope["args"] = new List(remaining[0..argsLength]);
+            newScope["args"] = new List(input.args[parameters.order.length..$]);
         }
         else
         {
             newScope["args"] = new List([]);
         }
 
-        debug {
-            stderr.writeln(" extra args: ", newScope["args"]);
-        }
+        // Inputs go to the $inputs variable (List)
+        newScope["inputs"] = new List(input.inputs);
 
-        // TODO: what was this supposed to do, exactly?
-        // See lines 152-176!
-        // newContext.push(positionalArguments[$-inputSize..$]);
-        // 2023-03-22: it seems we really don't need it.
+        // Since we're not going to use the old scope anymore:
+        input.escopo = newScope;
 
-        // RUN!
+        // -------------------------
+        // Finally, RUN!
         // pre-run
-        newContext = this.preRun(name, newContext);
-        if (newContext.exitCode == ExitCode.Failure)
+        log("- preRun");
+        auto exitCode = this.preRun(name, input, output);
+        if (exitCode != ExitCode.Success)
         {
-            return newContext;
-        }
-        debug {
-            stderr.writeln("xxx after preRun newContext.size: ", newContext.size);
+            return exitCode;
         }
 
         // on.call
-        newContext = this.handleEvent(newContext, "call");
-        if (newContext.exitCode == ExitCode.Failure)
-        {
-            return newContext;
-        }
-        else if (newContext.exitCode == ExitCode.Skip)
+        exitCode = this.handleEvent("call", input, output);
+        if (exitCode == ExitCode.Skip)
         {
             // do not execute the handler
             // but execute on.return
         }
-        else if (newContext.exitCode == ExitCode.Break)
+        else if (exitCode == ExitCode.Break)
         {
             // do not execute anything else
-            context.exitCode = ExitCode.Break;
             // XXX: should we set the exitCode to Success???
-            return context;
+            return exitCode;
         }
         else
         {
             // run
-            newContext = this.doRun(name, newContext);
-        }
-        if (newContext.exitCode == ExitCode.Failure)
-        {
-            return newContext;
-        }
-        debug {
-            stderr.writeln("xxx   doRun.context.size: ", newContext.size);
-            stderr.writeln("xxx   doRun.context.inputSize: ", newContext.inputSize);
+            log("- run");
+            exitCode = this.doRun(name, input, output);
         }
 
         // on.return
-        newContext = this.handleEvent(newContext, "return");
-        if (newContext.exitCode == ExitCode.Failure)
-        {
-            return newContext;
-        }
-        // -----------------------------------
+        auto onReturnExitCode = this.handleEvent("return", input, output);
 
-        context.size = newContext.size;
-        debug {
-            stderr.writeln("xxx exiting.");
-            stderr.writeln("xxx   context.size: ", context.size);
-            stderr.writeln("xxx   context.exitCode: ", context.exitCode);
-        }
-
-        if (newContext.exitCode == ExitCode.Return)
+        // TODO: check if this make sense:
+        if (onReturnExitCode == ExitCode.Return)
         {
-            context.exitCode = ExitCode.Success;
+            return onReturnExitCode;
         }
         else
         {
-            context.exitCode = newContext.exitCode;
+            return exitCode;
         }
-
-        return context;
     }
-    Context preRun(string name, Context context)
+    ExitCode preRun(string name, Input input, Output output)
     {
         // pass
-        return context;
+        return ExitCode.Success;
     }
-    Context doRun(string name, Context context)
+    ExitCode doRun(string name, Input input, Output output)
     {
         // pass
-        return context;
+        return ExitCode.Success;
     }
 
-    Context handleEvent(Context context, string event)
+    ExitCode handleEvent(string eventName, Input input, Output output)
     {
-        debug {
-            stderr.writeln("xxx handleEvent ", event, " for ", this.name);
-            stderr.writeln("xxx     context.size: ", context.size);
-            stderr.writeln("xxx     context.inputSize: ", context.inputSize);
-        }
-        auto fullname = "on." ~ event;
+        log("- handleEvent: ", eventName);
+        auto fullname = "on." ~ eventName;
         if (auto handlerPtr = (fullname in eventHandlers))
         {
             auto handler = *handlerPtr;
-            debug {stderr.writeln("Calling ", fullname);}
 
             /*
             Event handlers are not procedures or
             commands, but simple SubProgram.
             */
 
-            Escopo newScope = context.escopo;
-
-            if (event == "error")
+            if (eventName == "error")
             {
-                newScope = new Escopo(context.escopo);
                 // Avoid calling on.error recursively:
+                auto newScope = input.escopo.createChild("on.error");
                 newScope.rootCommand = null;
-                // We still want to share variables:
-                newScope.variables = context.escopo.variables;
-
-                if (context.peek().type == ObjectType.Error)
-                {
-                    newScope["error"] = context.pop();
-                }
+                return handler.run(newScope, output);
             }
-
-            // auto newContext = Context(context.process, newScope);
-            auto newContext = context.next(newScope);
-
-            newContext = context.process.run(handler, newContext);
-            debug {stderr.writeln(" returned context:", newContext);}
-            return newContext;
+            else
+            {
+                return handler.run(input.escopo, output);
+            }
         }
         else
         {
-            debug {
-                stderr.writeln("proc ", name, " has no ", event, " handler.");
-                stderr.writeln("handlers:", this.eventHandlers);
-            }
-            return context;
+            return ExitCode.Success;
         }
     }
 }

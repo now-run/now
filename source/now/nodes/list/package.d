@@ -1,24 +1,22 @@
 module now.nodes.list;
 
 
-import now.nodes;
+import now;
 
 
-CommandsMap listCommands;
+MethodsMap listMethods;
 
 
-class List : BaseList
+class List : Item
 {
-    this()
-    {
-        super();
-    }
+    Items items;
+
     this(Items items)
     {
-        super(items);
-        this.commands = listCommands;
+        this.methods = listMethods;
         this.type = ObjectType.List;
         this.typeName = "list";
+        this.items = items;
     }
 
     // -----------------------------
@@ -30,13 +28,10 @@ class List : BaseList
             .join(" , ")) ~ ")";
     }
 
-    override Context evaluate(Context context)
+    override Items evaluate(Escopo escopo)
     {
-        return this.runAsInfixProgram(context);
-    }
+        log("- List.evaluate: ", this);
 
-    ExecList infixProgram()
-    {
         string[] commandNames;
         Items arguments;
 
@@ -52,15 +47,7 @@ class List : BaseList
             // [* [/ [+ 1 2 3 4] 5] 6]
             if (index % 2 == 0)
             {
-                if (item.type == ObjectType.List)
-                {
-                    // Inner Lists also become InfixPrograms:
-                    arguments ~= (cast(List)item).infixProgram();
-                }
-                else
-                {
-                    arguments ~= item;
-                }
+                arguments ~= item;
             }
             else
             {
@@ -75,6 +62,7 @@ class List : BaseList
         while (argumentsIndex < arguments.length && commandsIndex < commandNames.length)
         {
             Items commandArgs = [arguments[argumentsIndex++]];
+            Items commandKwArgs;
             string commandName = commandNames[commandsIndex++];
 
             while (argumentsIndex < arguments.length)
@@ -91,7 +79,7 @@ class List : BaseList
                 }
             }
             auto commandCalls = [
-                new CommandCall(commandName, commandArgs)
+                new CommandCall(commandName, commandArgs, commandKwArgs)
             ];
             auto pipeline = new Pipeline(commandCalls);
             auto subprogram = new SubProgram([pipeline]);
@@ -112,46 +100,32 @@ class List : BaseList
                 auto argument = arguments[0];
                 if (argument.type == ObjectType.List)
                 {
-                    return (cast(List)argument).infixProgram();
+                    return (cast(List)argument).evaluate(escopo);
                 }
                 else
                 {
-                    /*
-                    Example:
-                        if $(true)
-                    Becomes:
-                        if ([push true])
-                    */
-                    // XXX: what???
-                    auto commandCalls = [new CommandCall("stack.push", arguments)];
-                    auto pipeline = new Pipeline(commandCalls);
-                    auto subprogram = new SubProgram([pipeline]);
-                    return new ExecList(subprogram);
+                    // TODO: check if this works fine:
+                    return arguments;
                 }
             }
+            log("-- List.arguments: ", arguments);
             throw new Exception("execList cannot be null!");
         }
-        return execList;
-    }
-    Context runAsInfixProgram(Context context)
-    {
-        return this.infixProgram().evaluate(context);
+        log("-- List.execList: ", execList);
+        return execList.evaluate(escopo);
     }
 }
 
 class Pair : List
 {
-    this()
-    {
-        super();
-        this.type = ObjectType.Pair;
-        this.typeName = "pair";
-    }
     this(Items items)
     {
         if (items.length != 2)
         {
-            throw new InvalidException("Pairs can only have 2 items");
+            throw new InvalidException(
+                null,
+                "Pairs can only have 2 items"
+            );
         }
         super(items);
         this.type = ObjectType.Pair;

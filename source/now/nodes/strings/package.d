@@ -1,10 +1,10 @@
 module now.nodes.strings;
 
 
-import now.nodes;
+import now;
 
 
-CommandsMap stringCommands;
+MethodsMap stringMethods;
 
 
 // A string without substitutions:
@@ -17,19 +17,13 @@ class String : Item
         this.repr = s;
         this.type = ObjectType.String;
         this.typeName = "string";
-        this.commands = stringCommands;
+        this.methods = stringMethods;
     }
 
     // Conversions:
     override string toString()
     {
         return this.repr;
-    }
-
-    override Context evaluate(Context context)
-    {
-        context.push(this);
-        return context;
     }
 
     template opCast(T : string)
@@ -92,21 +86,18 @@ class SubstString : String
             .join(""));
     }
 
-    override Context evaluate(Context context)
+    override Items evaluate(Escopo escopo)
     {
         string result;
-        string value;
 
         foreach(part; parts)
         {
-            context = part.evaluate(context);
-            if (context.exitCode == ExitCode.Failure)
+            foreach(item; part.evaluate(escopo))
             {
-                return context;
+                result ~= item.toString();
             }
-            result ~= context.pop().toString();
         }
 
-        return context.push(new String(result));
+        return [new String(result)];
     }
 }

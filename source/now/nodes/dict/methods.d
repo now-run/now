@@ -1,12 +1,12 @@
-module now.nodes.dict.commands;
+module now.nodes.dict.methods;
 
 
-import now.nodes;
+import now;
 
 
 static this()
 {
-    dictCommands["set"] = function (string path, Context context)
+    dictMethods["set"] = function (Item object, string path, Input input, Output output)
     {
         /*
         > dict | as d
@@ -14,16 +14,16 @@ static this()
         > print ($d . x)
         20
         */
-        auto dict = context.pop!Dict();
+        auto dict = cast(Dict)object;
 
-        foreach(argument; context.items)
+        foreach(argument; input.popAll)
         {
             Pair pair = cast(Pair)argument;
 
             if (pair.type != ObjectType.Pair)
             {
                 auto msg = "`dict." ~ path ~ "` expects pairs as arguments";
-                return context.error(msg, ErrorCode.InvalidArgument, "dict");
+                throw new SyntaxErrorException(input.escopo, msg, -1, object);
             }
 
             string key = pair.items[0].toString();
@@ -32,17 +32,17 @@ static this()
             dict[key] = value;
         }
 
-        return context;
+        return ExitCode.Success;
     };
-    dictCommands["unset"] = function (string path, Context context)
+    dictMethods["unset"] = function (Item object, string path, Input input, Output output)
     {
         /*
         > dict (a = 10) | as d
         > unset $d a
         */
-        auto dict = context.pop!Dict();
+        auto dict = cast(Dict)object;
 
-        foreach (argument; context.items)
+        foreach (argument; input.popAll)
         {
             string key;
             if (argument.type != ObjectType.List)
@@ -62,9 +62,9 @@ static this()
             }
         }
 
-        return context;
+        return ExitCode.Success;
     };
-    dictCommands["get"] = function (string path, Context context)
+    dictMethods["get"] = function (Item object, string path, Input input, Output output)
     {
         /*
         > dict (a = 30) | as d
@@ -72,8 +72,8 @@ static this()
         > print $a
         30
         */
-        Dict dict = context.pop!Dict();
-        Items items = context.items;
+        auto dict = cast(Dict)object;
+        Items items = input.popAll;
 
         auto lastKey = items.back.toString();
         items.popBack();
@@ -82,36 +82,33 @@ static this()
         if (innerDict is null)
         {
             auto msg = "Key `" ~ to!string(items.map!(x => x.toString()).join(".")) ~ "." ~ lastKey ~ "` not found";
-            return context.error(msg, ErrorCode.NotFound, "dict");
+            throw new NotFoundException(
+                input.escopo, msg, -1, dict
+            );
         }
 
-        try
-        {
-            return context.push(innerDict[lastKey]);
-        }
-        catch (Exception ex)
-        {
-            return context.error(ex.msg, ErrorCode.NotFound, "dict");
-        }
+        output.push(innerDict[lastKey]);
+        return ExitCode.Success;
     };
-    dictCommands["."] = dictCommands["get"];
-    dictCommands["keys"] = function (string path, Context context)
+    dictMethods["."] = dictMethods["get"];
+    dictMethods["keys"] = function (Item object, string path, Input input, Output output)
     {
-        Dict dict = context.pop!Dict();
-        return context.push(new List(
+        auto dict = cast(Dict)object;
+        output.push(new List(
             cast(Items)(dict.order
             .map!(x => new String(x))
             .array)
         ));
+        return ExitCode.Success;
     };
-    dictCommands["pairs"] = function (string path, Context context)
+    dictMethods["pairs"] = function (Item object, string path, Input input, Output output)
     {
-        Dict dict = context.pop!Dict();
-        foreach (key; dict.order)
+        auto dict = cast(Dict)object;
+        foreach (key, _; dict)
         {
             auto value = dict[key];
-            context.push(new Pair([new String(key), value]));
+            output.push(new Pair([new String(key), value]));
         }
-        return context;
+        return ExitCode.Success;
     };
 }

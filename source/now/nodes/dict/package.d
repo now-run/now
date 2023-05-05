@@ -1,10 +1,10 @@
 module now.nodes.dict;
 
 
-import now.nodes;
+import now;
 
 
-CommandsMap dictCommands;
+MethodsMap dictMethods;
 
 
 class Dict : Item
@@ -16,8 +16,8 @@ class Dict : Item
     this()
     {
         this.type = ObjectType.Dict;
-        this.commands = dictCommands;
         this.typeName = "dict";
+        this.methods = dictMethods;
     }
     this(Item[string] values)
     {
@@ -32,6 +32,7 @@ class Dict : Item
     // Conversions
     override string toString()
     {
+        // TODO: call `asPairs` and print them instead:
         string s = "dict " ~ to!string(
             order
                 .map!(key => "(" ~ key ~ " = " ~ values[key].toString() ~ ")")
@@ -42,14 +43,17 @@ class Dict : Item
 
     // ------------------
     // Operators
-    Item opIndex(string k)
+    Item opIndex(string key)
     {
-        auto v = values.get(k, null);
-        if (v is null)
+        auto value = values.get(key, null);
+        if (value is null)
         {
-            throw new NotFoundException("key " ~ k ~ " not found");
+            throw new NotFoundException(
+                null,
+                "key " ~ key ~ " not found"
+            );
         }
-        return v;
+        return value;
     }
     // d[["a", "b", "c"]]
     Item opIndex(string[] keys)
@@ -57,14 +61,14 @@ class Dict : Item
         auto pivot = this;
         foreach (key; keys)
         {
-            auto nextDict = (key in pivot.values);
+            auto nextDict = pivot.get(key, null);
             if (nextDict is null)
             {
                 return null;
             }
             else
             {
-                pivot = cast(Dict)pivot[key];
+                pivot = cast(Dict)nextDict;
             }
         }
         return pivot;
@@ -79,28 +83,18 @@ class Dict : Item
         {
             isNumeric = false;
         }
-        debug {stderr.writeln(" dict[", k, "] = ", to!string(v));}
         values[k] = v;
 
-        // XXX: this seems kinda expensive:
-        string[] newOrder;
-        foreach (key; order)
-        {
-            if (key != k)
-            {
-                newOrder ~= key;
-            }
-        }
-        newOrder ~= k;
-        this.order = newOrder;
+        order = order.filter!(v => v != k).array;
+        order ~= k;
     }
     void opIndexAssign(Item v, string[] keys)
     {
         auto pivot = this;
         foreach (key; keys[0..$-1])
         {
-            auto nextDictPtr = (key in pivot.values);
-            if (nextDictPtr is null)
+            auto d = pivot.get(key, null);
+            if (d is null)
             {
                 auto nextDict = new Dict();
                 pivot[key] = nextDict;
@@ -108,36 +102,119 @@ class Dict : Item
             }
             else
             {
-                pivot = cast(Dict)(*nextDictPtr);
+                pivot = cast(Dict)d;
             }
         }
         pivot[keys[$-1]] = v;
     }
+    void opIndexAssign(Items items, string k)
+    {
+        this[k] = new Sequence(items);
+    }
 
+    // --------------------------------------
+    // "getters":
+    Item get(string key, Item defaultValue)
+    {
+        Item value = values.get(key, null);
+        if (value is null)
+        {
+            return defaultValue;
+        }
+        else
+        {
+            return value;
+        }
+    }
     template get(T)
     {
-        T get(string key, T delegate(Dict) defaultValue)
+        T get(string key)
         {
-            auto valuePtr = (key in values);
-            if (valuePtr !is null)
+            Item value = this[key];
+            static if (__traits(hasMember, T, "typeName"))
             {
-                Item value = *valuePtr;
                 return cast(T)value;
+            }
+            else
+            {
+                return __traits(getMember, this, "to" ~ capitalize(T.stringof))();
+            }
+        }
+        T get(string key, T defaultValue)
+        {
+            Item value = get(key, null);
+            if (value !is null)
+            {
+                static if (__traits(hasMember, T, "typeName"))
+                {
+                    return cast(T)value;
+                }
+                else
+                {
+                    return __traits(getMember, this, "to" ~ capitalize(T.stringof))();
+                }
+            }
+            else
+            {
+                return defaultValue;
+            }
+        }
+        T get(string[] keys, T defaultValue)
+        {
+            Dict pivot = this;
+            foreach (key; keys[0..$-1])
+            {
+                auto item = pivot.get(key, null);
+                if (item !is null)
+                {
+                    if (item.type != ObjectType.Dict)
+                    {
+                        throw new Exception(
+                            "Cannot index "
+                            ~ item.type.to!string
+                            ~ " (" ~ item.toString() ~ ")"
+                            ~ " on key " ~ key
+                        );
+                    }
+                    pivot = cast(Dict)item;
+                }
+                else
+                {
+                    return defaultValue;
+                }
+            }
+            static if (__traits(hasMember, T, "typeName"))
+            {
+                return cast(T)(pivot[keys[$-1]]);
+            }
+            else
+            {
+                return __traits(getMember, pivot[keys[$-1]], "to" ~ capitalize(T.stringof))();
+            }
+        }
+    }
+    template getOr(T)
+    {
+        T getOr(string key, T delegate(Dict) defaultValue)
+        {
+            T value = get!T(key, null);
+            if (value !is null)
+            {
+                return value;
             }
             else
             {
                 return defaultValue(this);
             }
         }
-        T get(string[] keys, T delegate(Dict) defaultValue)
+        T getOr(string[] keys, T delegate(Dict) defaultValue)
         {
             Dict pivot = this;
             foreach (key; keys[0..$-1])
             {
-                auto pivotPtr = (key in pivot.values);
-                if (pivotPtr !is null)
+                auto item = pivot.get(key, null);
+                if (pivot !is null)
                 {
-                    auto item = *pivotPtr;
                     if (item.type != ObjectType.Dict)
                     {
                         throw new Exception(
@@ -154,7 +231,14 @@ class Dict : Item
                     return defaultValue(this);
                 }
             }
-            return cast(T)(pivot[keys[$-1]]);
+            static if (__traits(hasMember, T, "typeName"))
+            {
+                return cast(T)(pivot[keys[$-1]]);
+            }
+            else
+            {
+                return (pivot[keys[$-1]]).to!T;
+            }
         }
     }
 
@@ -162,7 +246,7 @@ class Dict : Item
     {
         T getOrCreate(string key)
         {
-            return this.get!T(
+            return this.getOr!T(
                 key,
                 delegate (Dict d) {
                     auto newItem = new T();
@@ -184,28 +268,14 @@ class Dict : Item
 
     void on(string key, void delegate(Item) callback, void delegate() neCallback)
     {
-        auto valuePtr = (key in values);
-        if (valuePtr !is null)
+        auto value = get(key, null);
+        if (value !is null)
         {
-            Item value = *valuePtr;
             callback(value);
         }
         else
         {
             neCallback();
-        }
-    }
-    Item getOrNull(string key)
-    {
-        auto valuePtr = (key in values);
-        if (valuePtr !is null)
-        {
-            Item value = *valuePtr;
-            return value;
-        }
-        else
-        {
-            return null;
         }
     }
 
@@ -215,7 +285,7 @@ class Dict : Item
         foreach (item; items)
         {
             string key = item.toString();
-            auto nextDict = (key in pivot.values);
+            auto nextDict = pivot.get(key, null);
             if (nextDict is null)
             {
                 if (autoCreate)
@@ -231,7 +301,7 @@ class Dict : Item
             }
             else
             {
-                pivot = cast(Dict)pivot[key];
+                pivot = cast(Dict)nextDict;
             }
         }
         return pivot;
@@ -243,26 +313,47 @@ class Dict : Item
         this.order = this.order.filter!(x => x != key).array;
     }
 
-    override Context evaluate(Context context)
+    // Operator for `foreach (key, value; dict) {...}`
+    // TODO test it!
+    int opApply(scope int delegate(ref string, ref Item) dg)
+    {
+        foreach (key; this.order)
+        {
+            auto value = this.values[key];
+            int result = dg(key, value);
+            if (result) return result;
+        }
+        return 0;
+    }
+
+    void update(Dict other)
+    {
+        foreach (k, v; other)
+        {
+            this[k] = v;
+        }
+    }
+
+    override Items evaluate(Escopo escopo)
     {
         if (order.length > 0 && isNumeric)
         {
-            return evaluateAsList(context);
+            return evaluateAsList(escopo);
         }
         else
         {
-            return evaluateAsDict(context);
+            return evaluateAsDict(escopo);
         }
     }
 
-    Context evaluateAsDict(Context context)
+    Items evaluateAsDict(Escopo escopo)
     {
-        return super.evaluate(context);
+        return super.evaluate(escopo);
     }
 
-    Context evaluateAsList(Context context)
+    Items evaluateAsList(Escopo escopo)
     {
-        return context.push(this.asList());
+        return [this.asList()];
     }
 
     List asList()
@@ -289,28 +380,19 @@ class SectionDict : Dict
         super(values);
     }
 
-    override Context evaluateAsDict(Context context)
+    override Items evaluateAsDict(Escopo escopo)
     {
         // We need to evaluate each value, here, since
         // they weren't evaluated normally before.
         auto d = new Dict();
         foreach (key, value; values)
         {
-            auto newContext = context.next();
-            newContext = value.evaluate(newContext);
-            if (newContext.exitCode == ExitCode.Failure)
-            {
-                return newContext;
-            }
-            // XXX: but what if an item evaluates to a sequence?
-            d[key] = newContext.pop();
-            debug {stderr.writeln("  d[", key, "] = ", d[key]);}
+            // XXX: if more than one Item is returned, it's totally ignored...
+            d[key] = value.evaluate(escopo).front;
         }
-        debug {stderr.writeln("    Result:", d);}
-        context.push(d);
-        return context;
+        return [d];
     }
-    override Context evaluateAsList(Context context)
+    override Items evaluateAsList(Escopo escopo)
     {
         // We need to evaluate each value, here, since
         // they weren't evaluated normally before.
@@ -318,14 +400,9 @@ class SectionDict : Dict
         foreach (key; this.order)
         {
             auto value = this.values[key];
-            context = value.evaluate(context);
-            if (context.exitCode == ExitCode.Failure)
-            {
-                return context;
-            }
-            items ~= context.pop();
+            // TODO: when output.push(Sequence), expand all Items in it!
+            items ~= value.evaluate(escopo);
         }
-        context.push(new List(items));
-        return context;
+        return [new List(items)];
     }
 }

@@ -4,11 +4,12 @@ module now.grammar;
 import std.algorithm : among, canFind;
 import std.math : pow;
 
-import now.conv;
-import now.exceptions;
 import now.nodes;
 import now.parser;
 
+
+const PIPE = '|';
+const METHOD_SELECTOR = ':';
 
 // Integers units:
 uint[char] units;
@@ -27,11 +28,11 @@ class NowParser : Parser
     {
         super(code);
     }
-    Program run()
+    Document run()
     {
         try
         {
-            return consumeProgram();
+            return consumeDocument();
         }
         catch(Exception ex)
         {
@@ -45,37 +46,40 @@ class NowParser : Parser
         }
     }
 
-    Program consumeProgram()
+    Document consumeDocument()
     {
-        auto p = new Program();
-
         /*
         hashbang line...
         */
+        log("% consumeDocument");
         while (currentChar == '#')
         {
             consumeLine();
+            consumeWhitespaces();
         }
-        consumeWhitespaces();
 
-        auto title = consumeSectionHeaderAsTitle();
+        auto title = consumeSectionHeaderAsString();
+        log("% title=", title);
         auto metadataSection = consumeSection();
-        metadataSection["title"] = title;
-        metadataSection["description"] = metadataSection.get!String(
-            "body",
-            delegate (Dict d)
-            {
-                return new String("");
-            }
-        );
-        p["document"] = metadataSection;
+        log("% metadataSection=", metadataSection);
+
+        auto description = metadataSection.get!string("body");
+        log("% description=", description);
+        auto metadata = metadataSection;
+        log("% metadata=", metadata);
+        // TESTE:
+        auto x = cast(Dict)metadata;
+        log("% x=", x);
+        auto document = new Document(title, description, cast(Dict)metadata);
 
         consumeWhitespaces();
 
         // Now read the other sections:
+        log("% Parsing remaining sections...");
         while (!eof)
         {
             auto section_path = consumeSectionHeader();
+            log("%% section_path: ", section_path);
             if (section_path[0].toString()[0] == '#')
             {
                 // Consume the section ignoring it completely
@@ -92,39 +96,30 @@ class NowParser : Parser
                 }
                 continue;
             }
-            auto subDict = p.navigateTo(section_path[0..$-1]);
+            auto subDict = document.data.navigateTo(section_path[0..$-1]);
+            log("%% subDict: ", subDict);
             auto key = section_path[$-1].toString();
             auto value = consumeSection();
+            log("%% key: ", key);
 
-            subDict.on(key, delegate (item) {
-                debug {stderr.writeln(
-                    "key ", key, " already exists in ", section_path,
-                    " and has type:", item.type
-                );}
-                // If the key EXISTS:
-                auto existentDict = cast(Dict)item;
-                foreach (subKey, subValue; value.values)
-                {
-                    // Here it is okay to overwrite
-                    existentDict[subKey] = subValue;
-                }
-            }, delegate () {
-                debug {stderr.writeln(
-                    "key ", key, " is new."
-                );}
-                // If the key doesn't exist yet:
+            auto currentValue = subDict.get(key, null);
+            log("%% currentValue: ", currentValue);
+            if (currentValue is null)
+            {
                 subDict[key] = value;
-            });
+            }
+            else
+            {
+                assert (currentValue.type == ObjectType.Dict);
+                auto existentDict = cast(Dict)currentValue;
+                existentDict.update(value);
+            }
             consumeWhitespaces();
         }
 
-        debug {
-            stderr.writeln("p[document]: ", p["document"]);
-        }
-
-        return p;
+        return document;
     }
-    String consumeSectionHeaderAsTitle()
+    string consumeSectionHeaderAsString()
     {
         auto opener = consumeChar();
         if (opener != '[')
@@ -143,15 +138,11 @@ class NowParser : Parser
                 ~ ")"
             );
         }
-        return new String(title);
+        return title;
     }
     Items consumeSectionHeader()
     {
         Items items;
-
-        debug {
-            stderr.writeln("   consumeSectionHeader: " ~ currentChar);
-        }
 
         auto opener = consumeChar();
         if (opener != '[')
@@ -194,9 +185,6 @@ class NowParser : Parser
     }
     SectionDict consumeSection()
     {
-        debug {
-            stderr.writeln("consumeSection");
-        }
         // No whitespaces after the header!
 
         /*
@@ -215,13 +203,9 @@ class NowParser : Parser
 
         consumeWhitespaces();
 
-        debug {
-            stderr.writeln(" consumeSection: currentChar: " ~ currentChar);
-        }
         // After a newline, it's
         // i) another section header or
-        // ii) a section body, that we're not assuming
-        //     to be a SubProgram just yet.
+        // ii) a section body.
         string body = "";
         if (currentChar != '[')
         {
@@ -257,9 +241,6 @@ class NowParser : Parser
     }
     SectionDict consumeSectionDict()
     {
-        debug {
-            stderr.writeln("consumeSectionDict");
-        }
         /*
         section dict:
         key value EOL
@@ -283,11 +264,6 @@ class NowParser : Parser
             auto key = consumeAtom();
 
             consumeWhitespace();
-
-            debug {
-                stderr.writeln(" consumeSectionDict: key: " ~ key.toString());
-                stderr.writeln("             currentChar: " ~ currentChar);
-            }
 
             Item value;
             if (currentChar == '{')
@@ -322,11 +298,9 @@ class NowParser : Parser
             }
         }
 
-        debug {
-            stderr.writeln(" /consumeSectionDict: currentChar: " ~ currentChar);
-        }
         return dict;
     }
+
     Item consumeInlineSectionDict()
     {
         /*
@@ -337,9 +311,6 @@ class NowParser : Parser
             key2 value2
         }>
         */
-        debug {
-            stderr.writeln("consumeInlineSectionDict: " ~ currentChar);
-        }
         auto inlineOpener = consumeChar();
         if (currentChar != '{')
         {
@@ -359,29 +330,25 @@ class NowParser : Parser
         return dict;
     }
 
+    // ---------------------------
+    // Nodes
+    // ---------------------------
+
     SubProgram consumeSubProgram()
     {
         Pipeline[] pipelines;
 
-        debug {
-            stderr.writeln("consumeSubProgram: " ~ currentChar);
-        }
-
         consumeWhitespaces();
 
-        while(!isStopper)
+        while(!isBlockCloser)
         {
             pipelines ~= consumePipeline();
 
             /*
             Pipelines can't begin with '['. If that's
             the case, we just found a new section header.
-            (Besides, no need to consumeWhitespaces here,
-            since section headers always begin in col 0. We
-            only use it to consume empty lines.)
             */
             consumeWhitespaces();
-
             if (currentChar == '[')
             {
                 break;
@@ -393,22 +360,26 @@ class NowParser : Parser
 
     Pipeline consumePipeline()
     {
-        CommandCall[] commands;
-
-        debug {
-            stderr.writeln("   consumePipeline: ", currentChar);
-        }
+        CommandCall[] commandCalls;
 
         consumeWhitespaces();
 
-        while (!isEndOfLine && !isStopper)
+        while (!isEndOfLine && !isBlockCloser)
         {
-            auto command = consumeCommandCall();
-            commands ~= command;
+            auto commandCall = consumeCommandCall();
+            commandCalls ~= commandCall;
 
-            if (currentChar == PIPE) {
+            if (currentChar == PIPE)
+            {
                 consumeChar();
                 consumeSpace();
+            }
+            else if (currentChar == METHOD_SELECTOR)
+            {
+                consumeChar();
+                consumeSpace();
+                // Mark the command as a target:
+                commandCall.isTarget = true;
             }
             else
             {
@@ -417,39 +388,36 @@ class NowParser : Parser
         }
 
         if (isEndOfLine && !eof) consumeChar();
-        return new Pipeline(commands, line);
+        return new Pipeline(commandCalls, line);
     }
 
     CommandCall consumeCommandCall()
     {
-        debug {
-            stderr.writeln("   consumeCommandCall: ", currentChar);
-        }
-
         // inline transform/foreach:
         if (currentChar == '{')
         {
             CommandCall nextCall = foreachInline();
             if (!isEndOfLine)
             {
-                debug {
-                    stderr.writeln("     transform.inline");
-                }
                 // Whops! It's not a foreach.inline, but a transform.inline!
                 nextCall.name = "transform.inline";
                 consumeWhitespaces();
             }
-            else
-            {
-                debug {
-                    stderr.writeln("     foreach.inline");
-                }
-            }
             return nextCall;
         }
 
-        NameAtom commandName = cast(NameAtom)consumeAtom();
-        Item[] arguments;
+        /*
+        > ls /opt -- (size_format = h)
+            (args -- kwargs)
+        */
+
+        // TODO: allow using References, like:
+        // > $dict | get key | print
+        Name commandName = cast(Name)consumeAtom();
+        Items args;
+        Items kwargs;
+
+        bool readingKwArgs = false;
 
         // That is: if the command HAS any argument:
         while (true)
@@ -461,23 +429,41 @@ class NowParser : Parser
                 if (currentChar == '.')
                 {
                     consumeChar();
-                    consumeSpace();
-                    arguments ~= consumeItem();
-                    continue;
+                    // consumeSpace();
                 }
                 else
                 {
                     break;
                 }
             }
-            else if (currentChar == SPACE)
+
+            if (currentChar == SPACE)
             {
                 consumeSpace();
-                if (currentChar.among!('}', ']', ')', '>', PIPE))
+                if (currentChar.among!('}', ']', ')', '>', PIPE, METHOD_SELECTOR))
                 {
                     break;
                 }
-                arguments ~= consumeItem();
+                auto arg = consumeItem();
+                // log("%% arg:", arg, ":", arg.type);
+                if (arg.type == ObjectType.Name && arg.toString() == "--")
+                {
+                    // XXX: what if the memory allocator reallocates
+                    // the array? Are `bucket` and `kwargs` going
+                    // to point to two different places or not?
+                    readingKwArgs = true;
+                    continue;
+                }
+
+                // Collect the arg/kwarg:
+                if (readingKwArgs)
+                {
+                    kwargs ~= arg;
+                }
+                else
+                {
+                    args ~= arg;
+                }
             }
             else
             {
@@ -485,18 +471,15 @@ class NowParser : Parser
             }
         }
 
-        return new CommandCall(commandName.toString(), arguments);
+        return new CommandCall(commandName.toString(), args, kwargs);
     }
     CommandCall foreachInline()
     {
-        return new CommandCall("foreach.inline", [consumeSubList()]);
+        return new CommandCall("foreach.inline", [consumeSubList()], []);
     }
 
     Item consumeItem()
     {
-        debug {
-            stderr.writeln("   consumeItem: ", currentChar);
-        }
         switch(currentChar)
         {
             case '{':
@@ -612,19 +595,19 @@ class NowParser : Parser
         auto open = consumeChar();
         assert(open == '(');
 
-        if (currentChar != ')')
-        {
-            items ~= consumeItem();
-        }
         while (currentChar != ')')
         {
-            consumeWhitespaces();
             items ~= consumeItem();
+            if (isWhitespace)
+            {
+                consumeWhitespaces();
+            }
         }
 
         auto close = consumeChar();
         assert(close == ')');
 
+        log("%% List.items: ", items);
         return new List(items);
     }
 
@@ -678,7 +661,7 @@ class NowParser : Parser
                         consumeChar();
                     }
 
-                    parts ~= new SubstAtom(token);
+                    parts ~= new Reference(token);
                     hasSubstitution = true;
                 }
                 else
@@ -742,12 +725,10 @@ class NowParser : Parser
 
         if (hasSubstitution)
         {
-            debug {stderr.writeln("new SubstString: ", parts);}
             return new SubstString(parts);
         }
         else if (parts.length == 1)
         {
-            debug {stderr.writeln("new String: ", parts);}
             return cast(String)(parts[0]);
         }
         else
@@ -769,7 +750,7 @@ class NowParser : Parser
         {
             isNumber = false;
             isSubst = true;
-            // Do NOT add `$` to the SubstAtom.
+            // Do NOT add `$` to the Reference.
             consumeChar();
         }
         // -2
@@ -788,14 +769,6 @@ class NowParser : Parser
             {
                 dotCounter++;
             }
-            /*
-            else if (currentChar == '(')
-            {
-                // $(1 + 2 + 4)
-                List list = consumeList();
-                return list.infixProgram();
-            }
-            */
             else if (currentChar >= 'A' && currentChar <= 'Z')
             {
                 uint* p = (currentChar in units);
@@ -813,7 +786,7 @@ class NowParser : Parser
                     break;
                 }
             }
-            else if (token.length && STOPPERS.canFind(currentChar))
+            else if (token.length && isBlockCloser)
             {
                 break;
             }
@@ -824,10 +797,7 @@ class NowParser : Parser
             token ~= consumeChar();
         }
 
-        debug {stderr.writeln(" token: ", token);}
-
         string s = cast(string)token;
-        debug {stderr.writeln(" s: ", s);}
 
         // 123
         // .2
@@ -840,7 +810,7 @@ class NowParser : Parser
             // (a dash, alone)
             if (s == "-" || s == ".")
             {
-                return new NameAtom(s);
+                return new Name(s);
             }
             else if (dotCounter == 0)
             {
@@ -860,17 +830,11 @@ class NowParser : Parser
                     }
                 }
 
-                debug {
-                    stderr.writeln(
-                        "new IntegerAtom: <", s, "> * ", multiplier
-                    );
-                }
-                return new IntegerAtom(s.to!int * multiplier);
+                return new Integer(s.to!int * multiplier);
             }
             else if (dotCounter == 1)
             {
-                debug {stderr.writeln("new FloatAtom: ", s);}
-                return new FloatAtom(s.to!float);
+                return new Float(s.to!float);
             }
             else
             {
@@ -882,8 +846,7 @@ class NowParser : Parser
         }
         else if (isSubst)
         {
-            debug {stderr.writeln("new SubstAtom: ", s);}
-            return new SubstAtom(s);
+            return new Reference(s);
         }
 
         // Handle hexadecimal format, like 0xabcdef
@@ -891,24 +854,18 @@ class NowParser : Parser
         {
             // XXX: should we handle FormatException, here?
             auto result = toLong(s);
-            debug {stderr.writeln("new IntegerAtom: ", result);}
-            return new IntegerAtom(result);
+            return new Integer(result);
         }
 
         // Names that are boolean:
         switch (s)
         {
             case "true":
-            case "yes":
-                debug {stderr.writeln("new BooleanAtom(true)");}
-                return new BooleanAtom(true);
+                return new Boolean(true);
             case "false":
-            case "no":
-                debug {stderr.writeln("new BooleanAtom(false)");}
-                return new BooleanAtom(false);
+                return new Boolean(false);
             default:
-                debug {stderr.writeln("new NameAtom: ", s);}
-                return new NameAtom(s);
+                return new Name(s);
         }
 
     }

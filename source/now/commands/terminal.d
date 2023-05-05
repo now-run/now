@@ -1,6 +1,7 @@
 module now.commands.terminal;
 
-import now.nodes;
+
+import now;
 
 
 extern(C) int isatty(int);
@@ -17,7 +18,7 @@ auto bgPrefix = "\033[48;2;";
 auto ansiResetCode = "\033[0m";
 
 
-Context printColor(int red, int green, int blue, Context context)
+ExitCode printColor(int red, int green, int blue, Input input)
 {
     if (isTTY)
     {
@@ -28,52 +29,58 @@ Context printColor(int red, int green, int blue, Context context)
             blue.to!string, "m"
         );
     }
-    while(context.size) stdout.write(context.pop!string());
+    foreach (item; input.args)
+    {
+        stdout.write(item.toString);
+    }
     if (isTTY)
     {
         stdout.write(ansiResetCode);
     }
     stdout.writeln();
-    return context;
+    return ExitCode.Success;
 }
 
 
 void loadTerminalCommands(CommandsMap commands)
 {
     // print.color red "ERROR"
-    commands["print.red"] = function (string path, Context context)
+    commands["print.red"] = function (string path, Input input, Output output)
     {
-        return printColor(255, 0, 0, context);
+        return printColor(255, 0, 0, input);
     };
-    commands["print.green"] = function (string path, Context context)
+    commands["print.green"] = function (string path, Input input, Output output)
     {
-        return printColor(0, 255, 0, context);
+        return printColor(0, 255, 0, input);
     };
 
-    commands["print.gray"] = function (string path, Context context)
+    commands["print.gray"] = function (string path, Input input, Output output)
     {
-        return printColor(120, 120, 120, context);
+        return printColor(120, 120, 120, input);
     };
-    commands["print.blue"] = function (string path, Context context)
+    commands["print.blue"] = function (string path, Input input, Output output)
     {
-        return printColor(0, 255, 255, context);
+        return printColor(0, 255, 255, input);
     };
-    commands["print.yellow"] = function (string path, Context context)
+    commands["print.yellow"] = function (string path, Input input, Output output)
     {
-        return printColor(255, 255, 0, context);
+        return printColor(255, 255, 0, input);
     };
-    commands["print.emphasis"] = function (string path, Context context)
+    commands["print.emphasis"] = function (string path, Input input, Output output)
     {
         if (isTTY)
         {
             stdout.write(reverseVideo);
         }
-        while(context.size) stdout.write(context.pop!string());
+        foreach (item; input.args)
+        {
+            stdout.write(item.toString);
+        }
         if (isTTY)
         {
             stdout.write(ansiResetCode);
         }
         stdout.writeln();
-        return context;
+        return ExitCode.Success;
     };
 }

@@ -1,8 +1,9 @@
 module now.pipeline;
 
+
 import core.exception : RangeError;
 
-import now.nodes;
+import now;
 
 
 class Pipeline
@@ -33,56 +34,46 @@ class Pipeline
         return s;
     }
 
-    Context run(Context context)
+    ExitCode run(Escopo escopo, Output output)
     {
-        debug {stderr.writeln("Running Pipeline: ", this);}
+        return run(escopo, output, []);
+    }
+    ExitCode run(Escopo escopo, Output output, Items inputs)
+    {
+        CommandCall lastCommandCall = null;
+        Item target;
+        ExitCode exitCode;
 
-        void printStatus(Context context, CommandCall command)
+        if (inputs is null)
         {
-            stderr.writeln(
-                "Exception: Pipeline=", this,
-                " context=", context,
-                " command_call=", command
-            );
+            inputs = [];
         }
 
-        foreach(index, command; commandCalls)
+        auto cmdOutput = new Output;
+
+        foreach(index, commandCall; commandCalls)
         {
-            debug {stderr.writeln(command.name, ">run:", context.size, "/", context.inputSize);}
-            try
+            if (lastCommandCall !is null)
             {
-                context = command.run(context);
+                if (lastCommandCall.isTarget)
+                {
+                    log("-- lastCommandCall ", lastCommandCall, " is target");
+                    target = cmdOutput.pop;
+                }
+                else
+                {
+                    log("-- lastCommandCall ", lastCommandCall, " is not target");
+                    target = null;
+                }
             }
-            catch (Exception ex)
-            {
-                printStatus(context, command);
-                return context.error(
-                    "Exception: " ~ ex.to!string,
-                    ErrorCode.InternalError,
-                    "", null
-                );
-            }
-            catch (RangeError ex)
-            {
-                printStatus(context, command);
-                return context.error(
-                    "RangeError: " ~ ex.to!string,
-                    ErrorCode.InternalError,
-                    "", null
-                );
-            }
-            debug {stderr.writeln(command.name, ">run.exitCode:", context.exitCode);}
-            debug {stderr.writeln(command.name, ">context.size:", context.size);}
 
-            final switch(context.exitCode)
-            {
-                case ExitCode.Undefined:
-                    return context.error(
-                        to!string(command) ~ " returned Undefined",
-                        ErrorCode.InternalError,
-                        ""
-                    );
+            // Run the command!
+            cmdOutput.items.length = 0;
+            exitCode = commandCall.run(escopo, inputs, cmdOutput, target);
+            log("- Pipeline <- ", exitCode, " <- ", cmdOutput);
 
+            final switch(exitCode)
+            {
                 // -----------------
                 // Proc execution:
                 case ExitCode.Return:
@@ -90,29 +81,35 @@ class Pipeline
                     // Return should keep stopping SubPrograms
                     // until a procedure or a program stops.
                     // (Imagine a `return` inside some nested loops.)
-                    return context;
-
-                case ExitCode.Failure:
-                    // Failures, for now, are going to be propagated:
-                    return context;
+                    return exitCode;
 
                 // -----------------
                 // Loops:
                 case ExitCode.Break:
                 case ExitCode.Continue:
                 case ExitCode.Skip:
-                    // TODO: check if this will affect anything:
-                    context.inputSize = context.size;
-                    return context;
+                    return exitCode;
 
-                // -----------------
+                /*
+                Together with Return, this
+                should be the most common
+                exit code.
+                The meaning here is simple: just
+                proceed to the next command in
+                this pipeline, if present.
+                */
                 case ExitCode.Success:
-                    context.inputSize = context.size;
+                    lastCommandCall = commandCall;
                     break;
             }
+
+            // Before going to the next commandCall:
+            inputs = cmdOutput.items;
         }
 
-        context.exitCode = ExitCode.Success;
-        return context;
+        // Whatever is left in cmdOutput goes to output, now:
+        output.items ~= cmdOutput.items;
+
+        return exitCode;
     }
 }

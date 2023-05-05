@@ -1,8 +1,9 @@
 module now.commands.yaml;
 
+
 import std.string : rightJustify, tr;
 
-import now.nodes;
+import now;
 import now.parser;
 
 
@@ -242,7 +243,7 @@ class YamlParser : Parser
         long indentation;
         while (!eof)
         {
-            indentation = consumeBlankspaces();
+            indentation = consumeWhitespaces();
             if (currentChar == '\n')
             {
                 consumeChar();
@@ -310,7 +311,7 @@ class YamlParser : Parser
         */
 
         bool isKey = false;
-        currentIndentation += consumeBlankspaces();
+        currentIndentation += consumeWhitespaces();
 
         string s;
         if (currentChar.among('"', '\''))
@@ -384,12 +385,12 @@ string ItemToYaml(Item item, long indentLevel=0, Item parent=null, bool strict=f
             return " " ~ item.toBool().to!string();
 
         case ObjectType.Integer:
-            return " " ~ item.toInt().to!string();
+            return " " ~ item.toLong().to!string();
 
         case ObjectType.Float:
             return " " ~ item.toFloat().to!string();
 
-        case ObjectType.Atom:
+        case ObjectType.Name:
         case ObjectType.String:
             auto s = item.toString();
             if (s == "<NULL>")
@@ -451,22 +452,22 @@ string ItemToYaml(Item item, long indentLevel=0, Item parent=null, bool strict=f
 
 void loadYamlCommands(CommandsMap commands)
 {
-    commands["yaml.decode"] = function (string path, Context context)
+    commands["yaml.decode"] = function (string path, Input input, Output output)
     {
-        foreach (item; context.items)
+        foreach (item; input.popAll)
         {
             auto s = item.toString();
             auto parser = new YamlParser(s);
-            context.push(parser.run());
+            output.push(parser.run());
         }
-        return context;
+        return ExitCode.Success;
     };
-    commands["yaml.encode"] = function (string path, Context context)
+    commands["yaml.encode"] = function (string path, Input input, Output output)
     {
-        foreach (item; context.items)
+        foreach (item; input.popAll)
         {
-            context.push(ItemToYaml(item));
+            output.push(ItemToYaml(item));
         }
-        return context;
+        return ExitCode.Success;
     };
 }

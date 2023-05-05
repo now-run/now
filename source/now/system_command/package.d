@@ -1,14 +1,14 @@
 module now.system_command;
 
+
+import std.algorithm.mutation : stripRight;
 import std.process;
 import std.stdio : readln;
-// import std.string;
-import std.algorithm.mutation : stripRight;
 
-import now.nodes;
+import now;
 
 
-CommandsMap systemProcessCommands;
+MethodsMap systemProcessMethods;
 
 
 class SystemCommand : BaseCommand
@@ -44,16 +44,7 @@ class SystemCommand : BaseCommand
             // check if the requested command is available.
         });
 
-        try
-        {
-            auto c = info["command"];
-        }
-        catch (Exception ex)
-        {
-            // do nothing
-        }
-
-        auto cmdItem = info.get(
+        auto cmdItem = info.getOr(
             "command",
             delegate (d) {
                 throw new Exception(
@@ -63,85 +54,55 @@ class SystemCommand : BaseCommand
                 return cast(Item)null;
             }
         );
-        if (cmdItem.type == ObjectType.List)
+        switch (cmdItem.type)
         {
-            this.command = cast(List)cmdItem;
-        }
-        else if (cmdItem.type == ObjectType.Dict)
-        {
-            this.command = (cast(Dict)cmdItem).asList();
-        }
-        else
-        {
-            throw new Exception(
-                "commands/" ~ name
-                ~ ".command must be a list"
-            );
+            case ObjectType.List:
+                this.command = cast(List)cmdItem;
+                break;
+            case ObjectType.Dict:
+                this.command = (cast(Dict)cmdItem).asList();
+                break;
+            default:
+                throw new Exception(
+                    "commands/" ~ name
+                    ~ ".command must be a list"
+                );
         }
 
         /*
         Option prefix and key/value separator follows
         GNU conventions by default ("--key=value").
         */
-        this.optionPrefix = info.get!String(
-            "option_prefix",
-            delegate (Dict d) {
-                auto prefix = new String("--");
-                d["option_prefix"] = prefix;
-                return prefix;
-            }
-        ).toString();
-        this.keyValueSeparator = info.get!String(
-            "key_value_separator",
-            delegate (Dict d) {
-                auto separator = new String("=");
-                d["key_value_separator"] = separator;
-                return separator;
-            }
-        ).toString();
-
-        this.workdir = info.get!Item(
-            "workdir",
-            delegate (Dict d) {
-                return cast(Item)null;
-            }
-        );
+        this.optionPrefix = info.get!string("option_prefix", "--");
+        this.keyValueSeparator = info.get!string("key_value_separator", "=");
+        this.workdir = info.get("workdir", cast(Item)null);
     }
 
-    override Context doRun(string name, Context context)
+    override ExitCode doRun(string name, Input input, Output output)
     {
         Item inputStream;
         string[] arguments;
 
         // We need this because we support event handling:
-        context.escopo.rootCommand = this;
+        input.escopo.rootCommand = this;
 
-        debug {
-            stderr.writeln("xxx SystemCommand ", name);
-            stderr.writeln("xxx   context.inputSize: ", context.inputSize);
-        }
-        if (context.inputSize == 1)
+        // Inputs:
+        if (input.inputs.length == 1)
         {
-            arguments = context.pop(context.size - 1, "SystemCommand arguments")
-                .map!(x => to!string(x)).array;
-            inputStream = context.pop("SystemCommand inputStream");
+            inputStream = input.inputs.front;
         }
-        else if (context.inputSize > 1)
+        else if (input.inputs.length > 1)
         {
-            auto msg = name ~ ": cannot handle multiple inputs";
-            return context.error(msg, ErrorCode.InvalidInput, "");
-        }
-        else
-        {
-            arguments = context.items("SystemCommand arguments")
-                .map!(x => to!string(x)).array;
+            throw new InvalidInputException(
+                input.escopo,
+                name ~ ": cannot handle multiple inputs",
+            );
         }
 
-        debug {
-            stderr.writeln("xxx   arguments: ", arguments);
-            stderr.writeln("xxx   command: ", command);
-            stderr.writeln("xxx   inputStream: ", inputStream);
-        }
+        // Arguments:
+        arguments = input.args.map!(x => to!string(x)).array;
+
+        // TODO: handle kwargs!!!
 
         /*
         command {
@@ -154,8 +115,9 @@ class SystemCommand : BaseCommand
         Items cmdItems;
         foreach (segment; command.items)
         {
-            context = segment.evaluate(context);
-            Item nextItem = context.pop("cmdItem");
+            auto segmentOutput = segment.evaluate(input.escopo);
+            // XXX: we PROBABLY have only one item, here:
+            Item nextItem = segmentOutput.front;
             if (nextItem.type == ObjectType.List)
             {
                 // Expand Lists inside the command arguments:
@@ -185,15 +147,16 @@ class SystemCommand : BaseCommand
         // set each variable on this Escopo as
         // a environment variable:
         string[string] env;
-        foreach (key, value; context.escopo.variables)
+        foreach (key, value; input.escopo)
         {
             // TODO:
             // set x 1 2 3
             // env["x"] = ?
-            debug {stderr.writeln(this.name, " ", key, "=", value);}
-            if (value.length)
+            if (value.type == ObjectType.Sequence)
             {
-                env[key] = value[0].toString();
+                auto sequence = cast(Sequence)value;
+                // XXX: should we try to emulate a bash array or something?
+                env[key] = sequence.items.front.toString();
             }
             else
             {
@@ -205,24 +168,14 @@ class SystemCommand : BaseCommand
         string workdirStr = null;
         if (workdir !is null)
         {
-            context = workdir.evaluate(context);
-            workdirStr = context.pop("workdir").toString();
+            auto workdirOutput = workdir.evaluate(input.escopo);
+            workdirStr = workdirOutput.front.toString();
         }
 
-        try
-        {
-            context.push(
-                new SystemProcess(cmd, arguments, inputStream, env, workdirStr)
-            );
-        }
-        catch (ProcessException ex)
-        {
-            return context.error(ex.msg, ErrorCode.Unknown, "");
-        }
-        debug {
-            stderr.writeln("SystemProcess.doRun.context.size:", context.size);
-        }
-        return context;
+        output.items ~= new SystemProcess(
+            cmd, arguments, inputStream, env, workdirStr
+        );
+        return ExitCode.Success;
     }
 }
 
@@ -249,18 +202,15 @@ class SystemProcess : Item
     {
         this.type = ObjectType.SystemProcess;
         this.typeName = "system_process";
-        this.commands = systemProcessCommands;
+        this.methods = systemProcessMethods;
 
         this.command = command;
         this.env = env;
-        debug {stderr.writeln("this.command:", this.command);}
         this.arguments = arguments;
         this.inputStream = inputStream;
 
         this.cmdline ~= command.items.map!(x => x.toString()).array;
         this.cmdline ~= arguments;
-
-        debug {stderr.writeln("cmdline:", cmdline);}
 
         if (inputStream is null)
         {
@@ -308,7 +258,7 @@ class SystemProcess : Item
         return _isRunning;
     }
 
-    override Context next(Context context)
+    override ExitCode next(Escopo escopo, Output output)
     {
         // For the output:
         string line = null;
@@ -318,57 +268,45 @@ class SystemProcess : Item
             // Send from inputStream, first:
             if (inputStream !is null)
             {
-                debug {stderr.writeln("xxx ", this.command.items[0], " inputStream is not null");}
-                auto inputContext = this.inputStream.next(context);
-                if (inputContext.exitCode == ExitCode.Break)
+                auto inputStreamOutput = new Output;
+                auto inputStreamExitCode = this.inputStream.next(escopo, inputStreamOutput);
+                if (inputStreamExitCode == ExitCode.Break)
                 {
-                    debug {stderr.writeln("xxx ", this.command.items[0], " inputContext -> Break");}
                     this.inputStream = null;
                     pipes.stdin.close();
                     continue;
                 }
-                else if (inputContext.exitCode == ExitCode.Skip)
+                else if (inputStreamExitCode == ExitCode.Skip)
                 {
-                    debug {stderr.writeln("xxx ", this.command.items[0], " inputContext -> Skip");}
                     continue;
                 }
-                else if (inputContext.exitCode != ExitCode.Continue)
+                else if (inputStreamExitCode != ExitCode.Continue)
                 {
-                    return context.error(
+                    throw new SystemProcessInputError(
+                        escopo,
                         "Error on " ~ this.toString()
                         ~ " while reading from "
                         ~ inputStream.toString()
-                        ~ " (exitCode " ~ inputContext.exitCode.to!string ~ ")",
+                        ~ " (exitCode " ~ inputStreamExitCode.to!string ~ ")",
                         returnCode,
-                        "",
                         inputStream
                     );
                 }
 
-                foreach (item; inputContext.items("SystemProcess next inputContext"))
+                foreach (item; inputStreamOutput.items)
                 {
                     string s = item.toString();
-                    debug {
-                        stderr.writeln("xxx ", this.command.items[0], " writing <", s, "> to pipes.stdin");
-                    }
                     pipes.stdin.writeln(s);
                     pipes.stdin.flush();
                 }
                 continue;
             }
-            else
-            {
-                debug {stderr.writeln("xxx ", this.command.items[0], " inputStream is null");}
-            }
 
             if (pipes.stdout.eof)
             {
-                debug {stderr.writeln("xxx ", this.command.items[0], " stdout.eof");}
                 if (isRunning)
                 {
-                    debug {stderr.writeln("xxx ", this.command.items[0], " isRunning. Returning Skip");}
-                    context.exitCode = ExitCode.Skip;
-                    return context;
+                    return ExitCode.Skip;
                 }
 
                 wait();
@@ -376,27 +314,25 @@ class SystemProcess : Item
 
                 if (returnCode != 0)
                 {
-                    auto msg = "Error while executing " ~ this.toString();
-                    return context.error(msg, returnCode, "", this);
+                    throw new SystemProcessException(
+                        escopo,
+                        "Error while executing " ~ this.toString(),
+                        returnCode,
+                        this
+                    );
                 }
                 else
                 {
-                    debug {
-                        stderr.writeln("xxx ", this.command.items[0], " returnCode is zero. Returning Break");
-                    }
-                    context.exitCode = ExitCode.Break;
-                    return context;
+                    return ExitCode.Break;
                 }
             }
 
             line = pipes.stdout.readln();
-            debug {stderr.writeln("xxx ", this.command.items[0], " line=", line);}
 
             if (line is null)
             {
                 // XXX: this Skip is weird...
-                context.exitCode = ExitCode.Skip;
-                return context;
+                return ExitCode.Skip;
             }
             else
             {
@@ -404,10 +340,8 @@ class SystemProcess : Item
             }
         }
 
-        context.push(line.stripRight('\n'));
-        context.exitCode = ExitCode.Continue;
-        debug {stderr.writeln("xxx ", this.command.items[0], " returning Continue");}
-        return context;
+        output.items ~= new String(line.stripRight('\n'));
+        return ExitCode.Continue;
     }
     void wait()
     {

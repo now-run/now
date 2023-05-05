@@ -1,134 +1,72 @@
 module now.nodes.command_call;
 
 
-import now.nodes;
+import now;
 
 
 class CommandCall
 {
     string name;
-    bool isDot;
-    Items arguments;
+    Items args;
+    Items kwargs;
+    bool isTarget;
 
-    this(string name, Items arguments)
+    this(string name, Items args, Items kwargs)
     {
-        /*
-        Check the length because "."
-        itself is NOT a dot-command.
-        */
-        if (name.length > 1 && name[0] == '.')
-        {
-            this.isDot = true;
-            this.name = name[1..$];
-        }
-        else
-        {
-            this.isDot = false;
-            this.name = name;
-        }
-        this.arguments = arguments;
+        this.name = name;
+        this.args = args;
+        this.kwargs = kwargs;
+        this.isTarget = false;
     }
 
     override string toString()
     {
-        if (isDot)
+        string s = this.name;
+        s ~= "  " ~ args.to!string;
+        s ~= "  " ~ kwargs.to!string;
+        // TODO: isTarget?
+        return s;
+    }
+
+    Items evaluateArguments(Escopo escopo)
+    {
+        Items items;
+
+        foreach(argument; this.args)
         {
-            return "dot " ~ this.name;
+            items ~= argument.evaluate(escopo);
+        }
+        return items;
+    }
+
+    ExitCode run(Escopo escopo, Items inputs, Output output, Item target=null)
+    {
+        log("- CommandCall.run: ", this);
+        if (isTarget)
+        {
+            log("-- isTarget!");
+        }
+        auto arguments = evaluateArguments(escopo);
+        log("--- ", inputs, " | ", name, "  ", arguments);
+        // TODO:
+        // auto keywordArguments = evaluateKeywordArguments(escopo);
+        KwArgs keywordArguments;
+
+        auto input = Input(
+            escopo,
+            inputs,
+            arguments,
+            keywordArguments
+        );
+
+        if (target !is null)
+        {
+            return target.runMethod(name, input, output);
         }
         else
         {
-            return this.name;
-        }
-        /*
-        return this.name
-            ~ " "
-            ~ arguments.map!(x => x.toString())
-                .join(" ");
-        */
-    }
-
-    Context evaluateArguments(Context context)
-    {
-        // Evaluate and push each argument, starting from
-        // the last one:
-        ulong realArgumentsCounter = 0;
-        foreach(argument; this.arguments.retro)
-        {
-            /*
-            Each item already pushes its evaluation
-            result into the stack
-            */
-            debug {stderr.writeln("   evaluating argument ", argument);}
-            context = argument.evaluate(context.next);
-
-            /*
-            But what if this argument is an ExecList and
-            while evaluating it returned an Error???
-            */
-            if (context.exitCode == ExitCode.Failure)
-            {
-                /*
-                Well, we quit imediately:
-                */
-                debug {stderr.writeln("   FAILURE!");}
-                return context;
-            }
-
-            debug {stderr.writeln("   += ", context.size);}
-            realArgumentsCounter += context.size;
-        }
-        context.size = cast(int)realArgumentsCounter;
-        return context;
-    }
-
-    Context run(Context context)
-    {
-        Item dotTarget;
-        if (isDot)
-        {
-            dotTarget = context.pop();
-            if (context.inputSize)
-            {
-                context.inputSize--;
-            }
-        }
-        // evaluate arguments and set proper context.size:
-        debug {stderr.writeln(name, ".context.initial_size:", context.size);}
-        auto executionContext = this.evaluateArguments(context);
-        if (executionContext.exitCode == ExitCode.Failure)
-        {
-            return executionContext;
-        }
-
-        if (isDot)
-        {
-            executionContext.push(dotTarget);
-        }
-
-        debug {stderr.writeln(name, ".executionContext.size:", executionContext.size);}
-        if (context.inputSize)
-        {
-            debug {stderr.writeln(name, ".context.inputSize:", context.inputSize);}
-            // `input`, when present, is always the last argument:
-            executionContext.size += context.inputSize;
-            executionContext.inputSize = context.inputSize;
-        }
-        debug {stderr.writeln(name, ".executionContext.size:", executionContext.size);}
-        debug {stderr.writeln(name, ".executionContext.inputSize:", executionContext.inputSize);}
-
-        // Inform the procedure how many arguments were passed:
-        executionContext.escopo["args.count"] = new IntegerAtom(executionContext.size);
-
-        // We consider the first argument as potentially
-        // the "target", when present:
-        if (executionContext.size)
-        {
-            Item target = executionContext.peek("check for target");
-            return target.runCommand(name, executionContext);
-        }
-        else
-        {
-            return context.program.runCommand(name, executionContext);
+            auto exitCode = escopo.document.runProcedure(name, input, output);
+            return exitCode;
         }
     }
 }

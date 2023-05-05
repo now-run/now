@@ -1,38 +1,26 @@
-module now.commands.simpletemplate;
+module now.nodes.simpletemplate.methods;
+
 
 import now;
 
 
-void loadTemplateCommands(CommandsMap commands)
+static this()
 {
-    commands["template"] = function (string path, Input input, Output output)
+    templateMethods["emit"] = function (Item object, string path, Input input, Output output)
     {
-        string name = input.pop!string;
-        auto templates = input.escopo.document.getOrCreate!Dict("templates");
-        auto tpl = templates.get!Block(name, null);
-        if (tpl is null) {
-            throw new NotFoundException(
-                input.escopo,
-                "Template '" ~ name ~ "' not found.",
-                -1,
-            );
-        }
+        auto tpl = cast(TemplateInstance)object;
+        auto blockName = input.pop!string;
 
         Item[string] variables;
-        /*
-        Kinda weird, but the only place where using
-        variables from the current escopo for
-        the template is when instantiating,
-        not when rendering.
-        */
-
         // Variables coming from the current escopo:
         foreach (key, value; input.escopo)
         {
+            // XXX: maybe we'll need to check for Sequences...?
             variables[key] = value;
         }
 
         // Variables passed manually:
+        // TODO: use kwargs!
         foreach (item; input.popAll)
         {
             if (item.type == ObjectType.Pair)
@@ -57,10 +45,18 @@ void loadTemplateCommands(CommandsMap commands)
                     "Invalid argument for " ~ path
                     ~ ": should be Pair or Dict",
                     -1,
+                    tpl
                 );
             }
         }
-        output.push(new TemplateInstance(tpl, variables));
+
+        tpl.emit(blockName, variables);
+        return ExitCode.Success;
+    };
+    templateMethods["render"] = function (Item object, string name, Input input, Output output)
+    {
+        auto tpl = cast(TemplateInstance)object;
+        output.push(tpl.render(input.escopo));
         return ExitCode.Success;
     };
 }

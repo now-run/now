@@ -1,9 +1,9 @@
 module now.nodes.path;
 
-import now.nodes;
+import now;
 
 
-CommandsMap pathCommands;
+MethodsMap pathMethods;
 
 
 class Path : Item
@@ -15,11 +15,11 @@ class Path : Item
         this.path = path;
         this.type = ObjectType.Path;
         this.typeName = "path";
-        this.commands = pathCommands;
+        this.methods = pathMethods;
     }
     override string toString()
     {
-        return this.path;
+        return "path " ~ this.path;
     }
 }
 
@@ -40,20 +40,18 @@ class PathFileRange : Item
     {
         return "PathFileRange";
     }
-    override Context next(Context context)
+    override ExitCode next(Escopo escopo, Output output)
     {
         auto line = range.front;
         if (line is null)
         {
-            context.exitCode = ExitCode.Break;
-            return context;
+            return ExitCode.Break;
         }
         else
         {
-            context.push(line.to!string);
-            context.exitCode = ExitCode.Continue;
+            output.push(line.to!string);
             range.popFront;
+            return ExitCode.Continue;
         }
-        return context;
     }
 }

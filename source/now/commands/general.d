@@ -13,82 +13,41 @@ import std.string : toLower;
 import std.uuid : sha1UUID, randomUUID;
 
 import now.nodes;
+
 import now.commands;
+import now.grammar;
+
 import now.commands.base64;
 import now.commands.csv;
 import now.commands.http;
+import now.commands.iterators;
 import now.commands.ini;
 import now.commands.json;
-import now.commands.iterators;
 import now.commands.simpletemplate;
 import now.commands.terminal;
 import now.commands.url;
 import now.commands.yaml;
-import now.grammar;
 
 
 static this()
 {
-    // ---------------------------------------------
-    // Stack
-    commands["stack.push"] = function (string path, Context context)
-    {
-        /*
-        > stack.push 1 2 3 | print
-        123
-        */
-        // Do nothing, the value is already on stack.
-        return context;
-    };
-
-    commands["stack.pop"] = function (string path, Context context)
-    {
-        /*
-        > stack.push 1 2 3
-        > stack.pop | print
-        1
-        > stack.pop | print
-        2
-        */
-        if (context.process.stack.stackPointer == 0)
-        {
-            auto msg = "Stack is empty";
-            return context.error(msg, ErrorCode.SemanticError, "");
-        }
-
-        long quantity = 1;
-        if (context.size) {
-            quantity = context.pop!long();
-        }
-        context.size += quantity;
-        return context;
-    };
-
-    commands["stack"] = function (string path, Context context)
-    {
-        /*
-        > stack.push 1 2 3
-        > stack | print
-        123
-        */
-        context.size = cast(int)context.process.stack.stackPointer;
-        return context;
-    };
+    // alias Command = ExitCode function(string, Input, Output);
 
     // ---------------------------------------------
     // Native types, nodes and conversion
-    commands["typeof"] = function (string path, Context context)
+    builtinCommands["type"] = function(string path, Input input, Output output)
     {
         /*
-        > typeof 1.2 | print
+        > type 1.2 | print
         float
         */
-        Item target = context.pop();
-        context.push(new NameAtom(to!string(target.type).toLower()));
-
-        return context;
+        foreach (item; input.popAll)
+        {
+            output.push(item.type.to!string);
+        }
+        return ExitCode.Success;
     };
-    commands["type.name"] = function (string path, Context context)
+    builtinCommands["type:name"] = function(string path, Input input, Output output)
     {
         /*
         We can have types that behave like strings, for example, but
@@ -98,67 +57,75 @@ static this()
         > type.name $extraneous_type
         string_on_steroids
         */
-        Item target = context.pop();
-        context.push(new NameAtom(to!string(target.typeName).toLower()));
-
-        return context;
-    };
-    commands["to.string"] = function (string path, Context context)
-    {
-        foreach(item; context.items.retro)
+        foreach (item; input.popAll)
         {
-            context.push(item.toString());
+            output.push(item.typeName.to!string);
         }
 
-        return context;
+        return ExitCode.Success;
     };
-    commands["to.bool"] = function (string path, Context context)
+    builtinCommands["to:string"] = function(string path, Input input, Output output)
     {
-        auto target = context.pop();
-        return context.push(target.toBool());
+        foreach(item; input.popAll)
+        {
+            output.push(item.toString());
+        }
+
+        return ExitCode.Success;
     };
-    commands["to.integer"] = function (string path, Context context)
+    builtinCommands["to:bool"] = function(string path, Input input, Output output)
     {
-        auto target = context.pop();
-        return context.push(target.toInt());
+        foreach(item; input.popAll)
+        {
+            output.push(item.toBool());
+        }
+        return ExitCode.Success;
     };
-    commands["to.float"] = function (string path, Context context)
+    builtinCommands["to:integer"] = function(string path, Input input, Output output)
     {
-        auto target = context.pop();
-        return context.push(target.toFloat());
+        foreach(item; input.popAll)
+        {
+            output.push(item.toLong());
+        }
+        return ExitCode.Success;
+    };
+    builtinCommands["to:float"] = function(string path, Input input, Output output)
+    {
+        foreach(item; input.popAll)
+        {
+            output.push(item.toFloat());
+        }
+        return ExitCode.Success;
     };
 
 
     // ---------------------------------------------
     // Various ExitCodes:
-    commands["break"] = function (string path, Context context)
+    builtinCommands["break"] = function(string path, Input input, Output output)
     {
-        context.exitCode = ExitCode.Break;
-        return context;
+        return ExitCode.Break;
     };
-    commands["continue"] = function (string path, Context context)
+    builtinCommands["continue"] = function(string path, Input input, Output output)
     {
-        context.exitCode = ExitCode.Continue;
-        return context;
+        return ExitCode.Continue;
     };
-    commands["skip"] = function (string path, Context context)
+    builtinCommands["skip"] = function(string path, Input input, Output output)
     {
-        context.exitCode = ExitCode.Skip;
-        return context;
+        return ExitCode.Skip;
     };
-    commands["return"] = function (string path, Context context)
+    builtinCommands["return"] = function(string path, Input input, Output output)
     {
-        context.exitCode = ExitCode.Return;
-        return context;
+        output.push(input.popAll);
+        return ExitCode.Return;
     };
 
     // Scope
-    commands["scope"] = function (string path, Context context)
+    builtinCommands["scope"] = function(string path, Input input, Output output)
     {
         /*
         > scope "send HTTP request" {
             http.get $url | as content
-          }
+        }
 
         When dealing with errors, at least we can see better names
         during long procedures. Good for test cases, too.
@@ -167,132 +134,27 @@ static this()
         > scope "read a file" {
             file.open $path | autoclose | as f
             file.read $f | as content
-          }
-        */
-        // TODO: set Escopo name
-        string name = context.pop!string();
-        SubProgram body = context.pop!SubProgram();
-
-        debug {stderr.writeln("= scope ", name, " =");}
-
-        auto escopo = context.escopo;
-        auto newScope = new Escopo(escopo, name);
-        newScope.variables = escopo.variables;
-
-        auto returnedContext = context.process.run(
-            body, context.next(newScope)
-        );
-
-        context.size = returnedContext.size;
-        context.exitCode = returnedContext.exitCode;
-        return context;
-    };
-    commands["uplevel"] = function (string path, Context context)
-    {
-        /*
-        uplevel set parent_value x
-        [procedures/superset]
-        parameters {
-            key {
-                type string
-            }
-            value {
-                type any
-            }
-
-        log "SETTING $key TO $VALUE"
-        uplevel set $key $value
-
-        [procedures/other_one]
-
-        superset a 1
-        print $a
-        # 1
-        */
-        auto parentScope = context.escopo.parent;
-        if (parentScope is null)
-        {
-            auto msg = "No upper level to access.";
-            return context.error(msg, ErrorCode.SemanticError, "");
         }
-
-        /*
-        It is very important to do this `pop` **before**
-        copying the context.size into
-        newContext.size!
-        You see,
-        uplevel set x 1 2 3  ← this command has 5 arguments
-           -    set x 1 2 3  ← and this one has 4
         */
-        auto cmdName = context.pop!(string);
+        auto name = input.pop!string;
+        auto body = input.pop!SubProgram;
 
-        /*
-        Also important to remember: `uplevel` is a command itself.
-        As such, all its arguments were already evaluated
-        when it was called, so we can safely assume
-        there's no further  substitutions to be
-        made and this is going to apply to
-        the command we are calling
-        */
-        auto cmdArguments = context.items;
-
-        // 1- create a new CommandCall
-        auto command = new CommandCall(cmdName, cmdArguments);
-
-        // 2- create a new context, with the parent
-        //    scope as the context.escopo
-        auto newContext = context.next();
-        newContext.escopo = parentScope;
-        newContext.size = context.size;
-
-        // 3- run the command
-        auto returnedContext = command.run(newContext);
-
-        if (returnedContext.exitCode != ExitCode.Failure)
-        {
-            context.exitCode = ExitCode.Success;
-        }
-        return context;
+        auto newScope = input.escopo.createChild(name);
+        return body.run(newScope, output);
     };
-    commands["with"] = function (string path, Context context)
-    {
-        /*
-        # No `with`:
-        > open $file
-        > read $file | as content
-        > close $file
-
-        # With `with`:
-        > with $file {
-            open
-            read | as content
-            close
-          }
-        */
-        auto target = context.pop();
-        auto body = context.pop!SubProgram();
-
-        foreach (pipeline; body.pipelines)
-        {
-            auto commandCall = pipeline.commandCalls.front;
-            commandCall.arguments = [target] ~ commandCall.arguments;
-        }
-
-        context = context.process.run(body, context.escopo);
-
-        return context;
-    };
-
 
     // ---------------------------------------------
     // Text I/O:
-    commands["print"] = function (string path, Context context)
+    builtinCommands["print"] = function (string path, Input input, Output output)
     {
-        while(context.size) stdout.write(context.pop!string());
+        foreach (item; input.popAll)
+        {
+            stdout.write(item);
+        }
         stdout.writeln();
-        return context;
+        return ExitCode.Success;
     };
-    commands["log"] = function (string path, Context context)
+    builtinCommands["log"] = function(string path, Input input, Output output)
     {
         /*
         [logging/formats/default]
@@ -304,74 +166,55 @@ static this()
         get $program directory | as pd
         return '{"timestamp":$timestamp, "hostname":"$hostname", "path":$pd, "message":$message}'
         */
-        string formatName;
-        if (context.size == 1)
+        auto formatName = input.kwargs.require("format", new String("default")).toString();
+        auto format = input.escopo.document.get!Dict(["logging", "formats", formatName], null);
+
+        if (format is null)
         {
-            formatName = "default";
-        }
-        else if (context.size == 2)
-        {
-            formatName = context.pop!string();
+            foreach (item; input.popAll)
+            {
+                stderr.write(item.toString);
+            }
+            stderr.writeln;
         }
         else
         {
-            return context.error(
-                path ~ " must receive 1 or 2 arguments.",
-                ErrorCode.InvalidSyntax,
-                ""
-            );
-        }
-
-        auto format = context.program.get!Dict(
-            ["logging", "formats", formatName],
-            delegate (Dict d) {
-                return cast(Dict)null;
-            }
-        );
-
-        if (format !is null)
-        {
             auto body = format["body"];
-            auto parser = new NowParser(body.toString());
-            // TODO: cache it:
-            auto subprogram = parser.consumeSubProgram();
+            // TODO: parse the format at Program.initialize!
+            auto parser = new NowParser(body.toString);
+            auto subprogram = parser.consumeSubProgram;
 
-            auto newScope = new Escopo(context.escopo);
-            newScope["message"] = context.pop!String();
-            auto newContext = context.process.run(
-                subprogram, context.next(newScope)
-            );
-            if (newContext.exitCode == ExitCode.Failure)
+            foreach (index, item; input.popAll)
             {
-                return newContext;
-            }
-            else
-            {
-                context.exitCode = ExitCode.Success;
-                context.size = newContext.size;
+                auto newScope = input.escopo.createChild(
+                    "log/" ~ formatName ~ "/" ~ index.to!string
+                );
+                newScope["message"] = item;
+                // A logger is not a handler, so we ignore the exitCode:
+                subprogram.run(newScope, output);
             }
         }
 
-        while(context.size) stderr.write(context.pop!string());
-        stderr.writeln();
-        return context;
+        return ExitCode.Success;
     };
-    commands["print.sameline"] = commands["print"];
+    builtinCommands["print:sameline"] = builtinCommands["print"];
 
-    commands["read"] = function (string path, Context context)
+    builtinCommands["read"] = function(string path, Input input, Output output)
     {
         /*
         Read the entire stdin.
         */
         string content = stdin.byLine.join("\n").to!string;
-        return context.push(content);
+        output.push(content);
+        return ExitCode.Success;
     };
 
     // ---------------------------------------------
     // Time
-    integerCommands["sleep"] = function (string path, Context context)
+    /*
+    integerCommands["sleep"] = function(string path, Input input, Output output)
     {
-        auto ms = context.pop!long();
+        auto ms = input.pop!long;
 
         auto sw = StopWatch(AutoStart.yes);
         while(true)
@@ -382,14 +225,16 @@ static this()
                 break;
             }
         }
-        return context;
+        return ExitCode.Success;
     };
-    commands["unixtime"] = function (string path, Context context)
+    builtinCommands["unixtime"] = function(string path, Input input, Output output)
     {
         SysTime today = Clock.currTime();
-        return context.push(today.toUnixTime!long());
+        output.push(today.toUnixTime!long());
+        return ExitCode.Success;
     };
-    commands["timer"] = function (string path, Context context)
+    */
+    builtinCommands["timer"] = function(string path, Input input, Output output)
     {
         /*
         scope "test the timer" {
@@ -401,42 +246,31 @@ static this()
         }
         # stderr> This scope ran for 5 seconds
         */
-        auto subprogram = context.pop!SubProgram();
-        auto callback = context.pop!SubProgram();
+        auto subprogram = input.pop!SubProgram;
+        auto callback = input.pop!SubProgram;
 
         auto sw = StopWatch(AutoStart.yes);
-        context = context.process.run(subprogram, context);
+        auto exitCode = subprogram.run(input.escopo, output);
         sw.stop();
 
         auto seconds = sw.peek().total!"seconds";
-        debug {stderr.writeln("  seconds: ", seconds);}
         auto msecs = sw.peek().total!"msecs";
         auto usecs = sw.peek().total!"usecs";
         auto nsecs = sw.peek().total!"nsecs";
 
-        auto newScope = new Escopo(context.escopo);
-        newScope["seconds"] = new FloatAtom(seconds);
-        newScope["miliseconds"] = new FloatAtom(msecs);
-        newScope["microseconds"] = new FloatAtom(usecs);
-        newScope["nanoseconds"] = new FloatAtom(nsecs);
+        auto newScope = input.escopo.createChild("timer-callback");
+        newScope["seconds"] = new Float(seconds);
+        newScope["miliseconds"] = new Float(msecs);
+        newScope["microseconds"] = new Float(usecs);
+        newScope["nanoseconds"] = new Float(nsecs);
 
-        // Save info about the context in order to restore it later:
-        Items items = context.items;
-        auto exitCode = context.exitCode;
-        // Run the callback:
-        context = context.process.run(callback, context.next(newScope));
-        // Restore previous context info:
-        context.push(items);
-        if (context.exitCode != ExitCode.Failure)
-        {
-            // Restore the previous exit code:
-            context.exitCode = exitCode;
-        }
-        return context;
+        // Run the callback, ignoring exit code:
+        callback.run(newScope, output);
+        return exitCode;
     };
     // ---------------------------------------------
     // Errors
-    commands["error"] = function (string path, Context context)
+    builtinCommands["error"] = function(string path, Input input, Output output)
     {
         /*
         Signalize that an error occurred.
@@ -447,51 +281,47 @@ static this()
         so no need to "return [error ...]". Just
         calling `error` will exit 
         */
-        string classe = "";
-        int code = -1;
-        string message = "An error ocurred";
 
         // "Full" call:
         // error message code class
         // error "Not Found" 404 http
         // error "segmentation fault" 11 os
-        if (context.size > 0)
-        {
-            message = context.pop!string();
-        }
-        if (context.size > 0)
-        {
-            code = cast(int)context.pop!long();
-        }
-        if (context.size > 0)
-        {
-            classe = context.pop!string();
-        }
+        string message = input.pop!string("An error ocurred");
+        int code = cast(int)(input.pop!long(-1));
 
-        return context.error(message, code, classe);
+        throw new UserException(
+            input.escopo,
+            message,
+            code
+        );
     };
 
     // ---------------------------------------------
     // Debugging
-    commands["assert"] = function (string path, Context context)
+    builtinCommands["assert"] = function(string path, Input input, Output output)
     {
         /*
         > assert true
         > assert false
         assertion error: false
         */
-        foreach (item; context.items)
+        foreach (item; input.popAll)
         {
             if (!item.toBool())
             {
                 auto msg = "assertion error: " ~ item.toString();
-                return context.error(msg, ErrorCode.AssertionError, "");
+                throw new NowException(
+                    input.escopo,
+                    msg,
+                    -1,
+                    item
+                );
             }
         }
-        return context;
+        return ExitCode.Success;
     };
 
-    commands["exit"] = function (string path, Context context)
+    builtinCommands["exit"] = function(string path, Input input, Output output)
     {
         /*
         [procedures/quit]
@@ -504,121 +334,85 @@ static this()
         [commands/run]
         parameters {}
 
-        quit 10
+        exit 10
         ---
         $ now ; echo $?
         10
         */
-        string classe = "";
-        string message = "Process was stopped";
-
-        long code = 0;
-
-        if (context.size)
-        {
-            code = context.pop!long();
-        }
-
-        if (context.size > 0)
-        {
-            message = context.pop!string();
-        }
+        int code = cast(int)(input.pop!long(0));
+        auto message = input.pop!string("Process was stopped");
 
         if (code == 0)
         {
-            context.exitCode = ExitCode.Return;
-            return context;
+            // TODO: how to succesfully exit???
+            return ExitCode.Return;
         }
         else
         {
-            return context.error(message, cast(int)code, classe);
+            throw new UserException(
+                input.escopo,
+                message,
+                code,
+                null
+            );
         }
     };
 
     // Names:
-    commands["set"] = function (string path, Context context)
+    builtinCommands["set"] = function(string path, Input input, Output output)
     {
         /*
         > set a 1
         > print $a
         1
         */
-        if (context.size < 2)
+        auto key = input.pop!string(null);
+        auto values = input.popAll();
+        if (key is null || values.length == 0)
         {
-            auto msg = "`" ~ path ~ "` must receive at least two arguments.";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
+            throw new SyntaxErrorException(
+                input.escopo,
+                "`" ~ path ~ "` must receive at least 2 arguments."
+            );
         }
+        input.escopo[key] = values;
 
-        auto key = context.pop!string();
-        context.escopo[key] = context.items;
-
-        return context;
+        return ExitCode.Success;
     };
-    commands["as"] = commands["set"];
+    builtinCommands["as"] = builtinCommands["set"];
 
-    commands["val"] = function (string path, Context context)
+    builtinCommands["val"] = function(string path, Input input, Output output)
     {
         /*
         > set x 10
         > val x | print
         10
         */
-        auto name = context.pop();
-        Items value;
-        try
-        {
-            value = context.escopo[name.toString()];
-        }
-        catch (NotFoundException ex)
-        {
-            return context.push(ex.to!string);
-        }
-        return context.push(value);
+        auto name = input.pop!string();
+        output.push(input.escopo[name]);
+        return ExitCode.Success;
     };
-    commands["value_of"] = function (string path, Context context)
+    builtinCommands["vars"] = function(string path, Input input, Output output)
     {
-        /*
-        > dict (a = 30) | value_of a | print
-        30
-        # It's simply an inverted `get`.
-        > dict (a = 30) | as d
-        > value_of a $d | print
-        30
-        */
-        Items items = context.items;
-        Item target = items[$-1];
+        Items items;
 
-        context.push(items[0..$-1]);
-        context.push(target);
-
-        return target.runCommand("get", context);
-    };
-
-    commands["vars"] = function (string path, Context context)
-    {
-        auto escopo = context.escopo;
-        auto varsList = new List([]);
-
-        do
+        auto escopo = cast(Dict)(input.escopo);
+        foreach (varName, _; escopo)
         {
-            foreach (varName; escopo.variables.keys)
-            {
-                varsList.items ~= new String(varName);
-            }
-            escopo = escopo.parent;
+            items ~= new String(varName);
         }
-        while (escopo !is null);
-
-        foreach (varName; context.program.order)
+        escopo = cast(Dict)(input.escopo.document);
+        foreach (varName, _; escopo)
         {
-            varsList.items ~= new String(varName);
+            items ~= new String(varName);
         }
 
-        return context.push(varsList);
+        output.push(new List(items));
+        return ExitCode.Success;
     };
 
     // TYPES
-    commands["dict"] = function (string path, Context context)
+    builtinCommands["dict"] = function(string path, Input input, Output output)
     {
         /*
         > dict (a = 1) (b = 2) | as d
@@ -629,121 +423,136 @@ static this()
         */
         auto dict = new Dict();
 
-        foreach(argument; context.items)
+        foreach(argument; input.popAll)
         {
-            List l = cast(List)argument;
+            auto pair = cast(Pair)argument;
+            if (pair.type != ObjectType.Pair)
+            {
+                throw new SyntaxErrorException(
+                    input.escopo,
+                    "`" ~ path ~ "` arguments should be Pairs."
+                );
+            }
 
-            Item value = l.items.back;
-            l.items.popBack();
+            Item value = pair.items.back;
+            pair.items.popBack();
 
-            string lastKey = l.items.back.toString();
-            l.items.popBack();
+            string lastKey = pair.items.back.toString();
+            pair.items.popBack();
 
-            auto nextDict = dict.navigateTo(l.items);
+            // XXX: autocreate is true?
+            auto nextDict = dict.navigateTo(pair.items);
             nextDict[lastKey] = value;
         }
-        return context.push(dict);
+        output.push(dict);
+        return ExitCode.Success;
     };
-    commands["list"] = function (string path, Context context)
+    builtinCommands["list"] = function(string path, Input input, Output output)
     {
         /*
         > set l [list 1 2 3 4]
         # l = (1 , 2 , 3 , 4)
         */
-        return context.push(new List(context.items));
+        output.push(new List(input.popAll));
+        log("- builtinCommands.list.output:", output);
+        return ExitCode.Success;
     };
 
     // set lista (a , b , c , d)
     // -> set lista [, a b c d]
     // --> set lista [list a b c d]
-    commands[","] = commands["list"];
+    builtinCommands[","] = builtinCommands["list"];
 
     // set pair (a = b)
     // -> set pair [= a b]
     // --> set pairt [list a b]
-    commands["="] = function (string path, Context context)
+    builtinCommands["="] = function(string path, Input input, Output output)
     {
-        auto key = context.pop();
-        auto value = context.pop();
-        if (context.size)
+        auto key = input.pop!Item();
+        auto value = input.pop!Item();
+        Items rest = input.popAll();
+        if (rest.length > 0)
         {
-            return context.error(
-                "Invalid pair",
-                ErrorCode.InvalidSyntax,
-                ""
+            throw new SyntaxErrorException(
+                input.escopo,
+                "Invalid syntax: Pairs should contain only 2 elements",
+                -1,
+                key
             );
         }
-        return context.push(new Pair([key, value]));
+        output.push(new Pair([key, value]));
+        return ExitCode.Success;
     };
-    commands["path"] = function (string name, Context context)
+    builtinCommands["path"] = function (string name, Input input, Output output)
     {
-        string path = context.pop!string;
-        return context.push(new Path(path));
+        foreach (item; input.popAll)
+        {
+            string path = item.toString;
+            output.push(new Path(path));
+        }
+        return ExitCode.Success;
     };
 
     // CONDITIONALS
-    commands["if"] = function (string path, Context context)
+    builtinCommands["if"] = function(string path, Input input, Output output)
     {
         bool isConditionTrue = true;
-        while (context.size > 1)
+        foreach (item; input.popAll[0..$-1])
         {
-            isConditionTrue = isConditionTrue && context.pop!bool();
+            isConditionTrue = isConditionTrue && item.toBool();
         }
-        auto thenBody = context.pop!SubProgram();
+        auto thenBody = cast(SubProgram)(input.popAll[$-1]);
 
         if (isConditionTrue)
         {
-            context = context.process.run(thenBody, context.next());
+            return thenBody.run(input.escopo, output);
         }
 
-        return context;
+        return ExitCode.Success;
     };
 
-    commands["when"] = function (string path, Context context)
+    builtinCommands["when"] = function(string path, Input input, Output output)
     {
         /*
         If first argument is true, executes the second one and return.
         */
-        auto isConditionTrue = context.pop!bool();
-        auto thenBody = context.pop!SubProgram();
+        auto isConditionTrue = input.pop!bool;
+        auto thenBody = input.pop!SubProgram;
 
         if (isConditionTrue)
         {
-            context = context.process.run(thenBody, context.next());
-            debug {stderr.writeln("when>returnedContext.size:", context.size);}
-
-            // Whatever the exitCode was (except Failure), we're going
-            // to force a return:
-            if (context.exitCode != ExitCode.Failure)
+            auto exitCode = thenBody.run(input.escopo, output);
+            if (exitCode == ExitCode.Success)
             {
-                context.exitCode = ExitCode.Return;
+                return ExitCode.Return;
+            }
+            else
+            {
+                return exitCode;
             }
         }
-
-        return context;
+        return ExitCode.Success;
     };
-    commands["default"] = function (string path, Context context)
+    builtinCommands["default"] = function(string path, Input input, Output output)
     {
         /*
         Just like when, but there's no "first argument" to evaluate,
         it always executes the body and returns.
         */
-        auto body = context.pop!SubProgram();
-
-        context = context.process.run(body, context.next());
-
-        // Whatever the exitCode was (except Failure), we're going
-        // to force a return:
-        if (context.exitCode != ExitCode.Failure)
+        auto body = input.pop!SubProgram();
+        auto exitCode = body.run(input.escopo, output);
+        if (exitCode == ExitCode.Success)
         {
-            context.exitCode = ExitCode.Return;
+            return ExitCode.Return;
         }
-
-        return context;
+        else
+        {
+            return exitCode;
+        }
     };
 
     // ITERATORS
-    commands["transform"] = function (string path, Context context)
+    builtinCommands["transform"] = function(string path, Input input, Output output)
     {
         /*
         > range 2 | transform x {return ($x * 10)} | foreach x {print $x}
@@ -751,23 +560,25 @@ static this()
         10
         20
         */
-        auto varName = context.pop!string();
-        auto body = context.pop!SubProgram();
-
-        if (context.size == 0)
+        auto varName = input.pop!string();
+        auto body = input.pop!SubProgram();
+        auto targets = input.popAll();
+        if (targets.length == 0)
         {
             auto msg = "no target to transform";
-            return context.error(msg, ErrorCode.InvalidSyntax, "");
+            throw new SyntaxErrorException(
+                input.escopo,
+                msg
+            );
         }
-        auto targets = context.items;
 
         auto iterator = new Transformer(
-            targets, varName, body, context
+            targets, varName, body, input.escopo
         );
-        context.push(iterator);
-        return context;
+        output.push(iterator);
+        return ExitCode.Success;
     };
-    commands["transform.inline"] = function (string path, Context context)
+    builtinCommands["transform.inline"] = function(string path, Input input, Output output)
     {
         /*
         > range 65 67 | transform.inline {to.char} | foreach x {print $x}
@@ -779,23 +590,59 @@ static this()
         B
         C
         */
-        auto body = context.pop!SubProgram();
-
-        if (context.size == 0)
+        auto body = input.pop!SubProgram();
+        auto targets = input.popAll();
+        if (targets.length == 0)
         {
             auto msg = "no target to transform";
-            return context.error(msg, ErrorCode.InvalidSyntax, "");
+            throw new SyntaxErrorException(
+                input.escopo,
+                msg
+            );
         }
-        auto targets = context.items;
 
         auto iterator = new Transformer(
-            targets, null, body, context
+            targets, null, body, input.escopo
         );
-        context.push(iterator);
-        return context;
+        output.push(iterator);
+        return ExitCode.Success;
     };
 
-    nameCommands["foreach"] = function (string path, Context context)
+    builtinCommands["range"] = function (string path, Input input, Output output)
+    {
+        /*
+        > range 10       # [zero, 10]
+        > range 10 20    # [10, 20]
+        > range 10 14 2  # 10 12 14
+        */
+        auto start = input.pop!long();
+        auto limit = input.pop!long(cast(long)null);
+        if (limit is cast(long)null)
+        {
+            // zero to...
+            limit = start;
+            start = 0;
+        }
+        if (start > limit)
+        {
+            throw new InvalidArgumentsException(input.escopo, "Invalid range");
+        }
+
+        auto step = input.pop!long(1);
+        auto range = new IntegerRange(start, limit, step);
+        range.silent = (path == "range.silent");
+
+        output.push(range);
+        return ExitCode.Success;
+    };
+    /*
+    A "silent" range does not push the current value into the stack.
+    > range.silent 10 | { stack.pop | print }
+    # pop 10 "actual" items from the stack.
+    */
+    builtinCommands["range.silent"] = builtinCommands["range"];
+
+    builtinCommands["foreach"] = function(string path, Input input, Output output)
     {
         /*
         > range 2 | foreach x { print $x }
@@ -803,67 +650,51 @@ static this()
         1
         2
         */
-        auto argName = context.pop!string();
-        auto argBody = context.pop!SubProgram();
+        auto argName = input.pop!string();
+        auto argBody = input.pop!SubProgram();
 
-        /*
-        Do NOT create a new scope for the
-        body of foreach.
-        */
-        auto loopScope = context.escopo;
-
-        uint index = 0;
-
-        foreach (target; context.items)
+        foreach (target; input.popAll)
         {
-            debug {stderr.writeln("foreach.target:", target);}
-    forLoop:
+            forLoop:
             while (true)
             {
-                auto nextContext = target.next(context.next());
-                debug {stderr.writeln("foreach next.exitCode:", nextContext.exitCode);}
-                switch (nextContext.exitCode)
+                auto nextOutput = new Output;
+                auto exitCode = target.next(input.escopo, nextOutput);
+                final switch (exitCode)
                 {
                     case ExitCode.Break:
                         break forLoop;
-                    case ExitCode.Failure:
-                        return nextContext;
                     case ExitCode.Skip:
                         continue;
                     case ExitCode.Continue:
                         break;  // <-- break the switch, not the while.
-                    default:
-                        return nextContext;
+                    case ExitCode.Return:
+                    case ExitCode.Success:
+                        return exitCode;
                 }
 
-                loopScope[argName] = nextContext.items;
+                input.escopo[argName] = nextOutput.items;
+                exitCode = argBody.run(input.escopo, output);
 
-                context = context.process.run(argBody, context.next());
-                debug {stderr.writeln("foreach context.exitCode:", context.exitCode);}
-
-                if (context.exitCode == ExitCode.Break)
+                if (exitCode == ExitCode.Break)
                 {
                     break;
                 }
-                else if (context.exitCode == ExitCode.Return)
+                else if (exitCode == ExitCode.Return)
                 {
                     /*
                     Return propagates up into the
-                    processes stack:
+                    processes stack and we
+                    don't want that.
                     */
-                    return context;
-                }
-                else if (context.exitCode == ExitCode.Failure)
-                {
-                    return context;
+                    return ExitCode.Success;
                 }
             }
         }
 
-        context.exitCode = ExitCode.Success;
-        return context;
+        return ExitCode.Success;
     };
-    commands["foreach.inline"] = function (string path, Context context)
+    builtinCommands["foreach.inline"] = function(string path, Input input, Output output)
     {
         /*
         > range 2 | foreach.inline { print }
@@ -875,221 +706,133 @@ static this()
         1
         2
         */
-        auto argBody = context.pop!SubProgram();
-
-        /*
-        Do NOT create a new scope for the
-        body of foreach.
-        */
-        auto loopScope = context.escopo;
+        auto argBody = input.pop!SubProgram();
 
         uint index = 0;
-
-        foreach (target; context.items)
+        foreach (target; input.popAll)
         {
-            debug {stderr.writeln("foreach.target:", target);}
-    forLoop:
+            forLoop:
             while (true)
             {
-                auto nextContext = target.next(context.next());
-                debug {stderr.writeln("foreach next.exitCode:", nextContext.exitCode);}
-                switch (nextContext.exitCode)
+                auto nextOutput = new Output;
+                auto exitCode = target.next(input.escopo, nextOutput);
+                final switch (exitCode)
                 {
                     case ExitCode.Break:
                         break forLoop;
-                    case ExitCode.Failure:
-                        return nextContext;
                     case ExitCode.Skip:
                         continue;
                     case ExitCode.Continue:
                         break;  // <-- break the switch, not the while.
-                    default:
-                        return nextContext;
+                    case ExitCode.Return:
+                    case ExitCode.Success:
+                        return exitCode;
                 }
 
-                auto bodyContext = context.next();
+                // use nextOutput as inputs for argBody:
+                exitCode = argBody.run(input.escopo, output, nextOutput.items);
 
-                // XXX: aren't we sharing the Stack?
-                // Shouldn't adjust .size be enough???
-                int inputSize = 0;
-                foreach (item; nextContext.items.retro)
-                {
-                    debug {stderr.writeln("foreach.push:", item);}
-                    bodyContext.push(item);
-                    inputSize++;
-                }
-
-                context = context.process.run(argBody, bodyContext, inputSize);
-                debug {stderr.writeln("foreach context.exitCode:", context.exitCode);}
-
-                if (context.exitCode == ExitCode.Break)
+                if (exitCode == ExitCode.Break)
                 {
                     break;
                 }
-                else if (context.exitCode == ExitCode.Return)
+                else if (exitCode == ExitCode.Return)
                 {
                     /*
                     Return propagates up into the
                     processes stack:
                     */
-                    return context;
-                }
-                else if (context.exitCode == ExitCode.Failure)
-                {
-                    return context;
+                    return ExitCode.Success;
                 }
             }
         }
 
-        context.exitCode = ExitCode.Success;
-        return context;
+        return ExitCode.Success;
     };
 
-    commands["collect"] = function (string path, Context context)
-    {
-        /*
-        > stack.push 1 2 3 4 | collect | print
-        (1 2 3 4)
-        */
-        if (context.size == 0)
-        {
-            auto msg = "`" ~ path ~ "` needs at least one input stream";
-            return context.error(msg, ErrorCode.InvalidSyntax, "");
-        }
-
-        Items items;
-
-        foreach (input; context.items)
-        {
-            while (true)
-            {
-                auto nextContext = input.next(context.next());
-                if (nextContext.exitCode == ExitCode.Break)
-                {
-                    break;
-                }
-                else if (nextContext.exitCode == ExitCode.Skip)
-                {
-                    continue;
-                }
-                else if (nextContext.exitCode == ExitCode.Failure)
-                {
-                    return nextContext;
-                }
-                auto x = nextContext.items;
-                items ~= x;
-            }
-        }
-
-        return context.push(new List(items));
-    };
-
-    commands["try"] = function (string path, Context context)
+    builtinCommands["try"] = function(string path, Input input, Output output)
     {
         /*
         try { subcommand } { return default_value }
         */
-        auto body = context.pop!SubProgram();
-        SubProgram default_body = null;
+        auto body = input.pop!SubProgram;
+        auto default_body = input.pop!SubProgram(null);
 
-        if (context.size)
+        ExitCode exitCode;
+        try
         {
-            default_body = context.pop!SubProgram();
+            exitCode = body.run(input.escopo, output);
         }
-
-        context = context.process.run(body, context);
-        if (context.exitCode == ExitCode.Failure)
+        catch (NowException ex)
         {
-            debug {
-                stderr.writeln("try on ", context.escopo.description);
-                stderr.writeln(" try failure context:", context);
-            }
-
-            if (default_body)
+            auto error = ex.toError;
+            if (default_body !is null)
             {
-                auto error = context.pop();
-                debug {stderr.writeln(" error:", error);}
+                auto newScope = input.escopo.createChild("catch");
 
-                context.escopo["error"] = error;
-                context.exitCode = ExitCode.Success;
-                context = context.process.run(default_body, context);
+                newScope["error"] = error;
+                return default_body.run(newScope, output);
             }
             else
             {
-                Item errorItem = context.peek();
-                if (errorItem.type == ObjectType.Error)
-                {
-                    auto error = cast(Erro)errorItem;
-
-                    if (error.subject !is null)
-                    {
-                        if (error.subject.type == ObjectType.SystemProcess)
-                        {
-                            auto subject = cast(SystemProcess)(error.subject);
-                            stderr.writeln("Command line: ", subject.cmdline);
-                        }
-                    }
-                }
+                stderr.writeln("e> ", error);
             }
         }
 
-        return context;
+        return ExitCode.Success;
     };
-    commands["call"] = function (string path, Context context)
+    builtinCommands["call"] = function(string path, Input input, Output output)
     {
         /*
         > call print "something"
         something
         */
-        auto name = context.pop!string();
+        auto name = input.pop!string();
 
-        if (context.size)
-        {
-            Item target = context.peek();
-            context = target.runCommand(name, context);
-        }
-        else
-        {
-            context = context.program.runCommand(name, context);
-        }
-        debug {
-            stderr.writeln("call ", name, " context:", context, "/", context.exitCode);
-        }
-        return context;
+        auto newInput = Input(
+            input.escopo,
+            input.inputs,
+            input.args[1..$],
+            input.kwargs
+        );
+        return input.escopo.document.runProcedure(name, newInput, output);
     };
 
     // Hashes
-    commands["md5"] = function (string path, Context context)
+    builtinCommands["md5"] = function(string path, Input input, Output output)
     {
-        string target = context.pop!string();
+        string target = input.pop!string();
         char[] digest = target.hexDigest!MD5;
-        return context.push(digest.to!string);
+        output.push(digest.to!string);
+        return ExitCode.Success;
     };
-    commands["uuid.sha1"] = function (string path, Context context)
+    builtinCommands["uuid:sha1"] = function(string path, Input input, Output output)
     {
-        string source = context.pop!string();
+        string source = input.pop!string();
         string result;
-        if (context.size)
+        /*
+        // TODO: use kwargs!
         {
-            auto namespace = sha1UUID(context.pop!string());
+            input = ?
+            auto namespace = sha1UUID(input.pop!string());
             result = sha1UUID(source, namespace).to!string;
         }
-        else
-        {
-            result = sha1UUID(source).to!string;
-        }
-        return context.push(result);
+        */
+        result = sha1UUID(source).to!string;
+        output.push(result);
+        return ExitCode.Success;
     };
-    commands["uuid.random"] = function (string path, Context context)
+    builtinCommands["uuid.random"] = function(string path, Input input, Output output)
     {
-        return context.push(randomUUID().to!string);
+        output.push(randomUUID().to!string);
+        return ExitCode.Success;
     };
 
     // Random
-    commands["random"] = function (string path, Context context)
+    builtinCommands["random"] = function(string path, Input input, Output output)
     {
-        auto a = context.pop();
-        auto b = context.pop();
+        auto a = input.pop!Item();
+        auto b = input.pop!Item();
 
         if (a.type == ObjectType.Float || b.type == ObjectType.Float)
         {
@@ -1098,9 +841,10 @@ static this()
             # A random number greater or equal to 0.1
             # and lower than 0.5.
             */
-            auto af = cast(FloatAtom)a;
-            auto bf = cast(FloatAtom)b;
-            return context.push(uniform(af.toFloat(), bf.toFloat()));
+            auto af = cast(Float)a;
+            auto bf = cast(Float)b;
+            output.push(uniform(af.toFloat(), bf.toFloat()));
+            return ExitCode.Success;
         }
         else
         {
@@ -1108,20 +852,67 @@ static this()
             > random 1 3
             # A random number between 1 and 3.
             */
-            auto ai = cast(IntegerAtom)a;
-            auto bi = cast(IntegerAtom)b;
-            return context.push(uniform(ai.toInt(), bi.toInt() + 1));
+            auto ai = cast(Integer)a;
+            auto bi = cast(Integer)b;
+            output.push(uniform(ai.toLong(), bi.toLong() + 1));
+            return ExitCode.Success;
         }
     };
 
+    // OPERATORS
+    /*
+    Since we changed the syntax for calling *methods*, now we must
+    have these operators as builtinCommands so they will identify
+    the target and call its correspondent method...
+    */
+    builtinCommands["."] = function(string path, Input input, Output output)
+    {
+        auto target = input.pop!Item;
+        return target.runMethod(path, input, output);
+    };
+    builtinCommands["+"] = builtinCommands["."];
+    builtinCommands["-"] = builtinCommands["."];
+    builtinCommands["*"] = builtinCommands["."];
+    builtinCommands["/"] = builtinCommands["."];
+    builtinCommands["%"] = builtinCommands["."];
+    builtinCommands["=="] = builtinCommands["."];
+    builtinCommands["!="] = builtinCommands["."];
+    builtinCommands[">"] = builtinCommands["."];
+    builtinCommands["<"] = builtinCommands["."];
+    builtinCommands[">="] = builtinCommands["."];
+    builtinCommands["<="] = builtinCommands["."];
+
+
+    // SubProgram related:
+    builtinCommands["run"] = function (string path, Input input, Output output)
+    {
+        /*
+        > run { print 123 }
+        123
+
+        Specially useful in conjunction with `when`:
+        > set x 1
+        > run {
+              when ($x == 0) {zero}
+              when ($x == 1) {one}
+              default {other}
+          } | print
+        one
+        */
+        auto body = input.pop!SubProgram;
+        auto escopo = input.escopo.createChild("run");
+
+        return body.run(escopo, output);
+    };
+
     // Others
-    loadBase64Commands(commands);
-    loadCsvCommands(commands);
-    loadIniCommands(commands);
-    loadJsonCommands(commands);
-    loadHttpCommands(commands);
-    loadTemplateCommands(commands);
-    loadTerminalCommands(commands);
-    loadUrlCommands(commands);
-    loadYamlCommands(commands);
+    loadBase64Commands(builtinCommands);
+    loadCsvCommands(builtinCommands);
+    loadIniCommands(builtinCommands);
+    loadJsonCommands(builtinCommands);
+    loadHttpCommands(builtinCommands);
+    loadTemplateCommands(builtinCommands);
+    loadTerminalCommands(builtinCommands);
+    loadUrlCommands(builtinCommands);
+    loadYamlCommands(builtinCommands);
 }

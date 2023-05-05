@@ -3,7 +3,7 @@ module now.nodes.item;
 
 import std.variant;
 
-import now.nodes;
+import now;
 
 
 // A base class for all kind of items that
@@ -12,7 +12,7 @@ class Item
 {
     ObjectType type;
     string typeName;
-    CommandsMap commands;
+    MethodsMap methods;
 
     // Operators:
     template opUnary(string operator)
@@ -34,12 +34,12 @@ class Item
             ~ thisInfo.toString() ~ " to bool not implemented."
         );
     }
-    long toInt()
+    long toLong()
     {
         auto thisInfo = typeid(this);
         throw new Exception(
             "Conversion from "
-            ~ thisInfo.toString() ~ " to int not implemented."
+            ~ thisInfo.toString() ~ " to long not implemented."
             ~ " (" ~ this.toString() ~ ")"
         );
     }
@@ -61,70 +61,38 @@ class Item
     }
 
     // Evaluation:
-    Context evaluate(Context context, bool force)
+    Items evaluate(Escopo escopo)
     {
-        return this.evaluate(context);
+        return [this];
     }
-    Context evaluate(Context context)
+    ExitCode next(Escopo escopo, Output output)
     {
-        context.push(this);
-        return context;
-    }
-    Context next(Context context)
-    {
-        context = runMethod("next", context);
-        return context;
+        auto input = Input(
+            escopo,
+            [], [], null
+        );
+        return runMethod("next", input, output);
     }
 
-    Context runMethod(string name, Context context)
+    bool hasMethod(string name)
     {
-        auto cmdPtr = (name in this.commands);
-        if (cmdPtr !is null)
-        {
-            auto cmd = *cmdPtr;
-            context.push(this);
-            return cmd(name, context);
-        }
-        else
-        {
-            context.push(this);
-            return context.program.runCommand(name, context);
-        }
-        /*
-        else
-        {
-            auto info = typeid(this);
-            string msg = 
-                name
-                ~ " not implemented for "
-                ~ info.toString();
-            return context.error(msg, ErrorCode.NotImplemented, "");
-        }
-        */
+        auto cmdPtr = (name in this.methods);
+        return (cmdPtr !is null);
     }
-
-    Context runCommand(string name, Context context)
+    ExitCode runMethod(string name, Input input, Output output)
     {
-        auto cmdPtr = (name in this.commands);
-        if (cmdPtr !is null)
+        if (auto cmdPtr = (name in this.methods))
         {
             auto cmd = *cmdPtr;
-            return cmd(name, context);
+            return cmd(this, name, input, output);
         }
         else
         {
-            return context.program.runCommand(name, context);
+            throw new NotFoundException(
+                input.escopo,
+                "Method `" ~ name ~ "` not found"
+                ~ " for type " ~ type.to!string
+            );
         }
-        /*
-        else
-        {
-            auto info = typeid(this);
-            string msg = 
-                name
-                ~ " not implemented for "
-                ~ info.toString();
-            return context.error(msg, ErrorCode.NotImplemented, "");
-        }
-        */
     }
 }

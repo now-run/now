@@ -1,52 +1,93 @@
-module now.nodes.program;
+module now.nodes.document;
 
 import core.sys.posix.dlfcn;
-import std.algorithm : each;
 import std.algorithm.searching : endsWith;
 import std.file : isFile, read;
 import std.path : buildPath;
 import std.string : toStringz;
 import std.uni : toUpper;
 
-import now.grammar;
+
 import now.nodes;
 
+import now.base_command;
+import now.grammar;
+import now.procedure;
+import now.shell_script;
+import now.system_command;
 
-class Program : Dict {
+
+class Document : Dict {
+    string title;
+    string description;
+    string sourcePath;
+    Dict metadata;
+    Dict data;
+    Dict text;
+
     // CLI commands:
-    Procedure[string] subCommands;
+    Procedure[string] commands;
     // Procedures:
     BaseCommand[string] procedures;
-    // Global commands:
-    CommandsMap globalCommands;
 
     string[] nowPath;
 
-    this()
+    this(string title, string description, Dict metadata, Dict data)
     {
+        log(": Document: ", title);
         this.type = ObjectType.Document;
-        this.commands = dictCommands;
+        this.methods = dictMethods;
         this.typeName = "document";
+
+        this.title = title;
+        this.description = description;
+        this.metadata = metadata;
+        this.data = data;
+        log(":: Document created");
+    }
+    this(string title, string description, Dict metadata)
+    {
+        log(": Document: ", title, " / ", description, " / ", metadata);
+        this(title, description, metadata, new Dict());
+    }
+    this(string title, string description)
+    {
+        log(": Document: ", title, " / ", description);
+        this(title, description, new Dict(), new Dict());
     }
 
-    void initialize(CommandsMap commands, Dict environmentVariables)
+    void initialize(Dict environmentVariables)
     {
-        debug {stderr.writeln("Initializing program");}
-        this.globalCommands = commands;
+        log("- Initializing document");
+        setNowPath(environmentVariables);
 
-        debug {stderr.writeln("Setting nowPath");}
-        auto nowPath = environmentVariables.get!String(
+        importPackages();
+        loadConfiguration(environmentVariables);
+        loadConstants();
+        loadTemplates();
+        loadShells();
+        loadProcedures();
+        loadDocumentCommands();
+        loadSystemCommands();
+        loadText();
+    }
+
+    void setNowPath(Dict environmentVariables)
+    {
+        log("- Setting nowPath");
+        auto nowPath = environmentVariables.getOr!string(
             "NOW_PATH",
             delegate (Dict d)
             {
-                auto pwd = d["PWD"].toString();
-                return new String(pwd ~ "/now");
+                auto pwd = d.get!string("PWD");
+                return pwd ~ "/now";
             }
-        ).toString();
+        );
         this.nowPath = nowPath.split(":");
-
-        // TODO: break all these sections in methods
-        debug {stderr.writeln("Importing packages");}
+    }
+    void importPackages()
+    {
+        log("- Importing packages");
         auto packages = this.getOrCreate!Dict("packages");
         foreach (index, filenameItem; packages.values)
         {
@@ -70,38 +111,39 @@ class Program : Dict {
             }
         }
 
-        debug {stderr.writeln("Adjusting configuration");}
+    }
+    void loadConfiguration(Dict environmentVariables)
+    {
+        log("- Adjusting configuration");
         /*
         About [configuration]:
         - It must always follow the format "configuration/:key";
         - No sub-keys are allowed;
         - No "direct" configuration is allowed.
         */
-        auto config = this.getOrCreate!Dict("configuration");
-        foreach (configSectionName, configSection; config.values)
+        auto configuration = data.getOrCreate!Dict("configuration");
+        foreach (configSectionName, configSection; configuration)
         {
-            // Make sure the subDict exists:
-            this.getOrCreate!Dict(configSectionName);
+            // TODO: check if the key is already present:
+            auto scopeDict = new Dict();
+            this[configSectionName] = scopeDict;
+            // Example: configSectionName = "http"
 
-            // configSectionName = http
-            auto d = cast(Dict)configSection;
-            foreach (name, infoItem; d.values)
+            // "name" = host
+            // "infoItem" = type, default value, etc. (before casting to Dict)
+            foreach (name, infoItem; cast(Dict)configSection)
             {
-                // name = host
-                if (infoItem.type != ObjectType.Dict)
-                {
-                    continue;
-                }
-
                 string envName = (configSectionName ~ "_" ~ name).toUpper;
-                debug {stderr.writeln("envName:", envName);}
+                Item finalValue;
+
                 Item *envValuePtr = (envName in environmentVariables.values);
                 if (envValuePtr !is null)
                 {
-                    String envValue = cast(String)(*envValuePtr);
-                    debug {stderr.writeln(" -->", envValue);}
-                    this[[configSectionName, name]] = envValue;
-                    this[envName] = envValue;
+                    finalValue = *envValuePtr;
+                }
+                else if (infoItem.type != ObjectType.Dict)
+                {
+                    finalValue = infoItem;
                 }
                 else
                 {
@@ -109,14 +151,13 @@ class Program : Dict {
                     Item* valuePtr = ("default" in info.values);
                     if (valuePtr !is null)
                     {
-                        Item value = *valuePtr;
-
-                        // http.port = 5000
-                        this[[configSectionName, name]] = value;
+                        // (http . port) = 5000
+                        finalValue = *valuePtr;
                     }
                     else
                     {
                         throw new InvalidConfigurationException(
+                            null,
                             "Configuration "
                             ~ configSectionName ~ "/" ~ name
                             ~ " not found. The environment variable "
@@ -125,41 +166,47 @@ class Program : Dict {
                         );
                     }
                 }
+                scopeDict[name] = finalValue;
+                // We'll overwrite if repeated and that's expected:
+                this[envName] = finalValue;
             }
         }
+    }
+    void loadConstants()
+    {
+        log("- Adjusting constants");
 
-        debug {stderr.writeln("Adjusting constants");}
-
-        auto constants = this.getOrCreate!Dict("constants");
-        foreach (sectionName, section; constants.values)
+        auto constants = data.getOrCreate!Dict("constants");
+        foreach (sectionName, section; constants)
         {
-            if (section.type == ObjectType.Dict)
-            {
-                auto sectionDict = cast(Dict)section;
-                this.on(
-                    sectionName,
-                    // If it already exists:
-                    delegate (Item value) {
-                        auto d = cast(Dict)value;
-                        foreach (k, v; sectionDict.values)
-                        {
-                            d[k] = v;
-                        }
-                    },
-                    // If doesn't exist:
-                    delegate () {
-                        this[sectionName] = section;
-                    }
-                );
-            }
-            else
+            if (section.type != ObjectType.Dict)
             {
                 this[sectionName] = section;
             }
+            else
+            {
+                auto sectionDict = cast(Dict)section;
+                Dict currentSection;
+                try
+                {
+                    currentSection = this.get!Dict(sectionName);
+                }
+                catch (NotFoundException ex)
+                {
+                    currentSection = new Dict();
+                    this[sectionName] = cast(Dict)section;
+                    continue;
+                }
+                // else:
+                currentSection.update(cast(Dict)section);
+            }
         }
+    }
+    void loadTemplates()
+    {
+        log("- Adjusting templates");
 
-        debug {stderr.writeln("Adjusting templates");}
-        auto templates = this.getOrCreate!Dict("templates");
+        auto templates = data.getOrCreate!Dict("templates");
         foreach (templateName, infoItem; templates.values)
         {
             auto templateInfo = cast(Dict)infoItem;
@@ -167,30 +214,31 @@ class Program : Dict {
                 templateName, templateInfo, templates
             );
         }
+    }
+    void loadShells()
+    {
+        log("- Adjusting shells");
 
-        debug {stderr.writeln("Adjusting shells");}
-        auto shells = this.getOrCreate!Dict("shells");
+        auto shells = data.getOrCreate!Dict("shells");
         foreach (shellName, infoItem; shells.values)
         {
             auto shellInfo = cast(Dict)infoItem;
 
-            shellInfo.get!Dict(
-                "command",
-                delegate (Dict d) {
-                    auto cmdDict = new Dict();
-                    shellInfo["command"] = cmdDict;
-                    // default options for every shell:
-                    // (works fine on bash)
-                    cmdDict["-"] = new String(shellName);
-                    cmdDict["-"] = new String("-c");
-                    cmdDict["-"] = new SubstAtom("script_body");
-                    if (shellName[0..3] != "ksh")
-                    {
-                        cmdDict["-"] = new SubstAtom("script_name");
-                    }
-                    return cast(Dict)null;
+            auto command = shellInfo.get!Dict("command", null);
+            if (command is null)
+            {
+                auto cmdDict = new Dict();
+                shellInfo["command"] = cmdDict;
+                // default options for every shell:
+                // (works fine on bash)
+                cmdDict["-"] = new String(shellName);
+                cmdDict["-"] = new String("-c");
+                cmdDict["-"] = new Reference("script_body");
+                if (shellName[0..3] != "ksh")
+                {
+                    cmdDict["-"] = new Reference("script_name");
                 }
-            );
+            }
 
             // Scripts for this shell:
             auto scripts = shellInfo.getOrCreate!Dict("scripts");
@@ -202,39 +250,41 @@ class Program : Dict {
                 were declared (we could, but it'd be innefective).
                 */
                 auto scriptInfo = cast(Dict)scriptInfoItem;
-                debug {
-                    stderr.writeln("scripts/", scriptName, ": ", scriptInfo);
-                }
                 this.procedures[scriptName] = new ShellScript(
                     shellName, shellInfo, scriptName, scriptInfo
                 );
             }
         }
+    }
+    void loadProcedures()
+    {
+        log("- Adjusting procedures");
 
-        debug {stderr.writeln("Adjusting procedures");}
-
-        // The program dict is loaded, now
+        // The document dict is loaded, now
         // act accordingly on each different section.
-        auto procedures = this.getOrCreate!Dict("procedures");
+        auto procedures = data.getOrCreate!Dict("procedures");
         foreach (name, infoItem; procedures.values)
         {
             auto info = cast(Dict)infoItem;
             this.procedures[name] = new Procedure(name, info);
         }
+    }
+    void loadDocumentCommands()
+    {
+        log("- Adjusting commands");
 
-        debug {stderr.writeln("Adjusting commands");}
-
-        auto commandsDict = this.getOrCreate!Dict("commands");
+        auto commandsDict = data.getOrCreate!Dict("commands");
         foreach (name, infoItem; commandsDict.values)
         {
             auto info = cast(Dict)infoItem;
-            subCommands[name] = new Procedure(name, info);
-
+            commands[name] = new Procedure(name, info);
         }
+    }
+    void loadSystemCommands()
+    {
+        log("- Preparing system commands");
 
-        debug {stderr.writeln("Preparing system commands");}
-
-        auto system_commands = this.getOrCreate!Dict("system_commands");
+        auto system_commands = data.getOrCreate!Dict("system_commands");
         foreach (name, infoItem; system_commands.values)
         {
             auto info = cast(Dict)infoItem;
@@ -246,18 +296,20 @@ class Program : Dict {
                 );
             }
             // XXX: is it correct to save procedures and
-            // syscmdcalls in the same place???
+            // syscmds in the same place???
             this.procedures[name] = new SystemCommand(name, info);
         }
+    }
+    void loadText()
+    {
+        log("- Collecting Text");
 
-        debug {stderr.writeln("Collecting Text");}
-        auto text = this.getOrCreate!Dict("text");
-        foreach (name; this.order)
+        foreach (key, value; data)
         {
-            if (name[0] >= 'A' && name[0] <= 'Z')
+            auto firstLetter = key[0];
+            if (firstLetter >= 'A' && firstLetter <= 'Z')
             {
-                text[name] = this[name];
-                this.remove(name);
+                text[key] = value;
             }
         }
     }
@@ -265,41 +317,42 @@ class Program : Dict {
     // Conversions
     override string toString()
     {
-        return "document " ~ this.get!String(
-            ["document","name"],
-            delegate (Dict d) {
-                return new String("PROGRAM WITHOUT A NAME");
-            }
-        ).toString();
+        return this.title;
     }
 
-    override Context runCommand(string path, Context context)
+    // Commands (for command line)
+    Procedure getCommand(string name)
     {
-        // If it's a procedure:
-        auto procPtr = (path in this.procedures);
-        if (procPtr !is null)
+        auto commandPtr = (name in commands);
+        if (commandPtr !is null)
+        {
+            return *commandPtr;
+        }
+        else
+        {
+            stderr.writeln("Command ", name, " not found.");
+            return null;
+        }
+    }
+    ExitCode runProcedure(string path, Input input, Output output)
+    {
+        if (auto procPtr = (path in this.procedures))
         {
             auto proc = *procPtr;
-            return proc.run(path, context);
+            return proc.run(path, input, output);
         }
 
-        // Or if it's a built-in command:
-        auto cmdPtr = (path in this.globalCommands);
-        if (cmdPtr !is null)
+        if (auto cmdPtr = (path in builtinCommands))
         {
             auto cmd = *cmdPtr;
-            return cmd(path, context);
+            auto exitCode = cmd(path, input, output);
+            return exitCode;
         }
 
-        // Or a system command:
-        // TODO
-
-        context.error(
-            "Command `" ~ path ~ "` not found.",
-            ErrorCode.CommandNotFound,
-            ""
+        throw new ProcedureNotFoundException(
+            input.escopo,
+            path
         );
-        return context;
     }
 
     // Packages
@@ -318,7 +371,7 @@ class Program : Dict {
     {
         auto parser = new NowParser(path.read().to!string);
         auto library = parser.run();
-        // Merge the library into the program:
+        // Merge the library into the document:
         foreach (key, value; library.values)
         {
             this.on(
@@ -372,7 +425,7 @@ class Program : Dict {
         }
 
         // Initialize the package:
-        auto initPackage = cast(CommandsMap function(Program))dlsym(
+        auto initPackage = cast(CommandsMap function(Document))dlsym(
             lh, "init"
         );
 

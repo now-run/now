@@ -2,6 +2,45 @@
 
 Illustrate some aspects of Now's syntax.
 
+
+[procedures/methods]
+
+set s "123.4"
+
+to.float $s | print "s:"
+path "/dev" | glob "sd*" | print "sd*:"  # Error!
+path "/sys/class" : glob "s*" | print "s*:"
+path "/dev" | .glob "sd*" | print "sd*:"
+dict (k = v) | .get k | print "dict.k:"
+path "/dev" . glob "sd*" | print "sd*:"
+to.float $s | print "s:"
+path "/dev" | set path
+$path : glob "sd*" | print "sd*: "
+
+
+# [ a : b c ] = pipe, but b object is the first input
+# [ a | b c ] = pipe, but b object is the first argument
+# [ a | .b c ] = pipe, but b object is the first input
+
+ls | foreach x { glob $x "*" | print "$x: " }
+
+list a b c |< get 0 |> print "list 0 is "
+list a b c |< get 0 | print "list 0 is "
+list a b c : get 0 | print "list 0 is "
+list a b c <- get 0 -> print "list 0 is "
+list a b c < get 0 > print "list 0 is "
+list a b c < get 0 | print "list 0 is "
+list a b c | set list
+$list : get 0 | print "(list . 0) is "
+
+dict (k = v) -> set dict
+dict (k = v) > set dict
+dict (k = v) | set dict
+$dict : get k | print "(dict . k) is "
+get $dict k -> print "(dict . k) is "
+get $dict k <- print " is the value of (dict . k)"
+
+
 [system_commands/wd]
 parameters {
     directory {

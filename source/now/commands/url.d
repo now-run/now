@@ -1,29 +1,30 @@
 module now.commands.url;
 
+
 import std.uri;
 
-import now.nodes;
+import now;
 
 
 void loadUrlCommands(CommandsMap commands)
 {
-    commands["url.encode"] = function (string path, Context context)
+    commands["url.encode"] = function (string path, Input input, Output output)
     {
-        foreach (item; context.items)
+        foreach (item; input.popAll)
         {
             auto s = item.toString();
-            context.push(s.encode());
+            output.push(s.encode());
         }
-        return context;
+        return ExitCode.Success;
     };
-    commands["url.decode"] = function (string path, Context context)
+    commands["url.decode"] = function (string path, Input input, Output output)
     {
-        foreach (item; context.items)
+        foreach (item; input.popAll)
         {
             auto s = item.toString();
-            context.push(s.decode());
+            output.push(s.decode());
         }
-        return context;
+        return ExitCode.Success;
     };
 
 

@@ -1,8 +1,7 @@
 module now.shell_script;
 
 
-import now.nodes;
-import now.grammar;
+import now;
 
 
 class ShellScript : SystemCommand
@@ -22,39 +21,28 @@ class ShellScript : SystemCommand
         // So we fix it now:
         this.parameters = info.getOrCreate!Dict("parameters");
 
-        this.body = info.get!String(
-            "body",
-            delegate (Dict d) {
-                throw new Exception(
-                    "ShellScript " ~ name ~ " must have a body"
-                );
-                return cast(String)null;
-            }
-        );
-        this.expandVariables = info.get!BooleanAtom(
-            "expand_variables",
-            delegate (Dict d) {
-                auto v = new BooleanAtom(false);
-                d["expand_variables"] = v;
-                return v;
-            }
-        ).toBool();
+        this.body = info.get!String("body", null);
+        if (this.body is null)
+        {
+            throw new Exception(
+                "ShellScript " ~ name ~ " must have a body"
+            );
+        }
+        this.expandVariables = info.get!bool("expand_variables", false);
 
         // Local event handlers:
         this.loadEventHandlers(info);
     }
-    override Context preRun(string name, Context context)
+    override ExitCode preRun(string name, Input input, Output output)
     {
-        auto escopo = context.escopo;
+        auto escopo = input.escopo;
 
         String body;
         if (expandVariables)
         {
-            // XXX: will it work properly???
             auto parser = new NowParser(this.body.toString());
             auto substString = parser.consumeString(cast(char)null);
-            context = substString.evaluate(context);
-            body = context.pop!String();
+            body = cast(String)(substString.evaluate(escopo).front);
         }
         else
         {
@@ -66,11 +54,11 @@ class ShellScript : SystemCommand
         escopo["script_call_name"] = new String(name);
         escopo["shell_name"] = new String(this.shellName);
 
-        return context;
+        return ExitCode.Success;
     }
-    override Context doRun(string name, Context context)
+    override ExitCode doRun(string name, Input input, Output output)
     {
-        context = super.doRun(name, context);
+        auto exitCode = super.doRun(name, input, output);
         /*
         What the SystemCommand do is to push
         a new SystemProcess, so we can peek the
@@ -78,14 +66,11 @@ class ShellScript : SystemCommand
         event handlers can access the process (to wait
         for it to finish, for instance).
         */
-        if (context.exitCode != ExitCode.Failure)
+        auto process = output.items.front;
+        if (process.type == ObjectType.SystemProcess)
         {
-            auto process = context.peek();
-            if (process.type == ObjectType.SystemProcess)
-            {
-                context.escopo["process"] = process;
-            }
+            input.escopo["process"] = process;
         }
-        return context;
+        return exitCode;
     }
 }

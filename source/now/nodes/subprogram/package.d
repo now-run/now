@@ -1,13 +1,13 @@
 module now.nodes.subprogram;
 
 
-import now.nodes;
+import now;
 
 
-CommandsMap subprogramCommands;
+MethodsMap subprogramMethods;
 
 
-class SubProgram : BaseList
+class SubProgram : Item
 {
     Pipeline[] pipelines;
 
@@ -16,7 +16,7 @@ class SubProgram : BaseList
         this.pipelines = pipelines;
         this.type = ObjectType.SubProgram;
         this.typeName = "subprogram";
-        this.commands = subprogramCommands;
+        this.methods = subprogramMethods;
     }
 
     override string toString()
@@ -41,20 +41,43 @@ class SubProgram : BaseList
         return s;
     }
 
-    override Context evaluate(Context context)
+    // From "process.d":
+    ExitCode run(Escopo escopo, Output output)
     {
-        return this.evaluate(context, false);
+        return run(escopo, output, []);
     }
-    override Context evaluate(Context context, bool force)
+    ExitCode run(Escopo escopo, Output output, Items inputs)
     {
-        if (!force)
+        auto exitCode = ExitCode.Success;
+
+        foreach(pipeline; pipelines)
         {
-            context.push(this);
-            return context;
+            exitCode = pipeline.run(escopo, output, inputs);
+
+            final switch(exitCode)
+            {
+                case ExitCode.Success:
+                    // That is the expected result from Pipelines:
+                    break;
+
+                // -----------------
+                // Proc execution:
+                case ExitCode.Return:
+                    // Return should keep stopping
+                    // processes until properly
+                    // handled.
+                    return exitCode;
+
+                // -----------------
+                // Loops:
+                case ExitCode.Break:
+                case ExitCode.Continue:
+                case ExitCode.Skip:
+                    return exitCode;
+            }
         }
-        else
-        {
-            return new ExecList(this).evaluate(context);
-        }
+
+        return exitCode;
     }
+
 }

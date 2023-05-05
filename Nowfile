@@ -119,6 +119,7 @@ parameters {
 print "# hello"
 print "arguments: name=$name times=$times"
 print "configuration: hello . salute_word: " ($hello . salute_word)
+print " times=$times"
 range.silent 1 $times | {
     print ">>> $salute_word, $name!"
 }
@@ -150,7 +151,7 @@ parameters {
     }
 }
 
-to.int $code | as n
+$code : to.int | as n
 if (($n > 127) || ($n < 0)) {
     error "The exit code should be between zero and 127"
 }
@@ -203,11 +204,11 @@ hello $name
 print
 
 print "calling hello with positional and named arguments..."
-hello $name (salute_word = $salute_word)
+hello $name -- (salute_word = $salute_word)
 print
 
 print "calling hello with times = 3 and a different salute word..."
-hello $name (times = 3) (salute_word = "hi")
+hello $name -- (times = 3) (salute_word = "hi")
 
 
 [commands/ls/on.error]
@@ -224,7 +225,8 @@ parameters {
     }
 }
 
-glob [path $path] "*" | range | {print}
+# TODO: iterate through List without the need to "range" it!
+path $path : glob "*" | print
 
 
 [commands/make]

@@ -1,10 +1,11 @@
 module now.commands.csv;
 
+
 import std.algorithm.mutation : stripRight;
 import std.array : replace;
 
+import now;
 import now.commands;
-import now.nodes;
 import now.parser;
 
 
@@ -55,18 +56,19 @@ class CsvParser : Parser
 
 void loadCsvCommands(CommandsMap commands)
 {
-    commands["csv.decode"] = function (string path, Context context)
+    commands["csv.decode"] = function (string path, Input input, Output output)
     {
         // TODO:
         // 1- accept multiple arguments;
         // 2- if argument is Path, use a CsvReader class.
-        string content = context.pop!string();
+        string content = input.pop!string();
         auto parser = new CsvParser(content);
-        return context.push(parser.run());
+        output.push(parser.run());
+        return ExitCode.Success;
     };
-    commands["csv.encode"] = function (string path, Context context)
+    commands["csv.encode"] = function (string path, Input input, Output output)
     {
-        auto source = context.pop!List();
+        auto source = input.pop!List();
         string s;
 
         foreach (lineItem; source.items)
@@ -95,6 +97,7 @@ void loadCsvCommands(CommandsMap commands)
             s ~= "\n";
         }
 
-        return context.push(s);
+        output.push(s);
+        return ExitCode.Success;
     };
 }

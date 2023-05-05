@@ -1,74 +1,67 @@
 module now.escopo;
 
 
-import now.nodes;
+import now;
 
 
-class Escopo
+class Escopo : Dict
 {
-    Program program;
     Escopo parent;
-    Items[string] variables;
-    string description;
+    string name;
     BaseCommand rootCommand;
+    Document document;
 
-    this(Program program, string description=null)
+    this(Escopo parent, string name)
     {
-        this.program = program;
-        this.parent = null;
-        this.description = description;
-    }
-    this(Escopo parent, string description=null)
-    {
+        super();
+        log(": Escopo: ", name);
+        this.name = name;
         this.parent = parent;
-        this.program = parent.program;
-        this.rootCommand = parent.rootCommand;
-        this.description = description;
-    }
 
-    // The "heap":
-    // auto x = escopo["x"];
-    Items opIndex(string name)
-    {
-        /*
-        I usually favour a well-structured if/else,
-        but in this case, early-returning makes
-        more sense:
-        */
-        Items* valuesPtr = (name in this.variables);
-        if (valuesPtr !is null)
+        if (parent !is null)
         {
-            return *valuesPtr;
-        }
+            // Child scopes always share variables:
+            this.order = parent.order;
+            this.values = parent.values;
 
-        if (this.parent !is null)
-        {
-            return this.parent[name];
+            this.rootCommand = parent.rootCommand;
+            this.document = parent.document;
         }
-
-        Item* valuePtr = (name in this.program.values);
-        if (valuePtr !is null)
-        {
-            return [*valuePtr];
-        }
-        throw new NotFoundException("`" ~ name ~ "` variable not found!");
+        log(":: Escopo created.");
     }
-    // escopo["x"] = new Atom(123);
-    void opIndexAssign(Item value, string name)
+    this(Document document, string name, BaseCommand rootCommand=null)
     {
-        variables[name] = [value];
-    }
-    void opIndexAssign(Items value, string name)
-    {
-        variables[name] = value;
+        this(cast(Escopo)null, name);
+        this.document = document;
+        this.rootCommand = rootCommand;
     }
 
-    // Debugging information about itself:
+    Escopo createChild(string name)
+    {
+        return new Escopo(this, name);
+    }
+
     override string toString()
     {
-        return (
-            "Escopo " ~ description ~ "\n"
-            ~ " vars:" ~ to!string(variables.byKey) ~ "\n"
-        );
+        return "Escopo " ~ name;
+    }
+
+    /*
+    Behave as a Dict, but if a key is missing,
+    try to find it in this.document.
+    */
+    override Item opIndex(string k)
+    {
+        auto v = values.get(k, null);
+        if (v is null && document !is null)
+        {
+            v = document.get(k, null);
+        }
+        if (v is null)
+        {
+            throw new NotFoundException(this, "key " ~ k ~ " not found");
+        }
+
+        return v;
     }
 }

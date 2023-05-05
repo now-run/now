@@ -1,10 +1,10 @@
 module now.nodes.error;
 
 
-import now.nodes;
+import now;
 
 
-CommandsMap errorCommands;
+MethodsMap errorMethods;
 
 
 class Erro : Item
@@ -13,19 +13,21 @@ class Erro : Item
     string classe;
     string message;
     Item subject;
-    Context context;
+    Escopo escopo;
+    NowException exception;
 
-    this(string message, int code, string classe, Context context, Item subject=null)
+    this(string message, int code, string classe, Escopo escopo, Item subject=null, NowException ex=null)
     {
         this.subject = subject;
         this.message = message;
         this.code = code;
         this.classe = classe;
         this.type = ObjectType.Error;
-        this.context = context;
+        this.escopo = escopo;
+        this.exception = ex;
 
         this.typeName = "error";
-        this.commands = errorCommands;
+        this.methods = errorMethods;
     }
 
     // Conversions:
@@ -37,7 +39,19 @@ class Erro : Item
         {
             s ~= " (" ~ classe ~ ")";
         }
-        s ~= " on " ~ context.description;
+        s ~= " on " ~ escopo.toString();
         return s;
     }
+}
+
+Erro toError(NowException ex)
+{
+    return new Erro(
+        ex.msg,
+        ex.code,
+        "NowException",
+        ex.escopo,
+        ex.subject,
+        ex
+    );
 }

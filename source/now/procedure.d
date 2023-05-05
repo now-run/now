@@ -3,9 +3,8 @@ module now.procedure;
 
 import std.algorithm : canFind;
 
+import now;
 import now.exceptions;
-import now.nodes;
-import now.grammar;
 
 
 class Procedure : BaseCommand
@@ -21,8 +20,8 @@ class Procedure : BaseCommand
         this.body = parser.consumeSubProgram();
     }
 
-    override Context doRun(string name, Context context)
+    override ExitCode doRun(string name, Input input, Output output)
     {
-        return context.process.run(this.body, context);
+        return this.body.run(input.escopo, output);
     }
 }

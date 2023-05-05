@@ -2,8 +2,8 @@ module now.commands.ini;
 
 import std.algorithm.mutation : stripRight;
 
+import now;
 import now.commands;
-import now.nodes;
 import now.parser;
 
 
@@ -54,7 +54,7 @@ class IniParser : Parser
             if (eof) break;
             key = key.stripRight(' ');
             consumeChar();  // '='
-            consumeBlankspaces();
+            consumeWhitespaces();
             auto closer = ';';
             bool isEnclosed = false;
             if (currentChar.among('"', '\''))
@@ -78,18 +78,19 @@ class IniParser : Parser
 
 void loadIniCommands(CommandsMap commands)
 {
-    commands["ini.decode"] = function (string path, Context context)
+    commands["ini.decode"] = function (string path, Input input, Output output)
     {
-        string content = context.pop!string();
+        string content = input.pop!string();
         auto parser = new IniParser(content);
-        return context.push(parser.run());
+        output.push(parser.run());
+        return ExitCode.Success;
     };
-    commands["ini.encode"] = function (string path, Context context)
+    commands["ini.encode"] = function (string path, Input input, Output output)
     {
-        return context.error(
+        throw new NotImplementedException(
+            input.escopo,
             "Not implemented",
-            ErrorCode.NotImplemented,
-            ""
+            -1,
         );
     };
 }

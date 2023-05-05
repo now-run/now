@@ -3,7 +3,7 @@ module now.commands.http;
 
 import std.net.curl;
 
-import now.nodes;
+import now;
 import now.commands.json;
 
 
@@ -39,8 +39,13 @@ auto getHttp(Items items)
                 response.body = s.toString();
                 break;
             default:
-                // TODO: handle this properly inside each command.
-                throw new InvalidException("Invalid type: " ~ item.type.to!string);
+                // TODO: handle this properly inside each command...?
+                throw new InvalidException(
+                    null,
+                    "Invalid type: " ~ item.type.to!string,
+                    -1,
+                    item
+                );
         }
     }
 
@@ -50,14 +55,14 @@ auto getHttp(Items items)
 
 void loadHttpCommands(CommandsMap commands)
 {
-    commands["http.get"] = function (string path, Context context)
+    commands["http.get"] = function (string path, Input input, Output output)
     {
         /*
         > http.get "http://example.com" (authorization = "bearer 1234")
         <html>...
         */
-        string address = context.pop!string();
-        auto http = getHttp(context.items);
+        string address = input.pop!string();
+        auto http = getHttp(input.popAll);
         char[] content;
         try
         {
@@ -65,23 +70,24 @@ void loadHttpCommands(CommandsMap commands)
         }
         catch (HTTPStatusException)
         {
-            return context.error(
+            throw new HTTPException(
+                input.escopo,
                 http.http.statusLine.reason,
                 http.http.statusLine.code,
-                "http"
             );
         }
-        return context.push(content.to!string);
+        output.push(content.to!string);
+        return ExitCode.Success;
     };
-    commands["http.post"] = function (string path, Context context)
+    commands["http.post"] = function (string path, Input input, Output output)
     {
         /*
         > http.post "http://example.org"
         >     . authorization = "bearer 4321")
         >     . [dict (username = "John.Doe") (password = "1324")]
         */
-        string address = context.pop!string();
-        auto http = getHttp(context.items);
+        string address = input.pop!string();
+        auto http = getHttp(input.popAll);
         char[] content;
         try
         {
@@ -89,59 +95,63 @@ void loadHttpCommands(CommandsMap commands)
         }
         catch (HTTPStatusException)
         {
-            return context.error(
+            throw new HTTPException(
+                input.escopo,
                 http.http.statusLine.reason,
                 http.http.statusLine.code,
-                "http"
             );
         }
-        return context.push(content.to!string);
+        output.push(content.to!string);
+        return ExitCode.Success;
     };
-    commands["http.put"] = function (string path, Context context)
+    commands["http.put"] = function (string path, Input input, Output output)
     {
         /*
         > http.put "http://example.org"
         >     . authorization = "bearer 4321")
         >     . [dict (username = "John.Doe") (password = "1324")]
         */
-        string address = context.pop!string();
-        auto http = getHttp(context.items);
+        string address = input.pop!string();
+        auto http = getHttp(input.popAll);
         char[] content;
         try
         {
             content = put(address, http.body, http.http);
         }
-        catch (HTTPStatusException)
+        catch (HTTPStatusException ex)
         {
-            return context.error(
+            // XXX: maybe we should add the original exception
+            // to the new one...
+            throw new HTTPException(
+                input.escopo,
                 http.http.statusLine.reason,
                 http.http.statusLine.code,
-                "http"
             );
         }
-        return context.push(content.to!string);
+        output.push(content.to!string);
+        return ExitCode.Success;
     };
-    commands["http.delete"] = function (string path, Context context)
+    commands["http.delete"] = function (string path, Input input, Output output)
     {
         /*
         > http.delete "http://example.org"
         >     . authorization = "bearer 4321")
         >     . [dict (username = "John.Doe") (password = "1324")]
         */
-        string address = context.pop!string();
-        auto http = getHttp(context.items);
+        string address = input.pop!string();
+        auto http = getHttp(input.popAll);
         try
         {
             del(address, http.http);
         }
         catch (HTTPStatusException)
         {
-            return context.error(
+            throw new HTTPException(
+                input.escopo,
                 http.http.statusLine.reason,
                 http.http.statusLine.code,
-                "http"
             );
         }
-        return context;
+        return ExitCode.Success;
     };
 }

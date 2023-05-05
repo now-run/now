@@ -4,7 +4,7 @@ module now.commands.json;
 import std.array;
 import std.json;
 
-import now.nodes;
+import now;
 import now.commands;
 
 
@@ -27,15 +27,15 @@ Item JsonToItem(JSONValue v)
         case JsonString:
             return new String(v.str);
         case JsonInteger:
-            return new IntegerAtom(v.integer);
+            return new Integer(v.integer);
         case JsonUInteger:
-            return new IntegerAtom(v.uinteger);
+            return new Integer(v.uinteger);
         case JsonFloat:
-            return new FloatAtom(v.floating);
+            return new Float(v.floating);
         case JsonTrue:
-            return new BooleanAtom(true);
+            return new Boolean(true);
         case JsonFalse:
-            return new BooleanAtom(false);
+            return new Boolean(false);
         case JsonArray:
             return new List(
                 v.array()
@@ -70,10 +70,10 @@ JSONValue ItemToJson(Item item, bool strict=false)
         case ObjectType.Boolean:
             return JSONValue(item.toBool());
         case ObjectType.Integer:
-            return JSONValue(item.toInt());
+            return JSONValue(item.toLong());
         case ObjectType.Float:
             return JSONValue(item.toFloat());
-        case ObjectType.Atom:
+        case ObjectType.Name:
         case ObjectType.String:
             auto s = item.toString();
             if (s == "<NULL>")
@@ -110,23 +110,23 @@ JSONValue ItemToJson(Item item, bool strict=false)
 
 void loadJsonCommands(CommandsMap commands)
 {
-    commands["json.decode"] = function (string path, Context context)
+    commands["json.decode"] = function (string path, Input input, Output output)
     {
-        foreach (arg; context.items)
+        foreach (arg; input.popAll)
         {
             JSONValue json = parseJSON(arg.toString());
             auto object = JsonToItem(json);
-            context.push(object);
+            output.push(object);
         }
-        return context;
+        return ExitCode.Success;
     };
-    commands["json.encode"] = function (string path, Context context)
+    commands["json.encode"] = function (string path, Input input, Output output)
     {
-        foreach (arg; context.items)
+        foreach (arg; input.popAll)
         {
             auto json = ItemToJson(arg);
-            context.push(json.toString());
+            output.push(json.toString());
         }
-        return context;
+        return ExitCode.Success;
     };
 }

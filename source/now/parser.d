@@ -3,25 +3,15 @@ module now.parser;
 public import std.algorithm : among, canFind;
 import std.math : pow;
 
+import now;
 import now.conv;
-import now.nodes;
 
 
 const EOL = '\n';
 const SPACE = ' ';
 const TAB = '\t';
-const PIPE = '|';
-const STOPPERS = [')', '>', ']', '}'];
+const STOPPERS = [')', ']', '}'];
 
-
-
-class IncompleteInputException : Exception
-{
-    this(string msg)
-    {
-        super(msg);
-    }
-}
 
 class Parser
 {
@@ -53,22 +43,13 @@ class Parser
         if (eof)
         {
             throw new IncompleteInputException(
+                null,
                 "Code input already ended."
                 ~ " Last char: [" ~ currentChar.to!string ~ "]"
                 ~ " line=" ~ line.to!string
                 ~ " char=" ~ col.to!string
                 ~ " code:\n" ~ code
             );
-        }
-        debug {
-            if (code[index] == EOL)
-            {
-                stderr.writeln("consumed: eol");
-            }
-            else
-            {
-                stderr.writeln("consumed: '", code[index], "'");
-            }
         }
         auto result = code[index++];
         col++;
@@ -77,14 +58,10 @@ class Parser
         {
             col = 0;
             line++;
-            debug {stderr.writeln("== line ", line, " ==");}
         }
 
         if (index >= code.length)
         {
-            debug{stderr.writeln(
-                "CODE ENDED; length=", code.length, "; index=", index
-            );}
             this.eof = true;
             index--;
         }
@@ -93,6 +70,36 @@ class Parser
     }
 
     // --------------------------------------------
+    // Checks on currentChar:
+    bool isWhitespace()
+    {
+        return cast(bool)currentChar.among!(SPACE, TAB, EOL);
+    }
+    bool isSignificantChar()
+    {
+        if (this.eof) return false;
+        return !isWhitespace();
+    }
+    bool isEndOfLine()
+    {
+        return eof || currentChar == EOL;
+    }
+    bool isBlockCloser()
+    {
+        return (eof || STOPPERS.canFind(currentChar));
+    }
+
+    // --------------------------------------------
+    void consumeWhitespace()
+    {
+        if (!isWhitespace)
+        {
+            throw new Exception(
+                "Expecting whitespace, found " ~ currentChar.to!string
+            );
+        }
+        consumeChar();
+    }
     long consumeWhitespaces(bool ignoreComments=true)
     {
         if (eof) return 0;
@@ -117,15 +124,15 @@ class Parser
             }
         }
 
-        debug {
-            if (counter)
-            {
-                stderr.writeln("whitespaces (" ~ counter.to!string ~ ")");
-            }
-        }
         return counter;
     }
-    long consumeBlankspaces(bool ignoreComments=true)
+
+    void consumeSpace()
+    {
+        assert(currentChar == SPACE);
+        consumeChar();
+    }
+    long consumeSpaces(bool ignoreComments=true)
     {
         if (eof) return 0;
 
@@ -143,14 +150,9 @@ class Parser
             consumeLine();
         }
 
-        debug {
-            if (counter)
-            {
-                stderr.writeln("whitespaces (" ~ counter.to!string ~ ")");
-            }
-        }
         return counter;
     }
+
     string consumeLine(bool eliminateEol=true)
     {
         string result;
@@ -168,45 +170,8 @@ class Parser
         }
         return result;
     }
-    void consumeWhitespace()
-    {
-        if (!isWhitespace)
-        {
-            throw new Exception(
-                "Expecting whitespace, found " ~ currentChar.to!string
-            );
-        }
-        debug {stderr.writeln("whitespace");}
-        consumeChar();
-    }
-    void consumeSpace()
-    {
-        debug {stderr.writeln("  SPACE");}
-        assert(currentChar == SPACE);
-        consumeChar();
-    }
-    bool isWhitespace()
-    {
-        return cast(bool)currentChar.among!(SPACE, TAB, EOL);
-    }
-    bool isSignificantChar()
-    {
-        if (this.eof) return false;
-        return !isWhitespace();
-    }
-    bool isEndOfLine()
-    {
-        return eof || currentChar == EOL;
-    }
-    bool isStopper()
-    {
-        return (eof
-                || currentChar == '}' || currentChar == ']'
-                || currentChar == ')' || currentChar == '>');
-    }
 
     // --------------------------------------------
-    // Nodes
     string consume_string(char opener, bool limit_to_eol=false)
     {
         string token;
@@ -290,6 +255,7 @@ class Parser
             else
             {
                 throw new InvalidException(
+                    null,
                     "Invalid number format: "
                     ~ token.to!string
                     ~ " <- "
@@ -299,10 +265,7 @@ class Parser
             token ~= consumeChar();
         }
 
-        debug {stderr.writeln(" token: ", token);}
-
         string s = cast(string)token;
-        debug {stderr.writeln(" s: ", s);}
 
         // .
         // (a dot, alone)
@@ -311,23 +274,23 @@ class Parser
         if (s == "-" || s == ".")
         {
             throw new InvalidException(
+                null,
                 "Invalid number format: "
                 ~ s
             );
         }
         else if (dotCounter == 0)
         {
-            debug {stderr.writeln("new IntegerAtom: ", s);}
-            return new IntegerAtom(s.to!int);
+            return new Integer(s.to!int);
         }
         else if (dotCounter == 1)
         {
-            debug {stderr.writeln("new FloatAtom: ", s);}
-            return new FloatAtom(s.to!float);
+            return new Float(s.to!float);
         }
         else
         {
             throw new InvalidException(
+                null,
                 "Invalid number format: "
                 ~ s
             );

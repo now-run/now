@@ -1,12 +1,12 @@
-BASE_CODE = source/now/*.d source/now/system_command/*.d source/now/nodes/*.d source/now/nodes/*/*.d source/now/nodes/*/*/*.d
-SOURCE_CODE = ${BASE_CODE} source/now/commands/*.d
+DIR = source/now
+BASE_CODE = ${DIR}/*.d ${DIR}/system_command/*.d ${DIR}/nodes/*.d ${DIR}/nodes/*/*.d
+SOURCE_CODE = ${BASE_CODE} ${DIR}/commands/*.d
 
 dist/now: ${SOURCE_CODE}
 	gdc \
 		-static-libphobos -static-libgcc \
-		cli/source/now/now.d \
 		$^ \
-		-Isource -Icli/source \
+		-Isource \
 		-O2 -o dist/now
 
 release: dist/now
@@ -16,9 +16,8 @@ release: dist/now
 dist/now.debug: ${SOURCE_CODE}
 	gdc -fdebug \
 		-static-libphobos -static-libgcc \
-		cli/source/now/now.d \
 		$^ \
-		-Isource -Icli/source \
+		-Isource \
 		-O1 -o dist/now.debug
 
 
@@ -27,7 +26,7 @@ examples/packages/now/hello.now.so: ${BASE_CODE}
 		-static-libphobos -static-libgcc \
 		examples/packages/now_hello.d \
 		$^ \
-		-Isource -Icli/source \
+		-Isource \
 		-O2 -o examples/packages/now/hello.now.so
 
 clean:

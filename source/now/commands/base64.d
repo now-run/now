@@ -1,15 +1,16 @@
 module now.commands.base64;
 
+
 import std.base64;
 
-import now.nodes;
+import now;
 
 
 void loadBase64Commands(CommandsMap commands)
 {
-    commands["base64.encode"] = function (string path, Context context)
+    commands["base64.encode"] = function (string path, Input input, Output output)
     {
-        foreach (item; context.items)
+        foreach (item; input.popAll)
         {
             ubyte[] data;
             switch (item.type)
@@ -19,30 +20,31 @@ void loadBase64Commands(CommandsMap commands)
                     data = cast(ubyte[])(s.toString());
                     break;
                 case ObjectType.Name:
-                    auto s = cast(NameAtom)item;
+                    auto s = cast(Name)item;
                     data = cast(ubyte[])(s.toString());
                     break;
                 default:
-                    return context.error(
+                    throw new SyntaxErrorException(
+                        input.escopo,
                         "Invalid input for " ~ path
                         ~ ": " ~ item.type.to!string(),
-                        ErrorCode.InvalidArgument,
-                        ""
+                        -1,
+                        item
                     );
             }
             auto result = Base64URL.encode(data);
-            context.push(result.to!string);
+            output.push(result.to!string);
         }
-        return context;
+        return ExitCode.Success;
     };
-    commands["base64.decode"] = function (string path, Context context)
+    commands["base64.decode"] = function (string path, Input input, Output output)
     {
-        foreach (item; context.items)
+        foreach (item; input.popAll)
         {
             auto s = item.toString();
             ubyte[] result = Base64URL.decode(s);
-            context.push(cast(string)result);
+            output.push(cast(string)result);
         }
-        return context;
+        return ExitCode.Success;
     };
 }
