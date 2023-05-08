@@ -88,7 +88,7 @@ class Item
         }
         else
         {
-            throw new NotFoundException(
+            throw new MethodNotFoundException(
                 input.escopo,
                 "Method `" ~ name ~ "` not found"
                 ~ " for type " ~ type.to!string
