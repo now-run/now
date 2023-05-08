@@ -701,7 +701,7 @@ static this()
         0
         1
         2
-        > range 2 | {print}
+        > range 2 | { print }
         0
         1
         2
@@ -711,38 +711,62 @@ static this()
         uint index = 0;
         foreach (target; input.popAll)
         {
-            forLoop:
-            while (true)
+            if (target.type == ObjectType.List)
             {
-                auto nextOutput = new Output;
-                auto exitCode = target.next(input.escopo, nextOutput);
-                final switch (exitCode)
+                auto list = cast(List)target;
+                foreach (item; list.items)
                 {
-                    case ExitCode.Break:
-                        break forLoop;
-                    case ExitCode.Skip:
-                        continue;
-                    case ExitCode.Continue:
-                        break;  // <-- break the switch, not the while.
-                    case ExitCode.Return:
-                    case ExitCode.Success:
-                        return exitCode;
+                    // use item as inputs for argBody:
+                    auto exitCode = argBody.run(input.escopo, output, [item]);
+                    if (exitCode == ExitCode.Break)
+                    {
+                        break;
+                    }
+                    else if (exitCode == ExitCode.Return)
+                    {
+                        /*
+                        Return propagates up into the
+                        processes stack:
+                        */
+                        return ExitCode.Success;
+                    }
                 }
-
-                // use nextOutput as inputs for argBody:
-                exitCode = argBody.run(input.escopo, output, nextOutput.items);
-
-                if (exitCode == ExitCode.Break)
+            }
+            else
+            {
+                forLoop:
+                while (true)
                 {
-                    break;
-                }
-                else if (exitCode == ExitCode.Return)
-                {
-                    /*
-                    Return propagates up into the
-                    processes stack:
-                    */
-                    return ExitCode.Success;
+                    auto nextOutput = new Output;
+                    auto exitCode = target.next(input.escopo, nextOutput);
+                    final switch (exitCode)
+                    {
+                        case ExitCode.Break:
+                            break forLoop;
+                        case ExitCode.Skip:
+                            continue;
+                        case ExitCode.Continue:
+                            break;  // <-- break the switch, not the while.
+                        case ExitCode.Return:
+                        case ExitCode.Success:
+                            return exitCode;
+                    }
+
+                    // use nextOutput as inputs for argBody:
+                    exitCode = argBody.run(input.escopo, output, nextOutput.items);
+
+                    if (exitCode == ExitCode.Break)
+                    {
+                        break;
+                    }
+                    else if (exitCode == ExitCode.Return)
+                    {
+                        /*
+                        Return propagates up into the
+                        processes stack:
+                        */
+                        return ExitCode.Success;
+                    }
                 }
             }
         }
