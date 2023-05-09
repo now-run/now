@@ -67,9 +67,24 @@ class Pipeline
                 }
             }
 
+            // Before going to the next commandCall
+            // (after re-entering this loop):
+            inputs = cmdOutput.items;
+
             // Run the command!
             cmdOutput.items.length = 0;
-            exitCode = commandCall.run(escopo, inputs, cmdOutput, target);
+            try
+            {
+                exitCode = commandCall.run(escopo, inputs, cmdOutput, target);
+            }
+            catch (Exception ex)
+            {
+                stderr.writeln(
+                    "Exception ", ex,
+                    " on command ", commandCall
+                );
+                throw ex;
+            }
             log("- Pipeline <- ", exitCode, " <- ", cmdOutput);
 
             final switch(exitCode)
@@ -102,11 +117,7 @@ class Pipeline
                     lastCommandCall = commandCall;
                     break;
             }
-
-            // Before going to the next commandCall:
-            inputs = cmdOutput.items;
         }
-
         // Whatever is left in cmdOutput goes to output, now:
         output.items ~= cmdOutput.items;
 

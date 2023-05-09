@@ -64,6 +64,7 @@ static this()
 
         return ExitCode.Success;
     };
+
     builtinCommands["to:string"] = function(string path, Input input, Output output)
     {
         foreach(item; input.popAll)
@@ -98,6 +99,21 @@ static this()
         return ExitCode.Success;
     };
 
+    // ---------------------------------------------
+    builtinCommands["put"] = function(string path, Input input, Output output)
+    {
+        /*
+        Puts a value in the pipeline.
+        > put 123 | as x
+        > print $x
+        123
+        */
+        foreach (item; input.popAll)
+        {
+            output.push(item);
+        }
+        return ExitCode.Success;
+    };
 
     // ---------------------------------------------
     // Various ExitCodes:
@@ -711,6 +727,7 @@ static this()
         uint index = 0;
         foreach (target; input.popAll)
         {
+            // TODO: encapsulate all this into proper functions/methods.
             if (target.type == ObjectType.List)
             {
                 auto list = cast(List)target;

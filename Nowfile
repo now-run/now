@@ -225,7 +225,6 @@ parameters {
     }
 }
 
-# TODO: iterate through List without the need to "range" it!
 path $path : glob "*" | { print }
 
 

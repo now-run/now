@@ -52,7 +52,18 @@ class SubProgram : Item
 
         foreach(pipeline; pipelines)
         {
-            exitCode = pipeline.run(escopo, output, inputs);
+            try
+            {
+                exitCode = pipeline.run(escopo, output, inputs);
+            }
+            catch (Exception ex)
+            {
+                stderr.writeln(
+                    "Exception ", ex,
+                    " on Pipeline ", this
+                );
+                throw ex;
+            }
 
             final switch(exitCode)
             {

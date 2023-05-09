@@ -75,8 +75,8 @@ static this()
         auto dict = cast(Dict)object;
         Items items = input.popAll;
 
-        auto lastKey = items.back.toString();
-        items.popBack();
+        auto lastKey = items.back.toString;
+        items.popBack;
 
         auto innerDict = dict.navigateTo(items, false);
         if (innerDict is null)
