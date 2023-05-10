@@ -36,20 +36,23 @@ class Pipeline
 
     ExitCode run(Escopo escopo, Output output)
     {
-        return run(escopo, output, []);
+        return run(escopo, [], output);
     }
-    ExitCode run(Escopo escopo, Output output, Items inputs)
+    ExitCode run(Escopo escopo, Items inputs, Output output)
     {
         CommandCall lastCommandCall = null;
         Item target;
         ExitCode exitCode;
 
+        auto cmdOutput = new Output;
         if (inputs is null)
         {
             inputs = [];
         }
-
-        auto cmdOutput = new Output;
+        else
+        {
+            cmdOutput.items = inputs;
+        }
 
         foreach(index, commandCall; commandCalls)
         {
@@ -73,18 +76,7 @@ class Pipeline
 
             // Run the command!
             cmdOutput.items.length = 0;
-            try
-            {
-                exitCode = commandCall.run(escopo, inputs, cmdOutput, target);
-            }
-            catch (Exception ex)
-            {
-                stderr.writeln(
-                    "Exception ", ex,
-                    " on command ", commandCall
-                );
-                throw ex;
-            }
+            exitCode = commandCall.run(escopo, inputs, cmdOutput, target);
             log("- Pipeline <- ", exitCode, " <- ", cmdOutput);
 
             final switch(exitCode)

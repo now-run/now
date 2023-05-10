@@ -19,7 +19,12 @@ class Path : Item
     }
     override string toString()
     {
-        return "path " ~ this.path;
+        /*
+        Remember we use toString to generate
+        usable string IN USERLAND, so don't
+        try to get fancy here.
+        */
+        return this.path;
     }
 }
 

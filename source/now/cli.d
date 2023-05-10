@@ -236,7 +236,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
             auto localParser = new NowParser(handlerString.toString());
             SubProgram handler = localParser.consumeSubProgram();
 
-            auto newScope = escopo.createChild("on.error");
+            auto newScope = escopo.createChild("on:error");
             auto error = new Erro(
                 ex.msg,
                 ex.code,
@@ -259,7 +259,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
             }
             // TODO: what to do with errorOutput???
         }
-        stderr.writeln(ex);
+        // stderr.writeln(ex);
         return ex.code;
     }
 
@@ -453,7 +453,15 @@ int cmd(Document document, string[] documentArgs)
     foreach (line; documentArgs)
     {
         auto parser = new NowParser(line);
-        auto pipeline = parser.consumePipeline();
+        Pipeline pipeline;
+        try
+        {
+            pipeline = parser.consumePipeline();
+        }
+        catch (Exception ex)
+        {
+            return -1;
+        }
 
         ExitCode exitCode;
         auto output = new Output;

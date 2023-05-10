@@ -733,8 +733,9 @@ static this()
                 auto list = cast(List)target;
                 foreach (item; list.items)
                 {
+                    log("- foreach.inline.item: ", item);
                     // use item as inputs for argBody:
-                    auto exitCode = argBody.run(input.escopo, output, [item]);
+                    auto exitCode = argBody.run(input.escopo, [item], output);
                     if (exitCode == ExitCode.Break)
                     {
                         break;
@@ -770,7 +771,7 @@ static this()
                     }
 
                     // use nextOutput as inputs for argBody:
-                    exitCode = argBody.run(input.escopo, output, nextOutput.items);
+                    exitCode = argBody.run(input.escopo, nextOutput.items, output);
 
                     if (exitCode == ExitCode.Break)
                     {

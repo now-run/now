@@ -22,6 +22,7 @@ class Procedure : BaseCommand
 
     override ExitCode doRun(string name, Input input, Output output)
     {
+        input.escopo.rootCommand = this;
         return this.body.run(input.escopo, output);
     }
 }

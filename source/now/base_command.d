@@ -152,7 +152,7 @@ class BaseCommand
         }
 
         // on.call
-        exitCode = this.handleEvent("call", input, output);
+        exitCode = this.handleEvent("call", newScope, output);
         if (exitCode == ExitCode.Skip)
         {
             // do not execute the handler
@@ -168,11 +168,28 @@ class BaseCommand
         {
             // run
             log("- run");
-            exitCode = this.doRun(name, input, output);
+            try
+            {
+                exitCode = this.doRun(name, input, output);
+            }
+            catch (NowException ex)
+            {
+                if (input.escopo.rootCommand !is null)
+                {
+                    auto errorScope = newScope.createChild("on:error");
+                    errorScope.rootCommand = null;
+                    errorScope["error"] = ex.toError();
+                    return input.escopo.rootCommand.handleEvent("error", errorScope, output);
+                }
+                else
+                {
+                    throw ex;
+                }
+            }
         }
 
         // on.return
-        auto onReturnExitCode = this.handleEvent("return", input, output);
+        auto onReturnExitCode = this.handleEvent("return", newScope, output);
 
         // TODO: check if this make sense:
         if (onReturnExitCode == ExitCode.Return)
@@ -195,7 +212,7 @@ class BaseCommand
         return ExitCode.Success;
     }
 
-    ExitCode handleEvent(string eventName, Input input, Output output)
+    ExitCode handleEvent(string eventName, Escopo escopo, Output output)
     {
         log("- handleEvent: ", eventName);
         auto fullname = "on." ~ eventName;
@@ -208,17 +225,7 @@ class BaseCommand
             commands, but simple SubProgram.
             */
 
-            if (eventName == "error")
-            {
-                // Avoid calling on.error recursively:
-                auto newScope = input.escopo.createChild("on.error");
-                newScope.rootCommand = null;
-                return handler.run(newScope, output);
-            }
-            else
-            {
-                return handler.run(input.escopo, output);
-            }
+            return handler.run(escopo, output);
         }
         else
         {

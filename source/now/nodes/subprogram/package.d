@@ -44,27 +44,17 @@ class SubProgram : Item
     // From "process.d":
     ExitCode run(Escopo escopo, Output output)
     {
-        return run(escopo, output, []);
+        return run(escopo, [], output);
     }
-    ExitCode run(Escopo escopo, Output output, Items inputs)
+    ExitCode run(Escopo escopo, Items inputs, Output output)
     {
         auto exitCode = ExitCode.Success;
 
+        log("- SubProgram.run: ", inputs, output);
+
         foreach(pipeline; pipelines)
         {
-            try
-            {
-                exitCode = pipeline.run(escopo, output, inputs);
-            }
-            catch (Exception ex)
-            {
-                stderr.writeln(
-                    "Exception ", ex,
-                    " on Pipeline ", this
-                );
-                throw ex;
-            }
-
+            exitCode = pipeline.run(escopo, inputs, output);
             final switch(exitCode)
             {
                 case ExitCode.Success:

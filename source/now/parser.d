@@ -21,8 +21,7 @@ class Parser
 
     size_t line = 1;
     size_t col = 0;
-
-    string[] stack;
+    string currentLine;
 
     this(string code)
     {
@@ -58,6 +57,7 @@ class Parser
         {
             col = 0;
             line++;
+            currentLine = "";
         }
 
         if (index >= code.length)
@@ -66,7 +66,20 @@ class Parser
             index--;
         }
 
+        currentLine ~= result;
+
         return result;
+    }
+
+    string getEntireCurrentLine()
+    {
+        auto localIndex = index;
+        auto localCurrentLine = currentLine;
+        while (!eof && localIndex < code.length && code[localIndex] != EOL)
+        {
+            localCurrentLine ~= code[localIndex++];
+        }
+        return localCurrentLine;
     }
 
     // --------------------------------------------

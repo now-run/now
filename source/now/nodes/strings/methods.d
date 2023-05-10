@@ -29,7 +29,7 @@ static this()
         // XXX: should we "translate" the eventual exception, here?
         subprogram = parser.consumeSubProgram();
 
-        return subprogram.run(input.escopo, output, input.inputs);
+        return subprogram.run(input.escopo, input.inputs, output);
     };
 
 

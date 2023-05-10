@@ -3,6 +3,7 @@ module now.grammar;
 
 import std.algorithm : among, canFind;
 import std.math : pow;
+import std.string : rightJustify;
 
 import now.nodes;
 import now.parser;
@@ -359,6 +360,29 @@ class NowParser : Parser
     }
 
     Pipeline consumePipeline()
+    {
+        try
+        {
+            return doConsumePipeline();
+        }
+        catch (Exception ex)
+        {
+            stderr.writeln(getEntireCurrentLine());
+            stderr.writeln(rightJustify("", currentLine.length, ' '), "^");
+            stderr.writeln(rightJustify("", currentLine.length, '_'), "|");
+            stderr.writeln(
+                "Error while parsing line ", line,
+                ": ", ex.msg,
+            );
+            if (isWhitespace)
+            {
+                stderr.writeln("(You probably typed an extra space...)");
+            }
+            throw ex;
+        }
+    }
+
+    Pipeline doConsumePipeline()
     {
         CommandCall[] commandCalls;
 
