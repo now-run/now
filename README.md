@@ -34,10 +34,9 @@ In the `extras/` directory you'll find:
 ## Syntax
 
 ```ini
-[program]
-name "Sample Program"
-description "Show the basics of the syntax"
+[Sample Program]
 
+Show the basics of the syntax
 
 [commands/hello]
 parameters {
@@ -47,10 +46,10 @@ parameters {
     }
 }
 
-print "Hello, ${name}!"
+print "Hello, $name!"
 ```
 
-Save it as `program.now` and run this in the same directory:
+Save it as `Nowfile` and run this in the same directory:
 
 ```bash
 $ now hello
@@ -70,6 +69,39 @@ through the command line.
 - Changes were made? `now test`
 - Tests passed and you want to make sure nobody is working
 outside a feature branch? `now push`
+
+## REPL
+
+```bash
+$ now :repl
+```
+
+If there's a `Nowfile` present in the current working directory,
+it will be loaded and everything available inside any procedure
+will also be available for you.
+
+### Commands
+
+```bash
+$ now :cmd 'set x 10' 'print $x'
+10
+```
+
+Sometimes it's useful to run a bunch of commands without having
+to write that into a file, so you can do that using the `:cmd' option.
+
+## More options
+
+```bash
+$ now :help
+  No arguments: run ./Nowfile if present
+  :bash-complete - shell autocompletion
+  :cmd <command> - run commands passed as arguments
+  :f <file> - run a specific file
+  :repl - enter interactive mode
+  :stdin - read a document from standard input
+  :help - display this help message
+```
 
 ## Integrating with bash
 
@@ -133,14 +165,13 @@ parameters {
     }
 }
 
-list_s3_objects "default-bucket" $prefix
+list_s3_objects "default-bucket" $prefix 
     | collect
-    | join "\n"
+    : join "\n"
     | json.decode
-    | value_of "Contents"
-    | range
+    : get "Contents"
     | foreach item {
-        get $item "Key" | print   
+        print ($item . "Key")
     }
 ```
 
@@ -151,13 +182,13 @@ object. Here we are using:
 
 - `list_s3_objects` will return a SystemProcess, that yields `stdout` line-by-line;
 - `collect` will receive each incoming line and turn they all into a single `List`;
-- `join` will join each item of this list as a string using "\n" as separator;
+- `join` **method** will join each item of this list as a string using "\n" as separator;
 - `json.decode` will turn the JSON string into a `Dict`;
-- `value_of` will get the value of the key "Contents", that is a `List`;
-- `range` will create a `Range` based on the incoming `List`;
-- `foreach` iterates over Ranges;
-- `get` will get the key "Key" from the Dict `$item`;
+- `get` **method** will get the value of the key "Contents", that is a `List`;
+- `foreach` iterates over the List;
 - `print` will print to the standard output.
+- `()` indicates we're using **infix notation**;
+- `.` is the same as the method `get`, so `($a . b)` equals `obj $a : get b`.
 
 ## Procedures
 
@@ -177,16 +208,15 @@ parameters {
 
 list_s3_objects "default-bucket" $prefix
     | collect
-    | join "\n"
+    : join "\n"
     | json.decode
-    | value_of "Contents"
-    | range
+    : get "Contents"
     | foreach item {
-        get $item "Key" | print   
+        print ($item . "Key")
     }
 ```
 
-And now our `ls` command is much simpler:
+And now our `ls` command itself is much simpler:
 
 ```ini
 [commands/ls]
@@ -206,44 +236,16 @@ JSON string line-by-line is weird. We could improve that
 by making everything more intuitive, like returning a
 proper Dict "directly". In common programming languages
 you'd probably wrap everything inside *yet another
-procedure*, but Now offer you two **event handlers** for
+procedure*, but Now offer you some **event handlers** for
 each system command, procedure, shell script and even
 commands:
 
 - `on.call` - called after parsing arguments but before
   the "function" body;
-- `on.return` - called right after the "function" returnds.
+- `on.return` - called right after the "function" returnds;
+- `on.error` - allows you to handle errors as you may find fit.
 
-These two handlers share the same scope as the body, so
-the stack and variables are all the same. In our case, we
-know that a system command will push a `SystemProcess` to
-the stack (also known as "return"), so instead of returning
-that directly and letting the caller fiddle with strings,
-we'll intercept this return and accomodate that into a
-simple Dict:
-
-```ini
-[system_commands/list_s3_objects/on.return]
-
-collect | join "\n" | json.decode | return
-```
-
-The `collect` command already pops from the stack, so no
-need to get fancy here. After that, the pipeline is part
-of what we already saw before: it's just joining everything
-together and decoding as JSON.
-
-Now the caller can expect a Dict to be returned and work
-with that:
-
-```ini
-list_s3_objects "default-bucket" $prefix
-    | value_of "Contents"
-    | range
-    | foreach item {
-        get $item "Key" | print   
-    }
-```
+These handlers (except `on.error`) share the same scope as the body.
 
 ## User-friendly Commands
 
@@ -378,8 +380,7 @@ environment variables.
 To access it in your scripts, use the `$api` Dict, like this:
 
 ```tcl
-get $api protocol | as protocol
-print $protocol
+obj $api : get protocol | print
 # https
 ```
 
@@ -463,7 +464,7 @@ Now each argument can be:
 - A number, an atom or a string;
 - Another SubProgram;
 - An ExecList;
-- An InfixList;
+- An InfixNotation;
 
 A SubProgram inside a SubProgram is enclosed by `{}`, like this:
 
