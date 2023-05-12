@@ -10,7 +10,9 @@ description "Basic HTML structure."
     <title>$page_title</title>
 </head>
 <body>
-    $body
+    % body %
+    BODY
+    % ---- %
 </body>
 </html>
 
@@ -36,15 +38,21 @@ description "Show how templates work."
 # Templates are just like Dicts.
 template htmls (page_title = "Directory Listings Example") | as tpl
 
-typeof $tpl | print "typeof tpl="
-
-list "/home" "/opt" | range | foreach directory {
-    print "directory=$directory"
-    emit $tpl "body"
-    glob [path $directory] "*" | range | foreach file {
-        print "    file=$file"
-        emit $tpl "file"
+list "/home" "/opt" | foreach directory {
+    obj $tpl : emit "body"
+    path $directory : glob "*" | foreach file {
+        obj $tpl : emit "file"
     }
 }
-print "------------------"
-render $tpl | print
+obj $tpl : render | as rendered_template
+
+obj $rendered_template
+    : split "\n"
+    : length
+    : eq 19
+    | assert "Rendered template should have 19 lines"
+
+obj $rendered_template
+    : find "<h2>Files in /home</h2>"
+    : neq -1
+    | assert "There should be a h2 header for /home"

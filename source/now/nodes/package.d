@@ -109,6 +109,14 @@ struct Input
         // the correct type declaration for "Items items"!
         this.items = chain(args, inputs).array;
     }
+    string toString()
+    {
+        return "Input: "
+            ~ escopo.name
+            ~ " in:" ~ inputs.to!string
+            ~ " args:" ~ args.to!string
+            ~ " kwargs:" ~ kwargs.to!string;
+    }
     template pop(T)
     {
         T pop()
@@ -197,5 +205,8 @@ class Output
     {
         items ~= new Float(thing);
     }
-
+    void push(bool thing)
+    {
+        items ~= new Boolean(thing);
+    }
 }

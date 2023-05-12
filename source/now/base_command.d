@@ -34,6 +34,7 @@ class BaseCommand
             auto v = cast(Dict)(info[k]);
             auto body = cast(String)v["body"];
             auto parser = new NowParser(body.toString());
+            parser.line = this.info.documentLineNumber;
             this.eventHandlers[k] = parser.consumeSubProgram();
         });
     }
@@ -79,6 +80,7 @@ class BaseCommand
             if (defaultValue !is null)
             {
                 newScope[parameterName] = defaultValue;
+                log("-- from default values: newScope[", parameterName, "] = ", defaultValue);
                 namedParametersAlreadySet ~= parameterName;
                 setParametersCount++;
             }
@@ -89,6 +91,7 @@ class BaseCommand
         foreach (key, value; input.kwargs)
         {
             newScope[key] = value;
+            log("-- from kwargs: newScope[", key, "] = ", value);
             if (!namedParametersAlreadySet.canFind(key))
             {
                 namedParametersAlreadySet ~= key;
@@ -108,15 +111,35 @@ class BaseCommand
             second = b
             third = c
         */
+        size_t lastIndex = -1;
         foreach (index, argument; input.args.take(parameters.order.length))
         {
             auto key = parameters.order[index];
             newScope[key] = argument;
+            log("-- from args: newScope[", key, "] = ", argument);
             setParametersCount++;
+            lastIndex = index;
+        }
+
+        auto remainingParameters = parameters.order.length - setParametersCount;
+        foreach (index, argument; input.inputs.take(remainingParameters))
+        {
+            // parameters.length = 4
+            // arguments = 2
+            // lastIndex = 1
+            // nextIndex should be 2
+            // nextIndex = lastIndex (1) + index (0) + 1
+            auto key = parameters.order[lastIndex + index + 1];
+            newScope[key] = argument;
+            log("-- from inputs: newScope[", key, "] = ", argument);
+            setParametersCount++;
+            input.inputs.popFront;
         }
 
         if (setParametersCount < parameters.order.length)
         {
+            // Try getting arguments from input.inputs:
+
             throw new InvalidArgumentsException(
                 input.escopo,
                 "Not enough arguments for " ~ name
@@ -176,15 +199,18 @@ class BaseCommand
             {
                 if (input.escopo.rootCommand !is null)
                 {
-                    auto errorScope = newScope.createChild("on:error");
-                    errorScope.rootCommand = null;
-                    errorScope["error"] = ex.toError();
-                    return input.escopo.rootCommand.handleEvent("error", errorScope, output);
+                    auto rootCommand = input.escopo.rootCommand;
+                    auto errorHandler = rootCommand.getEventHandler("error");
+                    if (errorHandler !is null)
+                    {
+                        auto errorScope = newScope.createChild("on.error");
+                        errorScope.rootCommand = null;
+                        errorScope["error"] = ex.toError();
+                        return rootCommand.handleEvent("error", errorScope, output);
+                    }
                 }
-                else
-                {
-                    throw ex;
-                }
+                // else:
+                throw ex;
             }
         }
 
@@ -212,14 +238,25 @@ class BaseCommand
         return ExitCode.Success;
     }
 
-    ExitCode handleEvent(string eventName, Escopo escopo, Output output)
+    SubProgram getEventHandler(string eventName)
     {
-        log("- handleEvent: ", eventName);
         auto fullname = "on." ~ eventName;
         if (auto handlerPtr = (fullname in eventHandlers))
         {
-            auto handler = *handlerPtr;
+            return *handlerPtr;
+        }
+        else
+        {
+            return null;
+        }
+    }
 
+    ExitCode handleEvent(string eventName, Escopo escopo, Output output)
+    {
+        log("- handleEvent: ", eventName);
+        auto handler = getEventHandler(eventName);
+        if (handler !is null)
+        {
             /*
             Event handlers are not procedures or
             commands, but simple SubProgram.

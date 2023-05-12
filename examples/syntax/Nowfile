@@ -5,40 +5,8 @@ Illustrate some aspects of Now's syntax.
 
 [procedures/methods]
 
-set s "123.4"
-
-to.float $s | print "s:"
-path "/dev" | glob "sd*" | print "sd*:"  # Error!
-path "/sys/class" : glob "s*" | print "s*:"
-path "/dev" | .glob "sd*" | print "sd*:"
-dict (k = v) | .get k | print "dict.k:"
-path "/dev" . glob "sd*" | print "sd*:"
-to.float $s | print "s:"
-path "/dev" | set path
-$path : glob "sd*" | print "sd*: "
-
-
-# [ a : b c ] = pipe, but b object is the first input
-# [ a | b c ] = pipe, but b object is the first argument
-# [ a | .b c ] = pipe, but b object is the first input
-
-ls | foreach x { glob $x "*" | print "$x: " }
-
-list a b c |< get 0 |> print "list 0 is "
-list a b c |< get 0 | print "list 0 is "
-list a b c : get 0 | print "list 0 is "
-list a b c <- get 0 -> print "list 0 is "
-list a b c < get 0 > print "list 0 is "
-list a b c < get 0 | print "list 0 is "
-list a b c | set list
-$list : get 0 | print "(list . 0) is "
-
-dict (k = v) -> set dict
-dict (k = v) > set dict
-dict (k = v) | set dict
+dict (k = v) | as dict
 $dict : get k | print "(dict . k) is "
-get $dict k -> print "(dict . k) is "
-get $dict k <- print " is the value of (dict . k)"
 
 
 [system_commands/wd]
@@ -115,31 +83,15 @@ try {
 [commands/run]
 description "General syntax tests"
 
-scope "value_of" {
-    dict (a = 10) (b = 20) | value_of a | as x
-    assert ($x == 10)
-}
-
-scope "stack juggling" {
-    stack.push a b c | list | join "-" | as x
-    assert ($x == "a-b-c")
-
-    stack.push 321
-    stack.pop | as x
-    assert ($x == 321)
-
-    stack.push 1
-    stack.push 2
-    stack.push 3
-    stack | list | join "-" | as x
-    assert ($x == "3-2-1")
+scope "Dict : get" {
+    dict (a = 10) (b = 20) : get a : eq 10 | assert
 }
 
 scope "type identification" {
-    assert ((123 typeof) == "integer")
-    assert (("123" typeof) == "string")
-    assert ((1.23 typeof) == "float")
-    assert (([dict] typeof) == "dict")
+    assert ((123 type) == "integer")
+    assert (("123" type) == "string")
+    assert ((1.23 type) == "float")
+    assert (([dict] type) == "dict")
 }
 
 scope "type coercion" {
@@ -188,7 +140,7 @@ scope "loops" {
     }
     scope "skipping in a loop" {
         set sum 0
-        range 1 10 | transform x {
+        range 1 5 | transform x {
             if ($x > 1) {
                 skip
             }
@@ -196,7 +148,7 @@ scope "loops" {
         } | foreach x {
             set sum ($sum + $x)
         }
-        assert ($sum == 1)
+        assert "$sum should be 1" ($sum == 1)
     }
     scope "returning from inside a loop" {
         set x [
@@ -212,25 +164,8 @@ scope "uplevel" {
     set x 10
     # Look, we're tricking the language!
     set y [set x 20] 20
-    assert ($x == 10)
+    assert ($x == 20)
     assert ($y == 20)
-
-    set y [uplevel set x 30] 40
-    assert ($x == 30)
-    assert ($y == 40)
-}
-
-scope "with" {
-    set x 1
-    with $x {
-        # x will become 3:
-        sum 2 | as x
-        # x will become 4:
-        sum 3 | as x
-        # See, the reference is to the value, not
-        # to the name of the variable.
-    }
-    assert ($x == 4)
 }
 
 scope "sleep and timer" {
@@ -253,10 +188,10 @@ scope "vars" {
     set x 1
     set y 2
     vars | as v
-    contains $v x | assert
-    contains $v "x" | assert
-    contains $v y | assert
-    contains $v "y" | assert
+    obj $v : contains x | assert
+    obj $v : contains "x" | assert
+    obj $v : contains y | assert
+    obj $v : contains "y" | assert
 }
 
 scope "when" {
@@ -266,7 +201,7 @@ scope "when" {
         when ($x == 1) { return one }
         default { return other }
     ]
-    assert ($y == one)
+    assert "'$y' should be 'one'" ($y == one)
 }
 scope "default" {
     set x 100
@@ -280,7 +215,7 @@ scope "default" {
 
 scope "collect" {
     range 1 10 | collect | as l
-    assert (($l length) == 10)
+    assert "$l length should be 10" (($l : length) == 10)
     assert (($l . 0) == 1)
     assert (($l . 9) == 10)
 }

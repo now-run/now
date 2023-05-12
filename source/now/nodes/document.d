@@ -209,6 +209,7 @@ class Document : Dict {
         auto templates = data.getOrCreate!Dict("templates");
         foreach (templateName, infoItem; templates.values)
         {
+            log("-- templateName: ", templateName);
             auto templateInfo = cast(Dict)infoItem;
             templates[templateName] = parseTemplate(
                 templateName, templateInfo, templates
@@ -351,7 +352,7 @@ class Document : Dict {
 
         throw new ProcedureNotFoundException(
             input.escopo,
-            path
+            "Procedure not found: " ~ path
         );
     }
 
@@ -360,7 +361,12 @@ class Document : Dict {
     {
         if (path.endsWith(".so"))
         {
-            return importSharedLibrary(path);
+            throw new InvalidPackageException(
+                null,
+                "Cannot import shared libraries.",
+                -1,
+                this
+            );
         }
         else
         {
@@ -408,32 +414,5 @@ class Document : Dict {
                 localDict[otherKey] = value;
             }
         }
-    }
-    void importSharedLibrary(string path)
-    {
-        // Clean up any old error messages:
-        dlerror();
-
-        // lh = "library handler"
-        void* lh = dlopen(path.toStringz, RTLD_LAZY);
-
-        auto error = dlerror();
-        if (error !is null)
-        {
-            // lastError = cast(char *)error;
-            throw new Exception(" dlerror: " ~ error.to!string);
-        }
-
-        // Initialize the package:
-        auto initPackage = cast(CommandsMap function(Document))dlsym(
-            lh, "init"
-        );
-
-        error = dlerror();
-        if (error !is null)
-        {
-            throw new Exception("dlsym error: " ~ to!string(error));
-        }
-        initPackage(this);
     }
 }

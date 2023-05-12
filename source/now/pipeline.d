@@ -9,12 +9,12 @@ import now;
 class Pipeline
 {
     CommandCall[] commandCalls;
-    long lineIndex;
+    size_t documentLineNumber;
+    size_t documentColNumber;
 
-    this(CommandCall[] commandCalls, long lineIndex=0)
+    this(CommandCall[] commandCalls)
     {
         this.commandCalls = commandCalls;
-        this.lineIndex = lineIndex;
     }
 
     ulong size()
@@ -27,10 +27,6 @@ class Pipeline
         auto s = to!string(commandCalls
             .map!(x => x.toString())
             .join(" | "));
-        if (lineIndex)
-        {
-            s ~= " - line=" ~ lineIndex.to!string;
-        }
         return s;
     }
 
@@ -54,6 +50,7 @@ class Pipeline
             cmdOutput.items = inputs;
         }
 
+forLoop:
         foreach(index, commandCall; commandCalls)
         {
             if (lastCommandCall !is null)
@@ -76,7 +73,75 @@ class Pipeline
 
             // Run the command!
             cmdOutput.items.length = 0;
-            exitCode = commandCall.run(escopo, inputs, cmdOutput, target);
+            try
+            {
+                exitCode = commandCall.run(escopo, inputs, cmdOutput, target);
+            }
+            catch (NowException ex)
+            {
+                if (!ex.printed)
+                {
+                    stderr.writeln("e> ", ex.typename);
+                    stderr.writeln("m> ", ex.msg);
+                    stderr.writeln("s> ", escopo);
+                    stderr.writeln("p> ", this);
+                    if (documentLineNumber)
+                    {
+                        stderr.writeln("l> ", documentLineNumber);
+                    }
+                    ex.printed = true;
+                }
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                stderr.writeln("m> ", ex.msg);
+                stderr.writeln("s> ", escopo);
+                stderr.writeln("p> ", this);
+                if (documentLineNumber)
+                {
+                    stderr.writeln("l> ", documentLineNumber);
+                }
+                stderr.writeln(
+                    "This is an internal error."
+                );
+                stderr.writeln(
+                    "===== Exception ====="
+                );
+                stderr.writeln(ex);
+
+                auto ex2 = new DException(
+                    null,
+                    ex.msg
+                );
+                ex2.printed = true;
+                stderr.writeln(ex);
+                throw ex2;
+            }
+            catch (object.Error ex)
+            {
+                stderr.writeln("m> ", ex.msg);
+                stderr.writeln("s> ", escopo);
+                stderr.writeln("p> ", this);
+                if (documentLineNumber)
+                {
+                    stderr.writeln("l> ", documentLineNumber);
+                }
+                stderr.writeln(
+                    "This is an internal error, your program may not be wrong."
+                );
+                stderr.writeln(
+                    "===== Error ====="
+                );
+                stderr.writeln(ex);
+
+                auto ex2 = new DError(
+                    null,
+                    ex.msg,
+                );
+                ex2.printed = true;
+                throw ex2;
+            }
             log("- Pipeline <- ", exitCode, " <- ", cmdOutput);
 
             final switch(exitCode)
@@ -88,14 +153,14 @@ class Pipeline
                     // Return should keep stopping SubPrograms
                     // until a procedure or a program stops.
                     // (Imagine a `return` inside some nested loops.)
-                    return exitCode;
+                    break forLoop;
 
                 // -----------------
                 // Loops:
                 case ExitCode.Break:
                 case ExitCode.Continue:
                 case ExitCode.Skip:
-                    return exitCode;
+                    break forLoop;
 
                 /*
                 Together with Return, this
@@ -107,11 +172,11 @@ class Pipeline
                 */
                 case ExitCode.Success:
                     lastCommandCall = commandCall;
-                    break;
+                    break;  // break the switch and proceed in the loop
             }
         }
         // Whatever is left in cmdOutput goes to output, now:
-        output.items ~= cmdOutput.items;
+        output.push(cmdOutput.items);
 
         return exitCode;
     }

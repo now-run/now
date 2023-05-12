@@ -63,6 +63,14 @@ static this()
         output.push(true);
         return ExitCode.Success;
     };
-    // TODO:
-    // cmd : if {...}
+    booleanMethods["then"] = function(Item object, string path, Input input, Output output)
+    {
+        bool isConditionTrue = (cast(Boolean)object).toBool;
+        auto thenBody = cast(SubProgram)(input.popAll[$-1]);
+        if (isConditionTrue)
+        {
+            return thenBody.run(input.escopo, output);
+        }
+        return ExitCode.Success;
+    };
 }

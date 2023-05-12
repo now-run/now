@@ -200,7 +200,14 @@ class NowParser : Parser
 
         // key simple_value
         // key { document_dict }
+        auto ln = line;
+        auto cn = col;
         auto dict = consumeSectionDict();
+        dict.documentLineNumber = ln;
+        dict.documentColNumber = cn;
+
+        ln = line - 1;
+        cn = col;
 
         consumeWhitespaces();
 
@@ -235,7 +242,10 @@ class NowParser : Parser
         }
         if (body.length)
         {
-            dict["body"] = new String(body);
+            auto s = new String(body);
+            s.documentLineNumber = ln;
+            s.documentColNumber = cn;
+            dict["body"] = s;
         }
 
         return dict;
@@ -356,7 +366,10 @@ class NowParser : Parser
             }
         }
 
-        return new SubProgram(pipelines);
+        auto result = new SubProgram(pipelines);
+        result.documentLineNumber = line;
+        result.documentColNumber = col;
+        return result;
     }
 
     Pipeline consumePipeline()
@@ -365,11 +378,16 @@ class NowParser : Parser
         {
             return doConsumePipeline();
         }
+        catch (ParsingErrorException ex)
+        {
+            // XXX: if (!ex.printed) {...}
+            throw ex;
+        }
         catch (Exception ex)
         {
             stderr.writeln(getEntireCurrentLine());
-            stderr.writeln(rightJustify("", currentLine.length, ' '), "^");
-            stderr.writeln(rightJustify("", currentLine.length, '_'), "|");
+            stderr.writeln(rightJustify("", currentLine.length-1, ' '), "^");
+            stderr.writeln(rightJustify("", currentLine.length-1, '_'), "|");
             stderr.writeln(
                 "Error while parsing line ", line,
                 ": ", ex.msg,
@@ -378,7 +396,13 @@ class NowParser : Parser
             {
                 stderr.writeln("(You probably typed an extra space...)");
             }
-            throw ex;
+            auto ex2 = new ParsingErrorException(
+                null,
+                "Error while consuming Pipeline",
+                cast(int)line,
+            );
+            ex2.printed = true;
+            throw ex2;
         }
     }
 
@@ -412,7 +436,10 @@ class NowParser : Parser
         }
 
         if (isEndOfLine && !eof) consumeChar();
-        return new Pipeline(commandCalls, line);
+        auto result = new Pipeline(commandCalls);
+        result.documentLineNumber = line;
+        result.documentColNumber = col;
+        return result;
     }
 
     CommandCall consumeCommandCall()
@@ -495,11 +522,17 @@ class NowParser : Parser
             }
         }
 
-        return new CommandCall(commandName.toString(), args, kwargs);
+        auto result = new CommandCall(commandName.toString(), args, kwargs);
+        result.documentLineNumber = line;
+        result.documentColNumber = col;
+        return result;
     }
     CommandCall foreachInline()
     {
-        return new CommandCall("foreach.inline", [consumeSubList()], []);
+        auto result = new CommandCall("foreach.inline", [consumeSubList()], []);
+        result.documentLineNumber = line;
+        result.documentColNumber = col;
+        return result;
     }
 
     Item consumeItem()
@@ -511,7 +544,7 @@ class NowParser : Parser
             case '[':
                 return consumeExecList();
             case '(':
-                return consumeList();
+                return consumeInfixCommand();
             case '<':
                 return consumeInlineSectionDict();
             case '"':
@@ -566,7 +599,10 @@ class NowParser : Parser
                         }
                         while (token[end].among!(SPACE, TAB, EOL));
 
-                        return new String(token[0..end+1].to!string);
+                        auto result = new String(token[0..end+1].to!string);
+                        result.documentLineNumber = line;
+                        result.documentColNumber = col;
+                        return result;
                     }
                     else
                     {
@@ -610,10 +646,13 @@ class NowParser : Parser
         auto close = consumeChar();
         assert(close == ']');
 
-        return new ExecList(subprogram);
+        auto result = new ExecList(subprogram);
+        result.documentLineNumber = line;
+        result.documentColNumber = col;
+        return result;
     }
 
-    List consumeList()
+    ExecList consumeInfixCommand()
     {
         Item[] items;
         auto open = consumeChar();
@@ -631,8 +670,101 @@ class NowParser : Parser
         auto close = consumeChar();
         assert(close == ')');
 
-        log("%% List.items: ", items);
-        return new List(items);
+        log("%% InfixCommand items: ", items);
+
+        ////////////////////////
+        // infix notation
+        string[] commandNames;
+        Items arguments;
+
+        foreach (index, item; items)
+        {
+            // 1 + 2 + 3 + 4 / 5 * 6
+            // [+ 1 2]
+            // [+ [+ 1 2] 3]
+            // [+ [+ [+ 1 2] 3] 4]
+            // Alternative:
+            // [+ 1 2 3 4]
+            // [/ [+ 1 2 3 4] 5]
+            // [* [/ [+ 1 2 3 4] 5] 6]
+            if (index % 2 == 0)
+            {
+                arguments ~= item;
+            }
+            else
+            {
+                commandNames ~= item.toString();
+            }
+        }
+
+        auto argumentsIndex = 0;
+        auto commandsIndex = 0;
+        ExecList execList = null;
+
+        while (argumentsIndex < arguments.length && commandsIndex < commandNames.length)
+        {
+            Items commandArgs = [arguments[argumentsIndex++]];
+            Items commandKwArgs;
+            string commandName = commandNames[commandsIndex++];
+
+            while (argumentsIndex < arguments.length)
+            {
+                commandArgs ~= arguments[argumentsIndex++];
+                if (commandsIndex < commandNames.length && commandNames[commandsIndex] == commandName)
+                {
+                    commandsIndex++;
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            auto cc = new CommandCall(commandName, commandArgs, commandKwArgs);
+            cc.documentLineNumber = line;
+            cc.documentColNumber = col;
+
+            auto commandCalls = [cc];
+            auto pipeline = new Pipeline(commandCalls);
+            pipeline.documentLineNumber = line;
+            pipeline.documentColNumber = col;
+
+            auto subprogram = new SubProgram([pipeline]);
+            subprogram.documentLineNumber = line;
+            subprogram.documentColNumber = col;
+
+            execList = new ExecList(subprogram);
+            execList.documentLineNumber = line;
+            execList.documentColNumber = col;
+
+            // This ExecList replaces the last seen argument:
+            arguments[--argumentsIndex] = execList;
+            // [0 1 2]
+            //      ^
+            // [0 [+ 0 1] 2]
+            //       ^
+        }
+
+        if (execList is null)
+        {
+            log("-- List.arguments: ", arguments);
+            if (arguments.length == 1)
+            {
+                /*
+                (print)
+                */
+                throw new Exception("Infix notation cannot have only one item.");
+            }
+            else
+            {
+                /*
+                () ?
+                */
+                throw new Exception("execList cannot be null!");
+            }
+        }
+        log("-- List.execList: ", execList);
+        return execList;
     }
 
     override String consumeString(char opener, bool limit_to_eol=false)
@@ -749,7 +881,10 @@ class NowParser : Parser
 
         if (hasSubstitution)
         {
-            return new SubstString(parts);
+            auto result = new SubstString(parts);
+            result.documentLineNumber = line;
+            result.documentColNumber = col;
+            return result;
         }
         else if (parts.length == 1)
         {
@@ -757,7 +892,10 @@ class NowParser : Parser
         }
         else
         {
-            return new String("");
+            auto result = new String("");
+            result.documentLineNumber = line;
+            result.documentColNumber = col;
+            return result;
         }
     }
 
@@ -834,7 +972,10 @@ class NowParser : Parser
             // (a dash, alone)
             if (s == "-" || s == ".")
             {
-                return new Name(s);
+                auto result = new Name(s);
+                result.documentLineNumber = line;
+                result.documentColNumber = col;
+                return result;
             }
             else if (dotCounter == 0)
             {
@@ -854,11 +995,17 @@ class NowParser : Parser
                     }
                 }
 
-                return new Integer(s.to!int * multiplier);
+                auto result = new Integer(s.to!int * multiplier);
+                result.documentLineNumber = line;
+                result.documentColNumber = col;
+                return result;
             }
             else if (dotCounter == 1)
             {
-                return new Float(s.to!float);
+                auto result = new Float(s.to!float);
+                result.documentLineNumber = line;
+                result.documentColNumber = col;
+                return result;
             }
             else
             {
@@ -870,27 +1017,37 @@ class NowParser : Parser
         }
         else if (isSubst)
         {
-            return new Reference(s);
+            auto result = new Reference(s);
+            result.documentLineNumber = line;
+            result.documentColNumber = col;
+            return result;
         }
 
         // Handle hexadecimal format, like 0xabcdef
         if (s.length > 2 && s[0..2] == "0x")
         {
             // XXX: should we handle FormatException, here?
-            auto result = toLong(s);
-            return new Integer(result);
+            auto result = new Integer(s.toLong);
+            result.documentLineNumber = line;
+            result.documentColNumber = col;
+            return result;
         }
 
         // Names that are boolean:
+        Item result;
         switch (s)
         {
             case "true":
-                return new Boolean(true);
+                result = new Boolean(true);
+                break;
             case "false":
-                return new Boolean(false);
+                result = new Boolean(false);
+                break;
             default:
-                return new Name(s);
+                result = new Name(s);
         }
-
+        result.documentLineNumber = line;
+        result.documentColNumber = col;
+        return result;
     }
 }

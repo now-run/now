@@ -12,7 +12,6 @@ class IntegerRange : Item
     long limit = 0;
     long step = 1;
     long current = 0;
-    bool silent = false;
 
     this(long limit)
     {
@@ -52,10 +51,7 @@ class IntegerRange : Item
         }
         else
         {
-            if (!silent)
-            {
-                output.push(value);
-            }
+            output.push(value);
             exitCode = ExitCode.Continue;
         }
         current += step;
@@ -129,6 +125,8 @@ class Transformer : Item
 
         if (varName)
         {
+            log("- Transformer ", varName, " <- ", nextOutput.items);
+            // TODO: it should be a popAll, right?
             escopo[varName] = nextOutput.items;
         }
         else
@@ -140,6 +138,7 @@ class Transformer : Item
         }
 
         auto execExitCode = body.run(escopo, output);
+        log("-- Transformer.body.exitCode: ", execExitCode, " <- ", output.items);
 
         switch(execExitCode)
         {
@@ -147,7 +146,6 @@ class Transformer : Item
             case ExitCode.Success:
                 execExitCode = ExitCode.Continue;
                 break;
-
             default:
                 break;
         }

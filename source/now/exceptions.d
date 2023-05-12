@@ -25,6 +25,7 @@ class NowException : Exception
     Item subject;
     string typename;
     Escopo escopo;
+    bool printed = false;
 
     this(Escopo escopo, string msg, int code=-1, Item subject=null)
     {
@@ -49,6 +50,9 @@ class " ~ name ~ " : NowException
     ";
 }
 
+mixin(customNowException!"AssertionError");
+mixin(customNowException!"DException");
+mixin(customNowException!"DError");
 mixin(customNowException!"EmptyException");
 mixin(customNowException!"HTTPException");
 mixin(customNowException!"IncompleteInputException");
@@ -56,11 +60,14 @@ mixin(customNowException!"InvalidArgumentsException");
 mixin(customNowException!"InvalidConfigurationException");
 mixin(customNowException!"InvalidException");
 mixin(customNowException!"InvalidInputException");
+mixin(customNowException!"InvalidOperatorException");
+mixin(customNowException!"InvalidPackageException");
 mixin(customNowException!"IteratorException");
 mixin(customNowException!"MethodNotFoundException");
 mixin(customNowException!"NotFoundException");
 mixin(customNowException!"NotImplementedException");
 mixin(customNowException!"PathException");
+mixin(customNowException!"ParsingErrorException");
 mixin(customNowException!"ProcedureNotFoundException");
 mixin(customNowException!"SyntaxErrorException");
 mixin(customNowException!"SystemProcessException");

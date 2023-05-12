@@ -100,9 +100,13 @@ class SystemCommand : BaseCommand
         }
 
         // Arguments:
-        arguments = input.args.map!(x => to!string(x)).array;
-
-        // TODO: handle kwargs!!!
+        // TESTE: all "args" were already used bound to
+        // proper variables in this scope, so no need
+        // to revisit it again.
+        // arguments = input.args.map!(x => to!string(x)).array;
+        // TODO: run further tests to make sure we really shouldn't
+        // be revisiting input.args again.
+        // XXX: Next: should we handle kwargs?
 
         /*
         command {
@@ -200,6 +204,7 @@ class SystemProcess : Item
         string workdir=null
     )
     {
+        log(": SystemProcess:", command, "; arguments:", arguments);
         this.type = ObjectType.SystemProcess;
         this.typeName = "system_process";
         this.methods = systemProcessMethods;
@@ -340,7 +345,7 @@ class SystemProcess : Item
             }
         }
 
-        output.items ~= new String(line.stripRight('\n'));
+        output.push(line.stripRight('\n'));
         return ExitCode.Continue;
     }
     void wait()

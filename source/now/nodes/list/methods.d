@@ -46,7 +46,7 @@ static this()
         output.push(new List(l.items[start..end]));
         return ExitCode.Success;
     };
-    listMethods["to:sequence"] = function (Item object, string path, Input input, Output output)
+    listMethods["to.sequence"] = function (Item object, string path, Input input, Output output)
     {
         List list = cast(List)object;
         output.push(new Sequence(list.items));
@@ -56,6 +56,7 @@ static this()
     {
         List list = cast(List)object;
         list.items ~= input.popAll;
+        output.push(list);
         return ExitCode.Success;
     };
     listMethods["pop"] = function (Item object, string path, Input input, Output output)
@@ -196,7 +197,7 @@ static this()
         a/b/c
         */
         List list = cast(List)object;
-        string joiner = input.pop!string();
+        string joiner = input.pop!string("");
         output.push(
             new String(list.items.map!(x => to!string(x)).join(joiner))
         );

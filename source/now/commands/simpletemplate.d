@@ -8,7 +8,7 @@ void loadTemplateCommands(CommandsMap commands)
     commands["template"] = function (string path, Input input, Output output)
     {
         string name = input.pop!string;
-        auto templates = input.escopo.document.getOrCreate!Dict("templates");
+        auto templates = input.escopo.document.data.getOrCreate!Dict("templates");
         auto tpl = templates.get!Block(name, null);
         if (tpl is null) {
             throw new NotFoundException(
@@ -19,12 +19,6 @@ void loadTemplateCommands(CommandsMap commands)
         }
 
         Item[string] variables;
-        /*
-        Kinda weird, but the only place where using
-        variables from the current escopo for
-        the template is when instantiating,
-        not when rendering.
-        */
 
         // Variables coming from the current escopo:
         foreach (key, value; input.escopo)

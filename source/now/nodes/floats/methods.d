@@ -9,7 +9,7 @@ template CreateOperator(string cmdName, string operator)
     const string CreateOperator = "
         floatMethods[\"" ~ cmdName ~ "\"] = function (Item object, string path, Input input, Output output)
         {
-            float result = input.pop!float();
+            float result = (cast(Float)object).toFloat;
             foreach (item; input.popAll)
             {
                 result = result " ~ operator ~ " item.toFloat();
@@ -25,7 +25,7 @@ template CreateComparisonOperator(string cmdName, string operator)
     const string CreateComparisonOperator = "
         floatMethods[\"" ~ cmdName ~ "\"] = function (Item object, string path, Input input, Output output)
         {
-            float pivot = input.pop!float();
+            float pivot = (cast(Float)object).toFloat;
             foreach (item; input.popAll)
             {
                 float x = item.toFloat();
@@ -55,14 +55,14 @@ static this()
 
     floatMethods["eq"] = function (Item object, string path, Input input, Output output)
     {
-        float pivot = (cast(Float)object).toFloat * 1000;
+        int pivot = cast(int)((cast(Float)object).toFloat * 1000);
         foreach (item; input.popAll)
         {
-            float x = cast(int)(item.toFloat() * 1000);
+            int x = cast(int)(item.toFloat() * 1000);
             if (pivot != x)
             {
                 output.push(false);
-            return ExitCode.Success;
+                return ExitCode.Success;
             }
             pivot = x;
         }

@@ -271,6 +271,7 @@ static this()
         auto target = (cast(String)object).toString;
         foreach (item; input.popAll)
         {
+            log("- eq ", target, " ", item, "?");
             output.push(item.toString() == target);
         }
         return ExitCode.Success;
@@ -287,25 +288,10 @@ static this()
     };
     stringMethods["!="] = stringMethods["neq"];
 
-    // Conversions
-    stringMethods["to:integer"] = function (Item object, string path, Input input, Output output)
-    {
-        auto target = (cast(String)object).toString;
-        output.push(target.toLong);
-        return ExitCode.Success;
-    };
-    stringMethods["to:float"] = function (Item object, string path, Input input, Output output)
-    {
-
-        auto target = (cast(String)object).toString;
-        output.push(target.to!float);
-        return ExitCode.Success;
-    };
-
     /*
-    stringMethods["to:ascii"] = function (Item object, string path, Input input, Output output)
+    stringMethods["to.ascii"] = function (Item object, string path, Input input, Output output)
     {
-        > "ab" : to:ascii
+        > "ab" : to.ascii
         (97 , 98)
         auto target = (cast(String)object).toString;
         auto items = target.toBytes()

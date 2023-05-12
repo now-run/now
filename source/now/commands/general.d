@@ -43,7 +43,7 @@ static this()
         */
         foreach (item; input.popAll)
         {
-            output.push(item.type.to!string);
+            output.push(item.type.to!string.toLower);
         }
         return ExitCode.Success;
     };
@@ -65,7 +65,7 @@ static this()
         return ExitCode.Success;
     };
 
-    builtinCommands["to:string"] = function(string path, Input input, Output output)
+    builtinCommands["to.string"] = function(string path, Input input, Output output)
     {
         foreach(item; input.popAll)
         {
@@ -74,7 +74,7 @@ static this()
 
         return ExitCode.Success;
     };
-    builtinCommands["to:bool"] = function(string path, Input input, Output output)
+    builtinCommands["to.bool"] = function(string path, Input input, Output output)
     {
         foreach(item; input.popAll)
         {
@@ -82,7 +82,7 @@ static this()
         }
         return ExitCode.Success;
     };
-    builtinCommands["to:integer"] = function(string path, Input input, Output output)
+    builtinCommands["to.integer"] = function(string path, Input input, Output output)
     {
         foreach(item; input.popAll)
         {
@@ -90,7 +90,7 @@ static this()
         }
         return ExitCode.Success;
     };
-    builtinCommands["to:float"] = function(string path, Input input, Output output)
+    builtinCommands["to.float"] = function(string path, Input input, Output output)
     {
         foreach(item; input.popAll)
         {
@@ -100,18 +100,52 @@ static this()
     };
 
     // ---------------------------------------------
-    builtinCommands["put"] = function(string path, Input input, Output output)
+    builtinCommands["obj"] = function(string path, Input input, Output output)
     {
         /*
-        Puts a value in the pipeline.
-        > put 123 | as x
+        Returns the value of an object.
+        > obj 123 | as x
         > print $x
         123
+        > dict (k = v) | as dict
+        > obj $dict : get k | print
+        v
         */
         foreach (item; input.popAll)
         {
             output.push(item);
         }
+        return ExitCode.Success;
+    };
+    builtinCommands["collect"] = function(string path, Input input, Output output)
+    {
+        auto generatedOutput = new Output;
+
+forLoop:
+        foreach (generator; input.popAll)
+        {
+            if (generator.type == ObjectType.List)
+            {
+                auto list = cast(List)generator;
+                generatedOutput.push(list.items);
+            }
+            else
+            {
+                while (true)
+                {
+                    auto nextExitCode = generator.next(input.escopo, generatedOutput);
+                    if (nextExitCode == ExitCode.Break)
+                    {
+                        break forLoop;
+                    }
+                    else if (nextExitCode == ExitCode.Skip)
+                    {
+                        continue;
+                    }
+                }
+            }
+        }
+        output.push(new List(generatedOutput.items));
         return ExitCode.Success;
     };
 
@@ -227,8 +261,7 @@ static this()
 
     // ---------------------------------------------
     // Time
-    /*
-    integerCommands["sleep"] = function(string path, Input input, Output output)
+    builtinCommands["sleep"] = function(string path, Input input, Output output)
     {
         auto ms = input.pop!long;
 
@@ -249,7 +282,6 @@ static this()
         output.push(today.toUnixTime!long());
         return ExitCode.Success;
     };
-    */
     builtinCommands["timer"] = function(string path, Input input, Output output)
     {
         /*
@@ -321,12 +353,21 @@ static this()
         > assert false
         assertion error: false
         */
+        string givenMessage = null;
         foreach (item; input.popAll)
         {
-            if (!item.toBool())
+            if (item.type == ObjectType.String)
             {
-                auto msg = "assertion error: " ~ item.toString();
-                throw new NowException(
+                givenMessage = item.toString;
+            }
+            else if (!item.toBool())
+            {
+                auto msg = "assertion error";
+                if (givenMessage !is null)
+                {
+                    msg ~= ": " ~  givenMessage;
+                }
+                throw new AssertionError(
                     input.escopo,
                     msg,
                     -1,
@@ -405,7 +446,7 @@ static this()
         10
         */
         auto name = input.pop!string();
-        output.push(input.escopo[name]);
+        output.push(input.escopo[name].evaluate(input.escopo));
         return ExitCode.Success;
     };
     builtinCommands["vars"] = function(string path, Input input, Output output)
@@ -513,11 +554,12 @@ static this()
     builtinCommands["if"] = function(string path, Input input, Output output)
     {
         bool isConditionTrue = true;
-        foreach (item; input.popAll[0..$-1])
+        auto items = input.popAll;
+        foreach (item; items[0..$-1])
         {
             isConditionTrue = isConditionTrue && item.toBool();
         }
-        auto thenBody = cast(SubProgram)(input.popAll[$-1]);
+        auto thenBody = cast(SubProgram)(items[$-1]);
 
         if (isConditionTrue)
         {
@@ -646,17 +688,10 @@ static this()
 
         auto step = input.pop!long(1);
         auto range = new IntegerRange(start, limit, step);
-        range.silent = (path == "range.silent");
 
         output.push(range);
         return ExitCode.Success;
     };
-    /*
-    A "silent" range does not push the current value into the stack.
-    > range.silent 10 | { stack.pop | print }
-    # pop 10 "actual" items from the stack.
-    */
-    builtinCommands["range.silent"] = builtinCommands["range"];
 
     builtinCommands["foreach"] = function(string path, Input input, Output output)
     {
@@ -671,39 +706,74 @@ static this()
 
         foreach (target; input.popAll)
         {
-            forLoop:
-            while (true)
+            // TODO: encapsulate all this into proper functions/methods.
+            if (target.type == ObjectType.List)
             {
-                auto nextOutput = new Output;
-                auto exitCode = target.next(input.escopo, nextOutput);
-                final switch (exitCode)
+                auto list = cast(List)target;
+                foreach (item; list.items)
                 {
-                    case ExitCode.Break:
-                        break forLoop;
-                    case ExitCode.Skip:
-                        continue;
-                    case ExitCode.Continue:
-                        break;  // <-- break the switch, not the while.
-                    case ExitCode.Return:
-                    case ExitCode.Success:
-                        return exitCode;
-                }
+                    log("- foreach.item: ", item);
+                    input.escopo[argName] = item;
 
-                input.escopo[argName] = nextOutput.items;
-                exitCode = argBody.run(input.escopo, output);
-
-                if (exitCode == ExitCode.Break)
-                {
-                    break;
-                }
-                else if (exitCode == ExitCode.Return)
-                {
+                    auto exitCode = argBody.run(input.escopo, [], output);
                     /*
-                    Return propagates up into the
-                    processes stack and we
-                    don't want that.
+                    This exitCode check is different from the
+                    check of .next method! Here we don't have
+                    the possibility of .next returning
+                    break or continue because we
+                    don't even have a .next
+                    in the case of a List!
                     */
-                    return ExitCode.Success;
+                    if (exitCode == ExitCode.Break)
+                    {
+                        break;
+                    }
+                    else if (exitCode == ExitCode.Return)
+                    {
+                        /*
+                        Return propagates up into the
+                        processes stack:
+                        */
+                        return ExitCode.Success;
+                    }
+                }
+            }
+            else
+            {
+            forLoop:
+                while (true)
+                {
+                    auto nextOutput = new Output;
+                    auto exitCode = target.next(input.escopo, nextOutput);
+                    final switch (exitCode)
+                    {
+                        case ExitCode.Break:
+                            break forLoop;
+                        case ExitCode.Skip:
+                            continue;
+                        case ExitCode.Continue:
+                            break;  // <-- break the switch, not the while.
+                        case ExitCode.Return:
+                        case ExitCode.Success:
+                            return exitCode;
+                    }
+
+                    input.escopo[argName] = nextOutput.items;
+                    exitCode = argBody.run(input.escopo, output);
+
+                    if (exitCode == ExitCode.Break)
+                    {
+                        break;
+                    }
+                    else if (exitCode == ExitCode.Return)
+                    {
+                        /*
+                        Return propagates up into the
+                        processes stack and we
+                        don't want that.
+                        */
+                        return ExitCode.Success;
+                    }
                 }
             }
         }
@@ -736,6 +806,14 @@ static this()
                     log("- foreach.inline.item: ", item);
                     // use item as inputs for argBody:
                     auto exitCode = argBody.run(input.escopo, [item], output);
+                    /*
+                    This exitCode check is different from the
+                    check of .next method! Here we don't have
+                    the possibility of .next returning
+                    break or continue because we
+                    don't even have a .next
+                    in the case of a List!
+                    */
                     if (exitCode == ExitCode.Break)
                     {
                         break;
@@ -752,7 +830,7 @@ static this()
             }
             else
             {
-                forLoop:
+            forLoop:
                 while (true)
                 {
                     auto nextOutput = new Output;
@@ -771,6 +849,7 @@ static this()
                     }
 
                     // use nextOutput as inputs for argBody:
+                    log("-- foreach.inline argBody inputs: ", nextOutput.items);
                     exitCode = argBody.run(input.escopo, nextOutput.items, output);
 
                     if (exitCode == ExitCode.Break)
@@ -910,7 +989,19 @@ static this()
     builtinCommands["."] = function(string path, Input input, Output output)
     {
         auto target = input.pop!Item;
+        log("- builtinCommands[.]: calling `", path, "` on ", target, ":", target.type);
         return target.runMethod(path, input, output);
+    };
+    builtinCommands[":"] = function(string path, Input input, Output output)
+    {
+        /*
+        > path /boot/grub | as p
+        > print ($p : basename)
+        --> : $p basename
+        */
+        auto target = input.pop!Item;
+        auto methodName = input.pop!string;
+        return target.runMethod(methodName, input, output);
     };
     builtinCommands["+"] = builtinCommands["."];
     builtinCommands["-"] = builtinCommands["."];
@@ -923,6 +1014,8 @@ static this()
     builtinCommands["<"] = builtinCommands["."];
     builtinCommands[">="] = builtinCommands["."];
     builtinCommands["<="] = builtinCommands["."];
+    builtinCommands["&&"] = builtinCommands["."];
+    builtinCommands["||"] = builtinCommands["."];
 
 
     // SubProgram related:

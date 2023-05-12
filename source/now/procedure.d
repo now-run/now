@@ -17,6 +17,7 @@ class Procedure : BaseCommand
 
         auto bodyString = info["body"];
         auto parser = new NowParser(bodyString.toString());
+        parser.line = bodyString.documentLineNumber;
         this.body = parser.consumeSubProgram();
     }
 

@@ -235,7 +235,10 @@ class Parser
     String consumeString(char opener, bool limit_to_eol=false)
     {
         string s = consume_string(opener, limit_to_eol);
-        return new String(s);
+        auto result = new String(s);
+        result.documentLineNumber = line;
+        result.documentColNumber = col;
+        return result;
     }
 
     Item consumeNumber()
@@ -294,11 +297,17 @@ class Parser
         }
         else if (dotCounter == 0)
         {
-            return new Integer(s.to!int);
+            auto result = new Integer(s.to!int);
+            result.documentLineNumber = line;
+            result.documentColNumber = col;
+            return result;
         }
         else if (dotCounter == 1)
         {
-            return new Float(s.to!float);
+            auto result = new Float(s.to!float);
+            result.documentLineNumber = line;
+            result.documentColNumber = col;
+            return result;
         }
         else
         {

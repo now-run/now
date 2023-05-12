@@ -99,6 +99,15 @@ command {
 }
 
 
+[system_commands/date]
+description "To be able to test commands with different outputs"
+parameters {}
+command {
+    - date
+    - '+%Y-%m-%d %H:%M:%S.%N'
+}
+
+
 [procedures/hello]
 parameters {
     name {
@@ -271,12 +280,13 @@ print.yellow "a list of available subcommands for this project."
 description "Run all the examples."
 
 try {
-    glob [path "examples"] "*" | range | foreach directory {
-        if (($test . ignore) contains ($directory basename)) {
+    path "examples" : glob "*" | foreach directory {
+        print $directory
+        val test : get ignore : contains ($directory : basename) : then {
             print "skipping $directory"
             continue
         }
         print "Testing ${directory}..."
-        now "$directory" | check
+        now "$directory" : check
     }
 }

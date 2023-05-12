@@ -25,6 +25,14 @@ class String : Item
     {
         return this.repr;
     }
+    override long toLong()
+    {
+        return repr.toLong;
+    }
+    override float toFloat()
+    {
+        return repr.to!float;
+    }
 
     template opCast(T : string)
     {

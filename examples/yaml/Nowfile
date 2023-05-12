@@ -12,8 +12,11 @@ parameters {
     }
 }
 
-range.silent ($nesting_level * 4) | { stack.push " " } | collect | join "" | as spacer
-return "$spacer$what"
+range ($nesting_level * 4)
+    | { return " " } | collect
+    : push $what
+    : join
+    | return
 
 
 [procedures/to.yaml]
@@ -27,7 +30,7 @@ parameters {
     }
 }
 
-typeof $node | as t
+type $node | as t
 
 when (($t == integer) || ($t == float)) {
     nest $node $nesting_level
@@ -36,8 +39,8 @@ when ($t == string) {
     nest '"$node"' $nesting_level
 }
 when ($t == dict) {
-    keys $node | range | foreach key {
-        get $node $key | as value
+    obj $node : keys | foreach key {
+        obj $node : get $key | as value
         nest "${key}: $value" $nesting_level
         to.yaml ($node . $key) ($nesting_level + 1)
     }

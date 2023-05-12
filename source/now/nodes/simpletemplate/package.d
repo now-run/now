@@ -247,11 +247,17 @@ class TemplateInstance : Item
     {
         string s;
 
+        auto blockScope = escopo.createChild(name);
+        foreach (key, value; variables)
+        {
+            blockScope[key] = value;
+        }
+
         foreach (block; tpl.children)
         {
             if (block.isText)
             {
-                foreach (item; block.text.evaluate(escopo))
+                foreach (item; block.text.evaluate(blockScope))
                 {
                     s ~= item.toString();
                 }

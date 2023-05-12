@@ -10,6 +10,8 @@ class CommandCall
     Items args;
     Items kwargs;
     bool isTarget;
+    size_t documentLineNumber;
+    size_t documentColNumber;
 
     this(string name, Items args, Items kwargs)
     {

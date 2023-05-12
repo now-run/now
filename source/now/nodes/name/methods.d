@@ -26,7 +26,7 @@ static this()
         string target = (cast(Name)object).toString;
         foreach (item; input.popAll)
         {
-            output.push(item.toString() != target);
+            output.push(item.toString() == target);
         }
         return ExitCode.Success;
     };
@@ -36,7 +36,7 @@ static this()
         string target = (cast(Name)object).toString;
         foreach (item; input.popAll)
         {
-            output.push(item.toString() == target);
+            output.push(item.toString() != target);
         }
         return ExitCode.Success;
     };

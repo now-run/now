@@ -43,7 +43,14 @@ class Escopo : Dict
 
     override string toString()
     {
-        return "Escopo " ~ name;
+        string[] names = [name];
+        auto pivot = this;
+        while (pivot.parent !is null)
+        {
+            pivot = pivot.parent;
+            names ~= pivot.name;
+        }
+        return names.retro.join("/");
     }
 
     /*

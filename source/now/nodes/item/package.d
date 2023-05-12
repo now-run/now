@@ -13,14 +13,19 @@ class Item
     ObjectType type;
     string typeName;
     MethodsMap methods;
+    size_t documentLineNumber;
+    size_t documentColNumber;
 
     // Operators:
     template opUnary(string operator)
     {
         Item opUnary()
         {
-            throw new Exception(
-                "Cannot apply " ~ operator ~ " to " ~ this.toString()
+            throw new InvalidOperatorException(
+                null,
+                "Cannot apply " ~ operator ~ " to " ~ this.toString(),
+                -1,
+                this
             );
         }
     }
@@ -29,34 +34,46 @@ class Item
     bool toBool()
     {
         auto thisInfo = typeid(this);
-        throw new Exception(
+        throw new NotImplementedException(
+            null,
             "Conversion from "
-            ~ thisInfo.toString() ~ " to bool not implemented."
+            ~ thisInfo.toString() ~ " to bool not implemented.",
+            -1,
+            this
         );
     }
     long toLong()
     {
         auto thisInfo = typeid(this);
-        throw new Exception(
+        throw new NotImplementedException(
+            null,
             "Conversion from "
             ~ thisInfo.toString() ~ " to long not implemented."
-            ~ " (" ~ this.toString() ~ ")"
+            ~ " (" ~ this.toString() ~ ")",
+            -1,
+            this
         );
     }
     float toFloat()
     {
         auto thisInfo = typeid(this);
-        throw new Exception(
+        throw new NotImplementedException(
+            null,
             "Conversion from "
-            ~ thisInfo.toString() ~ " to float not implemented."
+            ~ thisInfo.toString() ~ " to float not implemented.",
+            -1,
+            this
         );
     }
     override string toString()
     {
         auto thisInfo = typeid(this);
-        throw new Exception(
+        throw new NotImplementedException(
+            null,
             "Conversion from "
-            ~ thisInfo.toString() ~ " to string not implemented."
+            ~ thisInfo.toString() ~ " to string not implemented.",
+            -1,
+            this
         );
     }
 

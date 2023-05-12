@@ -19,7 +19,7 @@ class Sequence : Item
         return "<" ~ items.map!(x => x.toString()).join(" ") ~ ">";
     }
 
-    Items evaluate()
+    override Items evaluate(Escopo escopo)
     {
         log("- Sequence.evaluate: ", items);
         return items;

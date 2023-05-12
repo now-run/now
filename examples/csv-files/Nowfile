@@ -4,11 +4,14 @@ Show how to work with CSV files
 
 [commands/run]
 
-path "test.csv" | read | csv.decode | as lista
-assert (($lista length) == 6)
-get $lista 0 | as first
-assert (($first length) == 5)
+path "test.csv" : read | csv.decode | as lista
+assert (($lista : length) == 6)
+obj $lista : get 0 | as first
+assert (($first : length) == 5)
 
+# TODO: do not print stuff on `run`.
+# (Or change `now test` on main Nowfile to call
+#  other command...)
 print $lista
 print "------------"
 csv.encode $lista | print

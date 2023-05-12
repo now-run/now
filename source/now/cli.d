@@ -90,7 +90,14 @@ int main(string[] args)
     Document document = null;
     if (documentPath.exists)
     {
-        document = loadDocument(documentPath, documentArgs);
+        try
+        {
+            document = loadDocument(documentPath, documentArgs);
+        }
+        catch (Exception ex)
+        {
+            return 2;
+        }
         if (document is null)
         {
             return 3;
@@ -232,11 +239,12 @@ int runDocument(Document document, string commandName, string[] commandArgs)
         );
         if (handlerString !is null)
         {
+            log("+++ handlerString:", handlerString);
             // TODO: stop parsing SubPrograms ad-hoc!!!
             auto localParser = new NowParser(handlerString.toString());
             SubProgram handler = localParser.consumeSubProgram();
 
-            auto newScope = escopo.createChild("on:error");
+            auto newScope = escopo.createChild("on.error");
             auto error = new Erro(
                 ex.msg,
                 ex.code,
@@ -255,11 +263,47 @@ int runDocument(Document document, string commandName, string[] commandArgs)
             }
             catch (NowException ex2)
             {
-                return ex2.code;
+                // return ex2.code;
+                ex = ex2;
             }
-            // TODO: what to do with errorOutput???
+            /*
+            User should be able to recover gracefully from
+            errors, so this output should be considered "good"...
+            */
+            print_output(newScope, errorOutput);
+            return 0;
         }
-        // stderr.writeln(ex);
+
+        if (!ex.printed)
+        {
+            try
+            {
+                throw ex;
+            }
+            catch (ProcedureNotFoundException ex)
+            {
+                stderr.writeln(
+                    "e> Procedure not found: ", ex.msg
+                );
+                return ex.code;
+            }
+            catch (MethodNotFoundException ex)
+            {
+                stderr.writeln(
+                    "e> Method not found: ", ex.msg,
+                    "; object: ", ex.subject
+                );
+                return ex.code;
+            }
+            catch (NotImplementedException ex)
+            {
+                stderr.writeln(
+                    "e> Not implemented: ", ex.msg
+                );
+                return ex.code;
+            }
+            stderr.writeln(ex);
+        }
         return ex.code;
     }
 
@@ -399,42 +443,12 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
         // TODO: handle exceptions.
         auto exitCode = pipeline.run(escopo, output);
 
+        // Print whatever is still in the stack:
+        print_output(escopo, output);
+
         if (exitCode != ExitCode.Success)
         {
             stderr.writeln(exitCode.to!string);
-        }
-
-        // Print whatever is still in the stack:
-        foreach (item; output.items)
-        {
-            debug{stderr.writeln(item.type.to!string, " ");}
-            if (item.type == ObjectType.SystemProcess)
-            {
-                auto p = cast(SystemProcess)item;
-                ExitCode nextExitCode;
-                do
-                {
-                    auto nextItems = new Output;
-                    nextExitCode = p.next(escopo, nextItems);
-                    if (nextExitCode == ExitCode.Continue)
-                    {
-                        foreach (oItem; nextItems.items)
-                        {
-                            // XXX: stderr or stdout?
-                            stdout.writeln(oItem.toString());
-                        }
-                    }
-                }
-                while (nextExitCode == ExitCode.Continue);
-                if (!nextExitCode.among(ExitCode.Success, ExitCode.Skip))
-                {
-                    stderr.writeln(">> ", nextExitCode.to!string);
-                }
-            }
-            else
-            {
-                stderr.writeln(">>> ", item.toString());
-            }
         }
     }
     return 0;
@@ -449,6 +463,7 @@ int cmd(Document document, string[] documentArgs)
     }
 
     auto escopo = new Escopo(document, "cmd");
+    auto output = new Output;
 
     foreach (line; documentArgs)
     {
@@ -464,7 +479,8 @@ int cmd(Document document, string[] documentArgs)
         }
 
         ExitCode exitCode;
-        auto output = new Output;
+        // Reset output items array:
+        output.items.length = 0;
         try
         {
             exitCode = pipeline.run(escopo, output);
@@ -486,8 +502,11 @@ int cmd(Document document, string[] documentArgs)
         {
             stderr.writeln(exitCode.to!string);
         }
-        // TODO: what to do with `output`?
     }
+
+    // Print the output of the last command:
+    print_output(escopo, output);
+
     return 0;
 }
 
@@ -546,4 +565,42 @@ int bashAutoComplete(NowParser parser)
         stdout.writeln(commands.join(" "));
     }
     return 0;
+}
+
+
+void print_output(Escopo escopo, Output output)
+{
+    log("+ print_output:", escopo, output);
+    foreach (item; output.items)
+    {
+        debug{stderr.writeln(item.type.to!string, " ");}
+        if (item.type == ObjectType.SystemProcess)
+        {
+            auto p = cast(SystemProcess)item;
+            ExitCode nextExitCode;
+            do
+            {
+                auto nextItems = new Output;
+                nextExitCode = p.next(escopo, nextItems);
+                if (nextExitCode == ExitCode.Continue)
+                {
+                    foreach (oItem; nextItems.items)
+                    {
+                        // XXX: stderr or stdout?
+                        stdout.writeln(oItem.toString());
+                    }
+                }
+            }
+            while (nextExitCode == ExitCode.Continue);
+            if (!nextExitCode.among(ExitCode.Success, ExitCode.Skip))
+            {
+                stderr.writeln(">> ", nextExitCode.to!string);
+            }
+        }
+        else
+        {
+            stderr.writeln(">>> ", item);
+        }
+    }
+
 }
