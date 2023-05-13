@@ -3,6 +3,12 @@
 Illustrate some aspects of Now's syntax.
 
 
+[Some string madness]
+> What if we don't need to quote strings?
+> or even start with capital letters?
+> but this can only work on section dicts, not inside SubPrograms!
+> (And each `>` will be turned into a `-`, so Dict implementation won't even see what is happening.)
+
 [procedures/methods]
 
 dict (k = v) | as dict
@@ -49,7 +55,7 @@ range 0 8 | transform x {
 } | collect | as result
 print $result
 assert ($result == (0 , 4 , 8 , 12 , 16))
-print.stderr "ok!"
+log "ok!"
 
 
 [commands/strings]

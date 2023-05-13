@@ -242,7 +242,7 @@ commands:
 
 - `on.call` - called after parsing arguments but before
   the "function" body;
-- `on.return` - called right after the "function" returnds;
+- `on.return` - called right after the "function" returns;
 - `on.error` - allows you to handle errors as you may find fit.
 
 These handlers (except `on.error`) share the same scope as the body.

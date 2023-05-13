@@ -305,6 +305,8 @@ class Document : Dict {
     {
         log("- Collecting Text");
 
+        this.text = new Dict();
+
         foreach (key, value; data)
         {
             auto firstLetter = key[0];

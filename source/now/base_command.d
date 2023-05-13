@@ -259,9 +259,8 @@ class BaseCommand
         {
             /*
             Event handlers are not procedures or
-            commands, but simple SubProgram.
+            commands, but simple SubPrograms.
             */
-
             return handler.run(escopo, output);
         }
         else

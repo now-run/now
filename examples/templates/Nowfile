@@ -34,8 +34,6 @@ extends html_base
 [commands/run]
 description "Show how templates work."
 
-# New Template object.
-# Templates are just like Dicts.
 template htmls (page_title = "Directory Listings Example") | as tpl
 
 list "/home" "/opt" | foreach directory {

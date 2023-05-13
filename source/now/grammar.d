@@ -273,11 +273,15 @@ class NowParser : Parser
             }
 
             auto key = consumeAtom();
-
             consumeWhitespace();
 
             Item value;
-            if (currentChar == '{')
+            if (key.toString == ">")
+            {
+                key = new Name("-");
+                value = consumeString('\n');
+            }
+            else if (currentChar == '{')
             {
                 consumeChar();
                 consumeWhitespaces();
@@ -670,8 +674,6 @@ class NowParser : Parser
         auto close = consumeChar();
         assert(close == ')');
 
-        log("%% InfixCommand items: ", items);
-
         ////////////////////////
         // infix notation
         string[] commandNames;
@@ -763,7 +765,6 @@ class NowParser : Parser
                 throw new Exception("execList cannot be null!");
             }
         }
-        log("-- List.execList: ", execList);
         return execList;
     }
 

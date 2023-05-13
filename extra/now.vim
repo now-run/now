@@ -11,6 +11,7 @@ syn match nowNumber '[-+]\d\+'
 syn match nowString '"[^"]\+"'
 syn match nowString '\'[^"]\+\''
 syn match nowString '{{[^"]\+}}'
+syn match nowString '^ *> [^"]\+'
 syn match nowSubstAtom '$[a-z][^ ]*'
 syn match nowName '[a-z0-9_.]\+'
 
