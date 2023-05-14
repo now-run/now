@@ -26,6 +26,8 @@ static this()
 
 int main(string[] args)
 {
+    loadEnvVars();
+
     log("+ args:", args.to!string);
 
     NowParser parser;
@@ -165,7 +167,6 @@ int runDocument(Document document, string commandName, string[] commandArgs)
     auto rootScope = new Escopo(document, "document");
     log("+ rootScope: ", rootScope);
     rootScope["env"] = envVars;
-
     rootScope["args"] = new List(
         cast(Items)(
             commandArgs
@@ -213,7 +214,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
 
     // ------------------------------
     // Run the command:
-    auto escopo = rootScope.createChild("now");
+    auto escopo = rootScope.addPathEntry("now");
     log("  + escopo: ", escopo);
     auto input = Input(
         escopo,
@@ -228,7 +229,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
     log("+ Running ", commandName, "...");
     try
     {
-        exitCode = command.run(commandName, input, output);
+        exitCode = command.run(commandName, input, output, true);
     }
     catch (NowException ex)
     {
@@ -244,7 +245,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
             auto localParser = new NowParser(handlerString.toString());
             SubProgram handler = localParser.consumeSubProgram();
 
-            auto newScope = escopo.createChild("on.error");
+            auto newScope = escopo.addPathEntry("on.error");
             auto error = new Erro(
                 ex.msg,
                 ex.code,
@@ -390,6 +391,7 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
     document.initialize(envVars);
 
     auto escopo = new Escopo(document, "repl");
+    escopo["env"] = envVars;
 
     stderr.writeln("Starting REPL...");
 
@@ -463,6 +465,7 @@ int cmd(Document document, string[] documentArgs)
     }
 
     auto escopo = new Escopo(document, "cmd");
+    escopo["env"] = envVars;
     auto output = new Output;
 
     foreach (line; documentArgs)

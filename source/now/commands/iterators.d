@@ -64,7 +64,8 @@ class IntegerRange : Item
 class Transformer : Item
 {
     Items targets;
-    size_t targetIndex = 0;
+    size_t targetIndex;
+    size_t currentListIndex;
     SubProgram body;
     Escopo escopo;
     string varName;
@@ -98,42 +99,77 @@ class Transformer : Item
         more than one things it's going to consume from.
         */
         auto target = targets[targetIndex];
-        auto nextOutput = new Output;
-        auto exitCode = target.next(escopo, nextOutput);
 
-        switch (exitCode)
+        if (target.type == ObjectType.List)
         {
-            case ExitCode.Break:
+            auto list = cast(List)target;
+            Item nextItem;
+            if (currentListIndex >= list.items.length)
+            {
+                currentListIndex = 0;
                 targetIndex++;
                 if (targetIndex < targets.length)
                 {
                     return next(escopo, output);
                 }
-                goto case;
-            case ExitCode.Skip:
-                return exitCode;
-            case ExitCode.Continue:
-                break;
-            default:
-                throw new IteratorException(
-                    escopo,
-                    to!string(target)
-                    ~ ".next returned "
-                    ~ to!string(exitCode)
-                );
-        }
+                else
+                {
+                    return ExitCode.Break;
+                }
+            }
+            else
+            {
+                nextItem = list.items[currentListIndex++];
+            }
 
-        if (varName)
-        {
-            log("- Transformer ", varName, " <- ", nextOutput.items);
-            // TODO: it should be a popAll, right?
-            escopo[varName] = nextOutput.items;
+            if (varName)
+            {
+                escopo[varName] = nextItem;
+            }
+            else
+            {
+                output.push(nextItem);
+            }
         }
         else
         {
-            foreach (item; nextOutput.items)
+            auto nextOutput = new Output;
+            auto exitCode = target.next(escopo, nextOutput);
+
+            switch (exitCode)
             {
-                output.push(item);
+                case ExitCode.Break:
+                    targetIndex++;
+                    if (targetIndex < targets.length)
+                    {
+                        return next(escopo, output);
+                    }
+                    goto case;
+                case ExitCode.Skip:
+                    return exitCode;
+                case ExitCode.Continue:
+                    break;
+                default:
+                    throw new IteratorException(
+                        escopo,
+                        to!string(target)
+                        ~ ".next returned "
+                        ~ to!string(exitCode)
+                    );
+            }
+
+            if (varName)
+            {
+                log("- Transformer ", varName, " <- ", nextOutput.items);
+                // TODO: it should be a popAll, right?
+                escopo[varName] = nextOutput.items;
+            }
+            else
+            {
+                foreach (item; nextOutput.items)
+                {
+                    output.push(item);
+                }
             }
         }
 

@@ -9,7 +9,7 @@ import now.nodes;
 Dict envVars;
 
 
-static this()
+void loadEnvVars()
 {
     envVars = new Dict();
     foreach(key, value; environment.toAA())

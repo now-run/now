@@ -20,7 +20,7 @@ class ExecList : Item
     }
     override Items evaluate(Escopo escopo)
     {
-        auto newScope = escopo.createChild("ExecList");
+        auto newScope = escopo.addPathEntry("ExecList");
         auto output = new Output;
         this.subprogram.run(newScope, output);
         return output.items;

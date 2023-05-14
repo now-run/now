@@ -36,7 +36,7 @@ class Escopo : Dict
         this.rootCommand = rootCommand;
     }
 
-    Escopo createChild(string name)
+    Escopo addPathEntry(string name)
     {
         return new Escopo(this, name);
     }
@@ -60,6 +60,10 @@ class Escopo : Dict
     override Item opIndex(string k)
     {
         auto v = values.get(k, null);
+        if (v is null && this.parent !is null)
+        {
+            return this.parent[k];
+        }
         if (v is null && document !is null)
         {
             v = document.get(k, null);

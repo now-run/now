@@ -165,7 +165,27 @@ forLoop:
     };
     builtinCommands["return"] = function(string path, Input input, Output output)
     {
-        output.push(input.popAll);
+        foreach (item; input.popAll)
+        {
+            if (item.type == ObjectType.Error)
+            {
+                auto erro = cast(Erro)item;
+                if (erro.exception !is null)
+                {
+                    throw erro.exception;
+                }
+                else
+                {
+                    throw new NowException(
+                        erro.escopo,
+                        erro.message,
+                        erro.code,
+                        erro.subject
+                    );
+                }
+            }
+            output.push(item);
+        }
         return ExitCode.Return;
     };
 
@@ -189,7 +209,7 @@ forLoop:
         auto name = input.pop!string;
         auto body = input.pop!SubProgram;
 
-        auto newScope = input.escopo.createChild(name);
+        auto newScope = input.escopo.addPathEntry(name);
         return body.run(newScope, output);
     };
 
@@ -236,7 +256,7 @@ forLoop:
 
             foreach (index, item; input.popAll)
             {
-                auto newScope = input.escopo.createChild(
+                auto newScope = input.escopo.addPathEntry(
                     "log/" ~ formatName ~ "/" ~ index.to!string
                 );
                 newScope["message"] = item;
@@ -306,7 +326,7 @@ forLoop:
         auto usecs = sw.peek().total!"usecs";
         auto nsecs = sw.peek().total!"nsecs";
 
-        auto newScope = input.escopo.createChild("timer-callback");
+        auto newScope = input.escopo.addPathEntry("timer-callback");
         newScope["seconds"] = new Float(seconds);
         newScope["miliseconds"] = new Float(msecs);
         newScope["microseconds"] = new Float(usecs);
@@ -331,9 +351,9 @@ forLoop:
         */
 
         // "Full" call:
-        // error message code class
-        // error "Not Found" 404 http
-        // error "segmentation fault" 11 os
+        // > error message code class
+        // > error "Not Found" 404 http
+        // > error "segmentation fault" 11 os
         string message = input.pop!string("An error ocurred");
         int code = cast(int)(input.pop!long(-1));
 
@@ -889,7 +909,7 @@ forLoop:
             auto error = ex.toError;
             if (default_body !is null)
             {
-                auto newScope = input.escopo.createChild("catch");
+                auto newScope = input.escopo.addPathEntry("catch");
 
                 newScope["error"] = error;
                 return default_body.run(newScope, output);
@@ -1035,7 +1055,7 @@ forLoop:
         one
         */
         auto body = input.pop!SubProgram;
-        auto escopo = input.escopo.createChild("run");
+        auto escopo = input.escopo.addPathEntry("run");
 
         return body.run(escopo, output);
     };

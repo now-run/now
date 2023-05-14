@@ -137,12 +137,13 @@ class Dict : Item
             }
             else
             {
-                return __traits(getMember, this, "to" ~ capitalize(T.stringof))();
+                return __traits(getMember, value, "to" ~ capitalize(T.stringof))();
             }
         }
         T get(string key, T defaultValue)
         {
             Item value = get(key, null);
+
             if (value !is null)
             {
                 static if (__traits(hasMember, T, "typeName"))
@@ -151,7 +152,7 @@ class Dict : Item
                 }
                 else
                 {
-                    return __traits(getMember, this, "to" ~ capitalize(T.stringof))();
+                    return __traits(getMember, value, "to" ~ capitalize(T.stringof))();
                 }
             }
             else

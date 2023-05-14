@@ -67,8 +67,7 @@ class CommandCall
         }
         else
         {
-            auto exitCode = escopo.document.runProcedure(name, input, output);
-            return exitCode;
+            return escopo.document.runProcedure(name, input, output);
         }
     }
 }

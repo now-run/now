@@ -247,7 +247,7 @@ class TemplateInstance : Item
     {
         string s;
 
-        auto blockScope = escopo.createChild(name);
+        auto blockScope = escopo.addPathEntry(name);
         foreach (key, value; variables)
         {
             blockScope[key] = value;

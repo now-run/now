@@ -59,14 +59,21 @@ class BaseCommand
         return s ~ "  " ~ keys.join(" ");
     }
 
-    ExitCode run(string name, Input input, Output output)
+    ExitCode run(string name, Input input, Output output, bool keepScope=false)
     {
         log("- run: ", this, " / ", input);
         // input: Escopo escopo, Items inputs, Args args, KwArgs kwargs
 
         // Procedures are always top-level:
-        auto newScope = input.escopo.createChild(name);
-        newScope.parent = null;
+        Escopo newScope;
+        if (keepScope)
+        {
+            newScope = input.escopo;
+        }
+        else
+        {
+            newScope = new Escopo(input.escopo.document, name, this);
+        }
 
         auto setParametersCount = 0;
         string[] namedParametersAlreadySet;
@@ -203,7 +210,7 @@ class BaseCommand
                     auto errorHandler = rootCommand.getEventHandler("error");
                     if (errorHandler !is null)
                     {
-                        auto errorScope = newScope.createChild("on.error");
+                        auto errorScope = newScope.addPathEntry("on.error");
                         errorScope.rootCommand = null;
                         errorScope["error"] = ex.toError();
                         return rootCommand.handleEvent("error", errorScope, output);
@@ -257,11 +264,13 @@ class BaseCommand
         auto handler = getEventHandler(eventName);
         if (handler !is null)
         {
+            Items input = output.items;
+            output.items.length = 0;
             /*
             Event handlers are not procedures or
             commands, but simple SubPrograms.
             */
-            return handler.run(escopo, output);
+            return handler.run(escopo, input, output);
         }
         else
         {

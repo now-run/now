@@ -122,27 +122,48 @@ class SystemCommand : BaseCommand
             auto segmentOutput = segment.evaluate(input.escopo);
             // XXX: we PROBABLY have only one item, here:
             Item nextItem = segmentOutput.front;
+
             if (nextItem.type == ObjectType.List)
             {
+                auto list = cast(List)nextItem;
+                log("--- cmdItems ~= list: ", list);
                 // Expand Lists inside the command arguments:
-                cmdItems ~= (cast(List)nextItem).items;
+                cmdItems ~= list.items;
             }
             // dict (verbosity = 3)
             // -> "--verbosity=3"
             else if (nextItem.type == ObjectType.Dict)
             {
-                foreach (k, v; (cast(Dict)nextItem).values)
+                auto dict = cast(Dict)nextItem;
+                log("--- cmdItems ~= dict: ", dict);
+                if (this.keyValueSeparator != " ")
                 {
-                    cmdItems ~= new String(
-                        this.optionPrefix
-                        ~ k
-                        ~ this.keyValueSeparator
-                        ~ v.toString()
-                    );
+                    foreach (k, v; dict)
+                    {
+                        auto x = new String(
+                            this.optionPrefix
+                            ~ k
+                            ~ this.keyValueSeparator
+                            ~ v.toString()
+                        );
+                        cmdItems ~= x;
+                    }
+                }
+                else
+                {
+                    foreach (k, v; dict)
+                    {
+                        auto x = new String(this.optionPrefix ~ k);
+                        cmdItems ~= x;
+                        // SPACE
+                        x = new String(v.toString());
+                        cmdItems ~= x;
+                    }
                 }
             }
             else
             {
+                log("-- cmdItems ~= ", nextItem);
                 cmdItems ~= nextItem;
             }
         }
@@ -176,6 +197,8 @@ class SystemCommand : BaseCommand
             workdirStr = workdirOutput.front.toString();
         }
 
+        log(" -- inputStream: ", inputStream);
+
         output.items ~= new SystemProcess(
             cmd, arguments, inputStream, env, workdirStr
         );
@@ -204,7 +227,9 @@ class SystemProcess : Item
         string workdir=null
     )
     {
-        log(": SystemProcess:", command, "; arguments:", arguments);
+        log(": SystemProcess: ", command);
+        log(":     arguments: ", arguments);
+
         this.type = ObjectType.SystemProcess;
         this.typeName = "system_process";
         this.methods = systemProcessMethods;
@@ -244,9 +269,9 @@ class SystemProcess : Item
     override string toString()
     {
         auto s = this.cmdline.join(" ");
-        if (s.length > 64)
+        if (s.length > 256)
         {
-            return s[0..64] ~ "...";
+            return s[0..256] ~ " ...";
         }
         else
         {

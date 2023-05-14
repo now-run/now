@@ -1,5 +1,3 @@
-#!now :f
-
 [Now as an alternative to Make]
 focal_point "constants/targets/release"
 
@@ -10,10 +8,6 @@ A very convoluted way of doing the same a Makefile would do much more easily.
 description "now binary, release"
 output_filepath "dist/now"
 source_files {
-    - {
-        directory "cli/source/now"
-        pattern "now.d"
-    }
     - {
         directory "source/now"
         pattern "*.d"
@@ -27,10 +21,6 @@ command compile
 description "now binary, debug"
 output_filepath "dist/now.debug"
 source_files {
-    - {
-        directory "cli/source/now"
-        pattern "app.d"
-    }
     - {
         directory "source/now"
         pattern "*.d"
@@ -53,10 +43,10 @@ command {
 
 [system_commands/hash/on.return]
 
-stack.pop | transform entry {
+transform entry {
     # filename  hash
-    split " " $entry | range | transform part {
-        if (($part length) == 0) {
+    obj $entry : split " " | transform part {
+        if (($part : length) == 0) {
             skip
         }
         return $part
@@ -83,8 +73,7 @@ parameters {
     }
     extra {
         type list
-        default {
-        }
+        default {}
     }
 }
 key_value_separator ""
@@ -118,8 +107,7 @@ parameters {
     }
     extra {
         type list
-        default {
-        }
+        default {}
     }
 }
 key_value_separator ""
@@ -165,38 +153,42 @@ scope "generate object files" {
     set has_new_files false
     try {
         hash $files | foreach pair {
-            set (hash , input_file) $pair
+            obj $pair : get 0 | as hash
+            obj $pair : get 1 | as input_file
             path "build/${hash}-${options_hash}.o" | as obj_file
-            if (($obj_file exists) == false) {
+            if (($obj_file : exists) == false) {
                 log "compiling $input_file into $obj_file"
 
                 timer {
-                    gdc_obj $input_file $obj_file (extra = $extra) | check
+                    print gdc_obj " " $input_file " " $obj_file " -- " "(extra = $extra)"
+                    gdc_obj $input_file $obj_file -- (extra = $extra) : check
                 } {
                     log "$input_file was compiled in $microseconds microseconds."
                 }
                 set has_new_files true
             }
-            push $object_files $obj_file
+            obj $object_files : push $obj_file
         }
     }
 
 }
 
+if false {
 scope "clean old files" {
-    print "has_new_files=$has_new_files"
     if $has_new_files {
-        path "build" | .glob "*.o" | range | foreach filename {
-            if (($object_files contains $filename) == false) {
+        path "build" : glob "*.o" | foreach filename {
+            obj $object_files : contains $filename : eq false : then {
                 log "Deleting $filename ..."
-                delete $filename
+                obj $filename : delete
             }
         }
     }
 }
+}
 
 scope "generate binary" {
-    gdc_bin $object_files $output_filepath (extra = $extra) | { print }
+    print gdc_bin " " $object_files " " $output_filepath " -- " (extra = $extra)
+    gdc_bin $object_files $output_filepath -- (extra = $extra) | { print }
 }
 
 
@@ -208,43 +200,45 @@ parameters {
 }
 
 log "Making $target_name ..."
-get $targets $target_name | as target
+obj $targets : get $target_name | as target
 
 scope "resolve dependencies" {
-    try { get $target depends_on } { list } | range | foreach dependency {
+    try { obj $target : get depends_on } { list } | foreach dependency {
         make $dependency
     }
 }
 
 scope "compile" {
-    get $target command | as command
+    obj $target : get command | as command
     list | as source_files
 
-    get $target source_files | range | foreach pair {
-        get $pair directory | path | as directory
-        get $pair pattern | as pattern
+    obj $target : get source_files | foreach pair {
+        path ($pair . directory) | as directory
+        set pattern ($pair . pattern)
 
-        glob.depth $directory $pattern | range | foreach file {
-            push $source_files $file
+        obj $directory : glob.depth $pattern | foreach file {
+            # print "file=$file"
+            obj $source_files : push $file
         }
     }
 
-    get $target output_filepath | path | as output_filepath
+    obj $target : get output_filepath | path | as output_filepath
+    print "output_filepath=$output_filepath"
     try {
         timer {
             call $command
                 . $source_files
                 . $output_filepath
-                . (debug = ($target . debug))
+                . -- (debug = ($target . debug))
                 | foreach line {
-                    log "$command: $line"
+                    # log "$command: $line"
                 }
         } {
             log "$output_filepath was compiled in $miliseconds miliseconds."
         }
     } {
         log ">>>>> ERROR: $error"
-        return $error
+        error $error
     }
     log "compilation finished."
 }
@@ -255,9 +249,9 @@ log "make $target_name finished."
 [commands/build/on.call]
 description "Verify if the user is running from inside the examples directory."
 
-split "/" ($env . "PWD") | as pwd
-length $pwd | as length
-get $pwd ($length - 1) | as cwd
+obj $env : get "PWD" : split "/" | as pwd
+obj $pwd : length | as length
+obj $pwd : get ($length - 1) | as cwd
 if (($cwd == "examples") || ($cwd == "make")) {
     print "Do not run this program from inside the examples directory!"
     print "Go to the repository root and run it this way:"
@@ -285,4 +279,5 @@ make $target
 
 [commands/clean]
 
-glob [path "dist/*"] | foreach file { print delete $file }
+print "test mode"
+path "dist/*" : glob | foreach file { print delete $file }
