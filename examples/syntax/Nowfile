@@ -86,6 +86,27 @@ try {
 }
 
 
+[commands/booleans]
+description "Test boolean logic and operators."
+
+obj true : then {
+    dict (k = 1)
+} {
+    dict (k = 2)
+} : get k : eq 1 | assert "k should be 1"
+
+
+set x true
+run {
+    when ($x == true) {
+        dict (k = 1) | return
+    }
+    when ($x == false) {
+        dict (k = 2) | return
+    }
+} : get k : eq 1 | assert "k should be 1"
+
+
 [commands/run]
 description "General syntax tests"
 

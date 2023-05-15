@@ -66,11 +66,28 @@ static this()
     booleanMethods["then"] = function(Item object, string path, Input input, Output output)
     {
         bool isConditionTrue = (cast(Boolean)object).toBool;
-        auto thenBody = cast(SubProgram)(input.popAll[$-1]);
+        auto thenBody = input.pop!SubProgram;
+        auto elseBody = input.pop!SubProgram(null);
+        ExitCode exitCode;
         if (isConditionTrue)
         {
             return thenBody.run(input.escopo, output);
         }
+        else if (elseBody !is null)
+        {
+            return elseBody.run(input.escopo, output);
+        }
+        return ExitCode.Success;
+    };
+    booleanMethods["else"] = function(Item object, string path, Input input, Output output)
+    {
+        bool isConditionTrue = (cast(Boolean)object).toBool;
+        auto elseBody = input.pop!SubProgram;
+        if (!isConditionTrue)
+        {
+            return elseBody.run(input.escopo, output);
+        }
+        output.push(isConditionTrue);
         return ExitCode.Success;
     };
 }
