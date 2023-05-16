@@ -10,6 +10,7 @@ import now.conv;
 const EOL = '\n';
 const SPACE = ' ';
 const TAB = '\t';
+const SEMICOLON = ';';
 const STOPPERS = [')', ']', '}'];
 
 

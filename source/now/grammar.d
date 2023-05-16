@@ -433,6 +433,15 @@ class NowParser : Parser
                 // Mark the command as a target:
                 commandCall.isTarget = true;
             }
+            else if (currentChar == SEMICOLON)
+            {
+                consumeChar();
+                if (currentChar == SPACE)
+                {
+                    consumeWhitespace();
+                }
+                continue;
+            }
             else
             {
                 break;
@@ -499,6 +508,11 @@ class NowParser : Parser
                 {
                     break;
                 }
+                else if (currentChar == SEMICOLON)
+                {
+                    break;
+                }
+
                 auto arg = consumeItem();
                 // log("%% arg:", arg, ":", arg.type);
                 if (arg.type == ObjectType.Name && arg.toString() == "--")
