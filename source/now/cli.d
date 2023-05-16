@@ -98,6 +98,7 @@ int main(string[] args)
         }
         catch (Exception ex)
         {
+            stderr.writeln(ex.msg);
             return 2;
         }
         if (document is null)

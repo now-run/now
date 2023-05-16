@@ -13,6 +13,22 @@ command {
     - "-lha"
     - $path
 }
+which {
+    - ls
+    - --help
+}
+
+[system_commands/ls_no_which]
+parameters {
+    path {
+        type string
+    }
+}
+command {
+    - ls
+    - "-lha"
+    - $path
+}
 
 
 [commands/list_try]
@@ -41,4 +57,5 @@ ls $path : check
 
 [commands/run]
 
-ls . : check
+ls . | { print "ls> " }
+ls_no_which . | { print "lsnw> " }

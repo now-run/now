@@ -35,15 +35,6 @@ class SystemCommand : BaseCommand
         which "ls -h"
         command "ls"
         */
-        info.on("which", delegate (item) {
-            auto cmd = item.toString().split(" ");
-            // TODO: run which value to check if the
-            // requested command is available.
-        }, delegate () {
-            // TODO: run `which` (the system command) to
-            // check if the requested command is available.
-        });
-
         auto cmdItem = info.getOr(
             "command",
             delegate (d) {
@@ -67,6 +58,37 @@ class SystemCommand : BaseCommand
                     "commands/" ~ name
                     ~ ".command must be a list"
                 );
+        }
+
+        string [] whichCmdLine;
+        info.on("which", delegate (item) {
+            // XXX: check if this works:
+            auto list = cast(List)item;
+            whichCmdLine = list.items.map!(x => x.toString).array;
+        }, delegate () {
+            // TODO: run `which` (the system command) to
+            // check if the requested command is available.
+            whichCmdLine ~= "which";
+            whichCmdLine ~= this.command.items.front.toString;
+        });
+
+        int status;
+        try
+        {
+            auto p = execute(whichCmdLine);
+            status = p.status;
+        }
+        catch (ProcessException ex)
+        {
+            status = -1;
+        }
+        if (status != 0)
+        {
+            throw new Exception(
+                "commands/" ~ name
+                ~ ": `which` failed with code " ~ status.to!string
+                ~ "; command line was: " ~ whichCmdLine.to!string
+            );
         }
 
         /*
