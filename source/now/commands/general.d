@@ -23,6 +23,7 @@ import now.commands.http;
 import now.commands.iterators;
 import now.commands.ini;
 import now.commands.json;
+import now.commands.markdown;
 import now.commands.simpletemplate;
 import now.commands.terminal;
 import now.commands.url;
@@ -1066,6 +1067,7 @@ forLoop:
     loadIniCommands(builtinCommands);
     loadJsonCommands(builtinCommands);
     loadHttpCommands(builtinCommands);
+    loadMarkdownCommands(builtinCommands);
     loadTemplateCommands(builtinCommands);
     loadTerminalCommands(builtinCommands);
     loadUrlCommands(builtinCommands);

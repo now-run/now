@@ -315,6 +315,8 @@ class Document : Dict {
                 text[key] = value;
             }
         }
+
+        this["text"] = this.text;
     }
 
     // Conversions

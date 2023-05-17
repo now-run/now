@@ -504,6 +504,7 @@ class NowParser : Parser
             if (currentChar == SPACE)
             {
                 consumeSpace();
+                // XXX: isn't it a isBlockCloser or STOPPERS?
                 if (currentChar.among!('}', ']', ')', '>', PIPE, METHOD_SELECTOR))
                 {
                     break;

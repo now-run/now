@@ -2,6 +2,19 @@
 
 Show how the document syntax works.
 
+[Something to go into $text]
+> This section should be accessible through `$text`;
+- {
+    a alfa
+    b beta
+    c gama
+    d delta
+    e epsilo
+}
+> Last item from the list.
+
+And here goes the section body.
+
 [on.error]
 
 print "The program terminated with some error."
