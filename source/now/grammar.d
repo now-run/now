@@ -64,7 +64,7 @@ class NowParser : Parser
         auto metadataSection = consumeSection();
         log("% metadataSection=", metadataSection);
 
-        auto description = metadataSection.get!string("body");
+        auto description = metadataSection.get!string("body", "");
         log("% description=", description);
         auto metadata = metadataSection;
         log("% metadata=", metadata);
@@ -272,13 +272,23 @@ class NowParser : Parser
                 break;
             }
 
-            auto key = consumeAtom();
+            string key;
+            if (currentChar == '"')
+            {
+                consumeChar();
+                key = consume_string('"');
+                consumeChar();
+            }
+            else
+            {
+                key = consumeAtom.toString;
+            }
             consumeWhitespace();
 
             Item value;
-            if (key.toString == ">")
+            if (key == ">")
             {
-                key = new Name("-");
+                key = "-";
                 value = consumeString('\n');
             }
             else if (currentChar == '{')
@@ -300,7 +310,7 @@ class NowParser : Parser
             {
                 value = consumeItem();
             }
-            dict[key.toString()] = value;
+            dict[key] = value;
 
             auto newline = consumeChar();
             if (newline != EOL)

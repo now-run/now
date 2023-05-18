@@ -1,0 +1,1 @@
+{"authors":["Cléber Zavadniak"],"dependencies":{},"description":"Auxiliary tool for software projects in general","homepage":"https:\/\/now-run.org","license":"MIT","name":"now","postBuildCommands":["strip dist\/now"],"targetPath":"dist","targetType":"executable"}

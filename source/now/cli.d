@@ -304,7 +304,8 @@ int runDocument(Document document, string commandName, string[] commandArgs)
                 );
                 return ex.code;
             }
-            stderr.writeln(ex);
+            // TODO: this "statement is not reachable"???
+            // stderr.writeln(ex);
         }
         return ex.code;
     }

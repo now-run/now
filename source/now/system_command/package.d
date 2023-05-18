@@ -37,12 +37,11 @@ class SystemCommand : BaseCommand
         */
         auto cmdItem = info.getOr(
             "command",
-            delegate (d) {
+            delegate Item (d) {
                 throw new Exception(
                     "commands/" ~ name
                     ~ " must declare a `command` value."
                 );
-                return cast(Item)null;
             }
         );
         switch (cmdItem.type)

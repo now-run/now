@@ -15,6 +15,26 @@ Show how the document syntax works.
 
 And here goes the section body.
 
+
+[constants/dub]
+name "now"
+description "Auxiliary tool for software projects in general"
+authors {
+    - "Cléber Zavadniak"
+}
+homepage "https://now-run.org"
+license "MIT"
+"targetType" executable
+dependencies {}
+"targetPath" "dist"
+# dflags {
+    # - "-static-libphobos"
+    # - "--static"
+# }
+"postBuildCommands" {
+    - "strip dist/now"
+}
+
 [on.error]
 
 print "The program terminated with some error."
@@ -81,6 +101,16 @@ parameters {
 }
 
 /bin/ls -lh /dev | grep "$name"
+
+
+[system_commands/dub]
+command {
+    - dub
+}
+which {
+    - dub
+    - -h
+}
 
 
 [system_commands/make]
@@ -303,3 +333,9 @@ try {
         now "$directory" : check
     }
 }
+
+[commands/dub]
+description "Generate dub.json file"
+
+path "dub.json" : write [json.encode $dub]
+# dub | { print }

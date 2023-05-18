@@ -608,15 +608,23 @@ $ now
 
 ## Install
 
-For now, no binaries are being released, but you can clone this repository
-and run:
+To build Now, you must have `ldc` and `dub` installed.
+
+On Debian-based Linux distros:
 
 ```bash
-$ make
+$ sudo apt-get install -y dub ldc
 ```
 
-It's going to create a `dist/now`. I suggest you symlink it inside a directory
-in your `PATH` (I have my `~/bin` for that).
+On MacOS X:
 
-You'll need `ldc` and `make` installed (`apt-get install build-essential` on
-Debian or Ubuntu based distros).
+```bash
+$ brew install ldc
+$ brew install dub
+```
+
+Then, **install it**:
+
+```bash
+$ dub install now
+```

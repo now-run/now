@@ -4,7 +4,7 @@ module now.commands.general;
 import std.algorithm.mutation : stripRight;
 import std.array;
 import std.datetime;
-import std.datetime.stopwatch : StopWatch;
+import std.datetime.stopwatch : AutoStart, StopWatch;
 import std.digest.md;
 import std.file : read;
 import std.random : uniform;
@@ -574,17 +574,20 @@ forLoop:
     // CONDITIONALS
     builtinCommands["if"] = function(string path, Input input, Output output)
     {
-        bool isConditionTrue = true;
-        auto items = input.popAll;
-        foreach (item; items[0..$-1])
-        {
-            isConditionTrue = isConditionTrue && item.toBool();
-        }
-        auto thenBody = cast(SubProgram)(items[$-1]);
+        auto condition = input.pop!bool;
+        auto thenBody = input.pop!SubProgram;
 
-        if (isConditionTrue)
+        if (condition)
         {
             return thenBody.run(input.escopo, output);
+        }
+        else
+        {
+            auto elseBody = input.pop!SubProgram(null);
+            if (elseBody !is null)
+            {
+                return elseBody.run(input.escopo, output);
+            }
         }
 
         return ExitCode.Success;

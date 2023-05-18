@@ -2,6 +2,8 @@ module now.nodes.path;
 
 import now;
 
+import std.algorithm.mutation : stripRight;
+
 
 MethodsMap pathMethods;
 
@@ -32,14 +34,13 @@ class Path : Item
 class PathFileRange : Item
 {
     File file;
-    File.ByLine!(char, char) range;
+    string delegate() nextLine;
+
     this(Path path)
     {
         this.type = ObjectType.Range;
         this.typeName = "path_file_range";
-
         this.file = File(path.path);
-        this.range = file.byLine();
     }
     override string toString()
     {
@@ -47,15 +48,14 @@ class PathFileRange : Item
     }
     override ExitCode next(Escopo escopo, Output output)
     {
-        auto line = range.front;
-        if (line is null)
+        auto line = this.file.readln();
+        if (line.empty)
         {
             return ExitCode.Break;
         }
         else
         {
-            output.push(line.to!string);
-            range.popFront;
+            output.push(line.stripRight('\n'));
             return ExitCode.Continue;
         }
     }
