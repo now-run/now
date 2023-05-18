@@ -623,8 +623,28 @@ $ brew install ldc
 $ brew install dub
 ```
 
-Then, **install it**:
+Now you can run Now using `dub`, like in
 
 ```bash
-$ dub install now
+$ dub run now -b release
+```
+
+but probably you'll want to run it directly, so I recommend
+you create a symbolic link into some directory present in
+your `$PATH`. In my case, I have a `~/bin` for that, so it
+would be like this:
+
+```bash
+$ cd ~/bin
+$ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
+```
+
+Please notice you'll have to indicate the installed
+version. If you want to automate that, you can use
+`jq`:
+
+```bash
+$ NOW_VERSION=$(dub describe now | jq -rc '.packages[0].version')
+$ cd ~/bin
+$ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
 ```
