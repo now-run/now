@@ -1,8 +1,10 @@
 module now.nodes.document;
 
+import core.runtime;
+
 import core.sys.posix.dlfcn;
 import std.algorithm.searching : endsWith;
-import std.file : isFile, read;
+import std.file : exists, isFile, read;
 import std.path : buildPath;
 import std.string : toStringz;
 import std.uni : toUpper;
@@ -43,6 +45,7 @@ class Document : Dict {
         this.description = description;
         this.metadata = metadata;
         this.data = data;
+
         log(":: Document created");
     }
     this(string title, string description, Dict metadata)
@@ -88,15 +91,18 @@ class Document : Dict {
     void importPackages()
     {
         log("- Importing packages");
-        auto packages = this.getOrCreate!Dict("packages");
+        auto packages = data.getOrCreate!Dict("packages");
         foreach (index, filenameItem; packages.values)
         {
             bool success = false;
             string filename = filenameItem.toString();
+            log("-- ", index, ": ", filename);
             foreach (basedir; this.nowPath)
             {
-                auto path = buildPath([basedir.to!string, filename]);
-                if (path.isFile)
+                auto path = buildPath([basedir, filename]);
+                // .isFile raises a FileException if the path
+                // doesn't exist (so weird).
+                if (path.exists && path.isFile)
                 {
                     this.importPackage(path);
                     success = true;
@@ -365,18 +371,47 @@ class Document : Dict {
     {
         if (path.endsWith(".so"))
         {
-            throw new InvalidPackageException(
-                null,
-                "Cannot import shared libraries.",
-                -1,
-                this
-            );
+            return importSharedLibrary(path);
         }
         else
         {
             return importNowLibrary(path);
         }
     }
+
+    void importSharedLibrary(string path)
+    {
+        // Clean up any old error messages:
+        dlerror();
+
+        // lh = "library handler"
+        // void* lh = dlopen(path.toStringz, RTLD_LAZY);
+        void* lh = rt_loadLibrary(path.toStringz);
+
+        auto error = dlerror();
+        if (error !is null)
+        {
+            // lastError = cast(char *)error;
+            throw new Exception(" dlerror: " ~ error.to!string);
+        }
+
+        // Initialize the package:
+        auto getCommands = cast(CommandsMap function(Document))dlsym(
+            lh, "getCommands"
+        );
+
+        error = dlerror();
+        if (error !is null)
+        {
+            throw new Exception("dlsym error: " ~ to!string(error));
+        }
+        auto commands = getCommands(this);
+        foreach (cmdName, cmd; commands)
+        {
+            builtinCommands[cmdName] = cmd;
+        }
+    }
+
     void importNowLibrary(string path)
     {
         auto parser = new NowParser(path.read().to!string);

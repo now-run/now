@@ -25,15 +25,56 @@ authors {
 homepage "https://now-run.org"
 license "MIT"
 "targetType" executable
-dependencies {}
+"sourcePaths" {
+    - "cli"
+    - "source"
+}
 "targetPath" "dist"
-# dflags {
-    # - "-static-libphobos"
-    # - "--static"
-# }
 "postBuildCommands" {
     - "strip dist/now"
 }
+"subPackages" {
+    - {
+        name "dynamic"
+        "targetType" executable
+        libs {
+            - now_core
+        }
+        "sourcePaths" {
+            - "cli"
+        }
+        lflags {
+            - "-L\${PWD}/dist"
+        }
+        "targetPath" "dist"
+        "postBuildCommands" {
+            - "strip dist/now"
+        }
+    }
+    - {
+        name "core"
+        "targetType" "dynamicLibrary"
+        "sourcePaths" {
+            - "source/"
+        }
+        "targetPath" "dist"
+    }
+    - {
+        name "hello"
+        description "Test package to be loaded as a shared library"
+        "targetType" "dynamicLibrary"
+        "sourcePaths" {
+            - "source/"
+            - "packages/hello"
+        }
+        "targetPath" "dist"
+    }
+}
+
+
+[# packages]
+- libnow_hello.so
+
 
 [on.error]
 
@@ -172,7 +213,7 @@ print "# hello"
 print "arguments: name=$name times=$times"
 print "configuration: hello . salute_word: " ($hello . salute_word)
 print " times=$times"
-range.silent 1 $times | {
+range 1 $times | foreach _ {
     print ">>> $salute_word, $name!"
 }
 

@@ -98,7 +98,8 @@ int main(string[] args)
         }
         catch (Exception ex)
         {
-            stderr.writeln(ex.msg);
+            stderr.writeln("Error while loading document:");
+            stderr.writeln(ex);
             return 2;
         }
         if (document is null)
