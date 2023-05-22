@@ -36,12 +36,16 @@ static this()
 
     // ---------------------------------------------
     // Native types, nodes and conversion
+
+    /**
+    Examples:
+    ----------
+    > type 1.2 | print
+    float
+    ----------
+    */
     builtinCommands["type"] = function(string path, Input input, Output output)
     {
-        /*
-        > type 1.2 | print
-        float
-        */
         foreach (item; input.popAll)
         {
             output.push(item.type.to!string.toLower);
@@ -63,6 +67,26 @@ static this()
             output.push(item.typeName.to!string);
         }
 
+        return ExitCode.Success;
+    };
+    /**
+    Examples:
+    ----------
+    > methods 1
+    (neq , <= , > , gt , to.char)
+    ----------
+    */
+    builtinCommands["methods"] = function(string path, Input input, Output output)
+    {
+        foreach (item; input.popAll)
+        {
+            String[] items = item.methods
+                .keys
+                .map!(x => new String(x))
+                .array;
+            auto list = new List(cast(Items)items);
+            output.push(list);
+        }
         return ExitCode.Success;
     };
 
@@ -101,17 +125,20 @@ static this()
     };
 
     // ---------------------------------------------
+    /**
+    Returns the value of an object.
+    ---
+    > obj 123 | as x
+    > print $x
+    123
+    ---
+    > dict (k = v) | as dict
+    > obj $dict : get k | print
+    v
+    ---
+    */
     builtinCommands["obj"] = function(string path, Input input, Output output)
     {
-        /*
-        Returns the value of an object.
-        > obj 123 | as x
-        > print $x
-        123
-        > dict (k = v) | as dict
-        > obj $dict : get k | print
-        v
-        */
         foreach (item; input.popAll)
         {
             output.push(item);
@@ -191,31 +218,34 @@ forLoop:
     };
 
     // Scope
+    /**
+    ## Scopes
+
+    When dealing with errors, at least we can see better names
+    during long procedures. Good for test cases, too.
+
+    Examples:
+    ---
+    > scope "send HTTP request" {
+        http.get $url | as content
+    }
+    ---
+    */
+
     builtinCommands["scope"] = function(string path, Input input, Output output)
     {
-        /*
-        > scope "send HTTP request" {
-            http.get $url | as content
-        }
-
-        When dealing with errors, at least we can see better names
-        during long procedures. Good for test cases, too.
-
-        It can be used as support for `autoclose`:
-        > scope "read a file" {
-            file.open $path | autoclose | as f
-            file.read $f | as content
-        }
-        */
         auto name = input.pop!string;
         auto body = input.pop!SubProgram;
 
         auto newScope = input.escopo.addPathEntry(name);
-        return body.run(newScope, output);
+        auto exitCode = body.run(newScope, output);
+        return exitCode;
     };
 
     // ---------------------------------------------
-    // Text I/O:
+    /**
+    ## Text I/O
+    */
     builtinCommands["print"] = function (string path, Input input, Output output)
     {
         foreach (item; input.popAll)
@@ -225,18 +255,25 @@ forLoop:
         stdout.writeln();
         return ExitCode.Success;
     };
+    /*
+    ### Logging
+
+    `log` will follow the specified format or "default".
+
+    Examples:
+    ---
+    [logging/formats/default]
+    include {
+        - timestamp
+        - hostname
+    }
+
+    get $program directory | as pd
+    return '{"timestamp":$timestamp, "hostname":"$hostname", "path":$pd, "message":$message}'
+    ---
+    */
     builtinCommands["log"] = function(string path, Input input, Output output)
     {
-        /*
-        [logging/formats/default]
-        include {
-            - timestamp
-            - hostname
-        }
-
-        get $program directory | as pd
-        return '{"timestamp":$timestamp, "hostname":"$hostname", "path":$pd, "message":$message}'
-        */
         auto formatName = input.kwargs.require("format", new String("default")).toString();
         auto format = input.escopo.document.get!Dict(["logging", "formats", formatName], null);
 
@@ -270,18 +307,20 @@ forLoop:
     };
     builtinCommands["print:sameline"] = builtinCommands["print"];
 
+    /**
+    Read the entire stdin.
+    */
     builtinCommands["read"] = function(string path, Input input, Output output)
     {
-        /*
-        Read the entire stdin.
-        */
         string content = stdin.byLine.join("\n").to!string;
         output.push(content);
         return ExitCode.Success;
     };
 
     // ---------------------------------------------
-    // Time
+    /**
+    ## Time
+    */
     builtinCommands["sleep"] = function(string path, Input input, Output output)
     {
         auto ms = input.pop!long;
@@ -303,18 +342,21 @@ forLoop:
         output.push(today.toUnixTime!long());
         return ExitCode.Success;
     };
+    /*
+    Examples:
+    ---
+    scope "test the timer" {
+        timer {
+            sleep 5000
+        } {
+            print "This scope ran for $seconds seconds"
+        }
+    }
+    # stderr> This scope ran for 5 seconds
+    ---
+    */
     builtinCommands["timer"] = function(string path, Input input, Output output)
     {
-        /*
-        scope "test the timer" {
-            timer {
-                sleep 5000
-            } {
-                print "This scope ran for $seconds seconds"
-            }
-        }
-        # stderr> This scope ran for 5 seconds
-        */
         auto subprogram = input.pop!SubProgram;
         auto callback = input.pop!SubProgram;
 
@@ -337,25 +379,32 @@ forLoop:
         callback.run(newScope, output);
         return exitCode;
     };
-    // ---------------------------------------------
-    // Errors
+
+    /**
+    ## Errors
+    */
+
+    /*
+    Signalize that an error occurred.
+
+    ---
+    > error "something wrong happened"
+    ---
+
+    It's a kind of equivalent to `return`,
+    so no need to "return [error ...]". Just
+    calling `error` will exit 
+
+    "Full" call:
+    ---
+    > error message code class
+    > error "Not Found" 404 http
+    > error "segmentation fault" 11 os
+    ---
+    */
     builtinCommands["error"] = function(string path, Input input, Output output)
     {
-        /*
-        Signalize that an error occurred.
-
-        > error "something wrong happened"
-
-        It's a kind of equivalent to `return`,
-        so no need to "return [error ...]". Just
-        calling `error` will exit 
-        */
-
-        // "Full" call:
-        // > error message code class
-        // > error "Not Found" 404 http
-        // > error "segmentation fault" 11 os
-        string message = input.pop!string("An error ocurred");
+            string message = input.pop!string("An error ocurred");
         int code = cast(int)(input.pop!long(-1));
 
         throw new UserException(
@@ -366,14 +415,23 @@ forLoop:
     };
 
     // ---------------------------------------------
-    // Debugging
+    /**
+    ## Debugging
+    */
+
+    /**
+    Examples:
+    ---
+    > assert true
+    > assert false
+    assertion error: false
+    ---
+    > assert "this should be true" false
+    assertion error: this should be true
+    ---
+    */
     builtinCommands["assert"] = function(string path, Input input, Output output)
     {
-        /*
-        > assert true
-        > assert false
-        assertion error: false
-        */
         string givenMessage = null;
         foreach (item; input.popAll)
         {
@@ -398,25 +456,27 @@ forLoop:
         }
         return ExitCode.Success;
     };
+    /**
+    Examples:
+    ---
+    [procedures/quit]
+    parameters {
+        code {
+            type int
+        }
+    }
 
+    [commands/run]
+    parameters {}
+
+    exit 10
+    ---
+    $ now ; echo $?
+    10
+    ---
+    */
     builtinCommands["exit"] = function(string path, Input input, Output output)
     {
-        /*
-        [procedures/quit]
-        parameters {
-            code {
-                type int
-            }
-        }
-
-        [commands/run]
-        parameters {}
-
-        exit 10
-        ---
-        $ now ; echo $?
-        10
-        */
         int code = cast(int)(input.pop!long(0));
         auto message = input.pop!string("Process was stopped");
 
@@ -437,13 +497,16 @@ forLoop:
     };
 
     // Names:
+    /**
+    Examples:
+    ---
+    > set a 1
+    > print $a
+    1
+    ---
+    */
     builtinCommands["set"] = function(string path, Input input, Output output)
     {
-        /*
-        > set a 1
-        > print $a
-        1
-        */
         auto key = input.pop!string(null);
         auto values = input.popAll();
         if (key is null || values.length == 0)
@@ -1060,8 +1123,12 @@ forLoop:
         */
         auto body = input.pop!SubProgram;
         auto escopo = input.escopo.addPathEntry("run");
-
-        return body.run(escopo, output);
+        auto exitCode = body.run(escopo, output);
+        if (exitCode == ExitCode.Return)
+        {
+            exitCode = ExitCode.Success;
+        }
+        return exitCode;
     };
 
     // Others

@@ -51,6 +51,7 @@ static this()
         }
 
         tpl.emit(blockName, variables);
+        output.push(tpl);
         return ExitCode.Success;
     };
     templateMethods["render"] = function (Item object, string name, Input input, Output output)

@@ -41,7 +41,6 @@ class SubProgram : Item
         return s;
     }
 
-    // From "process.d":
     ExitCode run(Escopo escopo, Output output)
     {
         return run(escopo, [], output);
@@ -54,6 +53,8 @@ class SubProgram : Item
 
         foreach(pipeline; pipelines)
         {
+            // No output will be shared:
+            output.items.length = 0;
             exitCode = pipeline.run(escopo, inputs, output);
             final switch(exitCode)
             {

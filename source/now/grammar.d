@@ -209,14 +209,15 @@ class NowParser : Parser
         ln = line - 1;
         cn = col;
 
-        consumeWhitespaces();
+        auto indentationLevel = consumeWhitespaces(true, true);
 
         // After a newline, it's
         // i) another section header or
         // ii) a section body.
         string body = "";
-        if (currentChar != '[')
+        if (currentChar != '[' || indentationLevel > 0)
         {
+            body = rightJustify("", indentationLevel, ' ');
             while (!eof)
             {
                 if (isEndOfLine)

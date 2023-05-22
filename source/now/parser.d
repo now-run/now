@@ -114,7 +114,7 @@ class Parser
         }
         consumeChar();
     }
-    long consumeWhitespaces(bool ignoreComments=true)
+    long consumeWhitespaces(bool ignoreComments=true, bool countIndentation=false)
     {
         if (eof) return 0;
 
@@ -125,6 +125,10 @@ class Parser
             // Common whitespaces:
             while (isWhitespace && !eof)
             {
+                if (countIndentation && currentChar == EOL)
+                {
+                    counter = -1;
+                }
                 consumeChar();
                 counter++;
             }

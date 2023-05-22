@@ -49,7 +49,7 @@ static this()
     listMethods["to.sequence"] = function (Item object, string path, Input input, Output output)
     {
         List list = cast(List)object;
-        output.push(new Sequence(list.items));
+        output.push(list.items);
         return ExitCode.Success;
     };
     listMethods["push"] = function (Item object, string path, Input input, Output output)

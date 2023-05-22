@@ -1,0 +1,287 @@
+[Now Website]
+
+[constants]
+dist_dir "dist"
+
+[Pages/index.html]
+page_title "Home"
+header "Now"
+subheader "Your code is ready. Now run."
+
+[Pages/index.html/content]
+- "Now is a **tool** intended as a complement to software
+projects written in other languages. Think `make` or
+shell scripts, for instance. The idea is not to replace
+your favorite language, but to make it easier to build,
+run, deploy and share a common set of commands between
+a team."
+> What follows is a sample Now document:
+- {
+    type reference
+    format code
+    reference {
+        - "Sample"
+        - body
+    }
+}
+- {
+    type sequence
+    format p
+    content {
+        - "Find more at"
+        - {
+            type link
+            format link
+            text "Github"
+            href "http://github.com/now-run/now"
+        }
+        - "."
+    }
+}
+
+[Sample]
+
+    [Sample Document]
+    > A simple test.
+
+    Blah blah blah...
+
+[templates/style]
+
+@font-face {
+    font-family: Fira Sans ExtraBold;
+    src:url("fonts/FiraSans-ExtraBold.ttf");
+}
+@font-face {
+    font-family: Fira Sans Heavy;
+    src:url("fonts/FiraSans-Heavy.ttf");
+}
+@font-face {
+    font-family: Fira Sans Light;
+    src:url("fonts/FiraSans-Light.ttf");
+}
+@font-face {
+    font-family: FiraCode Light;
+    src:url("fonts/FiraCode-Light.ttf");
+}
+@media (min-width: 0em) {
+  #body {
+    padding-top: 5px;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: 50px;
+    margin-right: 50px;
+    font-size: 1.4em;
+    background-color: #eee9bf;
+    border: 4px solid black;
+  }
+}
+@media (min-width: 100em) {
+  #body {
+    padding-top: 10px;
+    padding-left: 35px;
+    padding-right: 35px;
+    margin-left: 200px;
+    margin-right: 250px;
+    font-size: 1.4em;
+    background-color: #eee9bf;
+    border: 4px solid black;
+  }
+
+}
+h1 {
+  font-family: Fira Sans Heavy;
+}
+h2,h3 {
+  font-family: Fira Sans ExtraBold;
+}
+p,li {
+  font-family: Fira Sans Light;
+}
+pre {
+  font-family: FiraCode Light;
+}
+
+[templates/base]
+
+<html>
+  <head>
+    <title>$[
+        when [vars : contains "page_title"] {
+            return "$page_title - Now"
+        }
+        default {
+            return "Now"
+        }
+    ]</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+  <div id='body'>
+    <h1>
+        $header
+        % subheader %
+        <br/><small>$subheader</small>
+        % --------- %
+    </h1>
+    <div id='content'>
+        % content %
+            placeholder for block body
+        % ---- %
+    </div>
+  </div>
+  </body>
+</html>
+
+[templates/page]
+extends base
+
+% content %
+$content
+% ------- %
+
+[templates/header]
+
+    <h${level}>$content</h${level}>
+
+[templates/p]
+
+    <p>
+    % content %
+    $content
+    % ------- %
+    </p>
+
+[templates/code]
+
+    <pre>
+    % content %
+$content
+    % --- %
+    </pre>
+
+[templates/link]
+
+    <a href="$href" target="_blank">$text</a>
+
+[procedures/render_item]
+parameters {
+    content {
+        type any
+    }
+}
+returns string
+
+type $content | as t
+print "t=$t"
+print "content=$content"
+
+when ($t == list) {
+    obj $content | transform item {
+        render_item $item : to.sequence | return
+    } | collect | return
+}
+when ($t == string) {
+    template p : emit content : render | list | return
+}
+when ($t == dict) {
+    set format ($content . format)
+    set type ($content . type)
+    template $format | as tpl
+
+    when ($type == sequence) {
+        print "sequence=$content"
+        obj $content : get content | foreach sub_item {
+            print "sub_item=$sub_item"
+            type $sub_item | as sub_item_type
+            if ($sub_item_type == string) {
+                obj $tpl : emit content (content = $sub_item)
+            } {
+                render_item $sub_item | foreach x {
+                    print "x=$x"
+                    obj $tpl : emit content (content = $x)
+                }
+            }
+        }
+        obj $tpl : render | list | return
+    }
+    default {
+        run {
+            when ($type == reference) {
+                obj $content
+                    : get reference
+                    : to.sequence
+                    | . $text
+                    | as content
+            }
+            when ($type == link) {
+                set text ($content . text)
+                set href ($content . href)
+            }
+            default {
+                set content ($content . content)
+            }
+        }
+        obj $tpl : emit content : render | list | return
+    }
+}
+
+
+[procedures/render_page]
+parameters {
+    filename {
+        type string
+    }
+    data {
+        type dict
+    }
+    template {
+        type string
+        default "page"
+    }
+}
+
+template $template [obj $data : pairs] | as tpl
+
+scope "page content" {
+    obj $data : get content : pairs | list | foreach pair {
+        set item_data ($pair . 1)
+        print "item_data=$item_data"
+        render_item $item_data | foreach content {
+            print "item_data.content=$content"
+            obj $tpl : emit content
+        }
+    }
+}
+
+scope "page body" {
+    # obj $tpl : emit content
+    obj $tpl : emit subheader [obj $data : pairs]
+    path "$dist_dir/$filename" : write [obj $tpl : render]
+    obj $tpl : render | print
+}
+
+[commands/build]
+description "Build the Website."
+
+path "$dist_dir" | as dist_dir
+if (($dist_dir : exists) == false) {
+    mkdir $dist_dir
+}
+
+path "resources" : glob "*" | foreach entry {
+    obj $entry : basename | as filename
+    # TODO: make the copy automatically recursive.
+    # copy $entry [path "$dist_dir/$filename"]
+}
+
+scope "style" {
+    template style | as tpl
+    path "$dist_dir/style.css" : write [obj $tpl : render]
+}
+
+obj $text : get "Pages" : pairs | list | foreach pair {
+    set filename ($pair . 0)
+    set data ($pair . 1)
+    render_page $filename $data
+}

@@ -33,6 +33,11 @@ license "MIT"
 "postBuildCommands" {
     - "strip dist/now"
 }
+"toolchainRequirements" {
+    # dmd no
+    # gdc no
+    ldc ">=1.28.0"
+}
 "subPackages" {
     - {
         name "dynamic"

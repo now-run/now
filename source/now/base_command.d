@@ -224,10 +224,16 @@ class BaseCommand
         // on.return
         auto onReturnExitCode = this.handleEvent("return", newScope, output);
 
-        // TODO: check if this make sense:
+        /*
+        No base_command can return a ExitCode.Return!
+        */
         if (onReturnExitCode == ExitCode.Return)
         {
-            return onReturnExitCode;
+            return ExitCode.Success;
+        }
+        else if (exitCode == ExitCode.Return)
+        {
+            return ExitCode.Success;
         }
         else
         {

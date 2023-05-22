@@ -7,7 +7,7 @@ dist/now: ${SOURCE_CODE}
 	${CC} \
 		$^ \
 		-Isource \
-		-O2 -of=dist/now
+		-O0 -of=dist/now
 
 release: dist/now
 	strip $^

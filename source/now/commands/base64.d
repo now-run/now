@@ -1,13 +1,26 @@
+/**
+Commands related to base64 encoding.
+*/
 module now.commands.base64;
-
 
 import std.base64;
 
 import now;
 
-
+/++
+Load base64-related commands into `commands` AA.
++/
 void loadBase64Commands(CommandsMap commands)
 {
+    /++
+    Encode strings as base64.
+
+    Examples:
+    ---
+    > base64.encode "123"
+    # encoded-value
+    ---
+    +/
     commands["base64.encode"] = function (string path, Input input, Output output)
     {
         foreach (item; input.popAll)
