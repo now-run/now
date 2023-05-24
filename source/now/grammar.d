@@ -1,6 +1,7 @@
 module now.grammar;
 
 
+import core.exception : AssertError;
 import std.algorithm : among, canFind;
 import std.math : pow;
 import std.string : rightJustify;
@@ -411,6 +412,23 @@ class NowParser : Parser
             {
                 stderr.writeln("(You probably typed an extra space...)");
             }
+            auto ex2 = new ParsingErrorException(
+                null,
+                "Error while consuming Pipeline",
+                cast(int)line,
+            );
+            ex2.printed = true;
+            throw ex2;
+        }
+        catch (AssertError ex)
+        {
+            stderr.writeln(getEntireCurrentLine());
+            stderr.writeln(rightJustify("", currentLine.length-1, ' '), "^");
+            stderr.writeln(rightJustify("", currentLine.length-1, '_'), "|");
+            stderr.writeln(
+                "Error while parsing line ", line,
+                ": ", ex.msg,
+            );
             auto ex2 = new ParsingErrorException(
                 null,
                 "Error while consuming Pipeline",

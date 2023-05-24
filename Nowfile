@@ -77,8 +77,8 @@ license "MIT"
 }
 
 
-[# packages]
-- libnow_hello.so
+[packages]
+# - libnow_hello.so
 
 
 [on.error]

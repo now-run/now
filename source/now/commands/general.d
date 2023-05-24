@@ -518,6 +518,9 @@ forLoop:
         }
         input.escopo[key] = values;
 
+        // Pass along the values, so we can use this:
+        // > list 1 2 3 | as lista : length | print
+        output.push(values);
         return ExitCode.Success;
     };
     builtinCommands["as"] = builtinCommands["set"];
