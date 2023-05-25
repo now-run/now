@@ -9,7 +9,8 @@ header "Now"
 subheader "Your code is ready. Now run."
 
 [Pages/index.html/content]
-- "Now is a **tool** intended as a complement to software
+- "Now is a tool (and a form of programming language)
+intended as a complement to software
 projects written in other languages. Think `make` or
 shell scripts, for instance. The idea is not to replace
 your favorite language, but to make it easier to build,
@@ -42,9 +43,20 @@ a team."
 [Sample]
 
     [Sample Document]
-    > A simple test.
+    reference "http://github.com/now-run/now"
 
-    Blah blah blah...
+    This document serves as a sample for the
+    format/language.
+
+    [commands/run]
+
+    # This command simply runs the program title and description
+    print "# $($text . title)"
+    print ($text . description)
+
+    print "Every section starting with capital letters are"
+    print "included inside \$text."
+
 
 [templates/style]
 

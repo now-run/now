@@ -1,0 +1,52 @@
+@font-face {
+    font-family: Fira Sans ExtraBold;
+    src:url("fonts/FiraSans-ExtraBold.ttf");
+}
+@font-face {
+    font-family: Fira Sans Heavy;
+    src:url("fonts/FiraSans-Heavy.ttf");
+}
+@font-face {
+    font-family: Fira Sans Light;
+    src:url("fonts/FiraSans-Light.ttf");
+}
+@font-face {
+    font-family: FiraCode Light;
+    src:url("fonts/FiraCode-Light.ttf");
+}
+@media (min-width: 0em) {
+  #body {
+    padding-top: 5px;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: 50px;
+    margin-right: 50px;
+    font-size: 1.4em;
+    background-color: #eee9bf;
+    border: 4px solid black;
+  }
+}
+@media (min-width: 100em) {
+  #body {
+    padding-top: 10px;
+    padding-left: 35px;
+    padding-right: 35px;
+    margin-left: 200px;
+    margin-right: 250px;
+    font-size: 1.4em;
+    background-color: #eee9bf;
+    border: 4px solid black;
+  }
+ }
+h1 {
+  font-family: Fira Sans Heavy;
+}
+h2,h3 {
+  font-family: Fira Sans ExtraBold;
+}
+p,li {
+  font-family: Fira Sans Light;
+}
+pre {
+  font-family: FiraCode Light;
+}
