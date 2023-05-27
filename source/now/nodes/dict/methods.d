@@ -111,4 +111,20 @@ static this()
         }
         return ExitCode.Success;
     };
+    dictMethods["run"] = function (Item object, string path, Input input, Output output)
+    {
+        auto dict = cast(Dict)object;
+        auto subprogram = input.pop!SubProgram;
+
+        auto escopo = input.escopo.addPathEntry("dict");
+        escopo.order = dict.order;
+        escopo.values = dict.values;
+
+        auto exitCode = subprogram.run(escopo, input.popAll, output);
+
+        dict.order = escopo.order;
+        dict.values = escopo.values;
+
+        return exitCode;
+    };
 }

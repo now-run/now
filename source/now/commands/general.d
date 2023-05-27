@@ -516,7 +516,14 @@ forLoop:
                 "`" ~ path ~ "` must receive at least 2 arguments."
             );
         }
-        input.escopo[key] = values;
+        else if (values.length == 1)
+        {
+            input.escopo[key] = values.front;
+        }
+        else
+        {
+            input.escopo[key] = values;
+        }
 
         // Pass along the values, so we can use this:
         // > list 1 2 3 | as lista : length | print
@@ -1088,6 +1095,8 @@ forLoop:
         > path /boot/grub | as p
         > print ($p : basename)
         --> : $p basename
+
+        (Doesn't work as a commandCall, though.)
         */
         auto target = input.pop!Item;
         auto methodName = input.pop!string;
