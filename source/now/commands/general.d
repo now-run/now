@@ -89,6 +89,15 @@ static this()
         }
         return ExitCode.Success;
     };
+    builtinCommands["commands"] = function(string path, Input input, Output output)
+    {
+        String[] items = builtinCommands
+                .keys
+                .map!(x => new String(x))
+                .array;
+        output.push(new List(cast(Items)items));
+        return ExitCode.Success;
+    };
 
     builtinCommands["to.string"] = function(string path, Input input, Output output)
     {
@@ -313,6 +322,12 @@ forLoop:
     builtinCommands["read"] = function(string path, Input input, Output output)
     {
         string content = stdin.byLine.join("\n").to!string;
+        output.push(content);
+        return ExitCode.Success;
+    };
+    builtinCommands["read.line"] = function(string path, Input input, Output output)
+    {
+        string content = stdin.readln.to!string;
         output.push(content);
         return ExitCode.Success;
     };

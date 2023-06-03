@@ -39,6 +39,11 @@ static this()
 
     booleanMethods["||"] = function (Item object, string path, Input input, Output output)
     {
+        if (object.toBool)
+        {
+            output.push(true);
+            return ExitCode.Success;
+        }
         foreach (item; input.popAll)
         {
             if (item.toBool())
@@ -48,16 +53,21 @@ static this()
             }
         }
         output.push(false);
-            return ExitCode.Success;
+        return ExitCode.Success;
     };
     booleanMethods["&&"] = function (Item object, string path, Input input, Output output)
     {
+        if (!object.toBool)
+        {
+            output.push(false);
+            return ExitCode.Success;
+        }
         foreach (item; input.popAll)
         {
             if (!item.toBool())
             {
                 output.push(false);
-            return ExitCode.Success;
+                return ExitCode.Success;
             }
         }
         output.push(true);
