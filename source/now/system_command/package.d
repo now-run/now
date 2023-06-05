@@ -72,22 +72,25 @@ class SystemCommand : BaseCommand
         });
 
         int status;
-        try
+        if (whichCmdLine.length)
         {
-            auto p = execute(whichCmdLine);
-            status = p.status;
-        }
-        catch (ProcessException ex)
-        {
-            status = -1;
-        }
-        if (status != 0)
-        {
-            throw new Exception(
-                "commands/" ~ name
-                ~ ": `which` failed with code " ~ status.to!string
-                ~ "; command line was: " ~ whichCmdLine.to!string
-            );
+            try
+            {
+                auto p = execute(whichCmdLine);
+                status = p.status;
+            }
+            catch (ProcessException ex)
+            {
+                status = -1;
+            }
+            if (status != 0)
+            {
+                throw new Exception(
+                    "commands/" ~ name
+                    ~ ": `which` failed with code " ~ status.to!string
+                    ~ "; command line was: " ~ whichCmdLine.to!string
+                );
+            }
         }
 
         /*

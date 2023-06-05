@@ -56,6 +56,9 @@ class SubProgram : Item
             // No output will be shared:
             output.items.length = 0;
             exitCode = pipeline.run(escopo, inputs, output);
+            // We can't share `inputs` with the next pipelines!
+            inputs = [];
+
             final switch(exitCode)
             {
                 case ExitCode.Success:

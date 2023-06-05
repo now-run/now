@@ -30,6 +30,15 @@ static this()
         return ExitCode.Success;
     };
     listMethods["."] = listMethods["get"];
+    listMethods["as"] = function (Item object, string path, Input input, Output output)
+    {
+        List l = cast(List)object;
+        foreach (index, varName; input.popAll)
+        {
+            input.escopo[varName.toString] = l.items[index];
+        }
+        return ExitCode.Success;
+    };
 
     listMethods["slice"] = function (Item object, string path, Input input, Output output)
     {

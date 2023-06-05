@@ -262,8 +262,10 @@ forLoop:
             stdout.write(item);
         }
         stdout.writeln();
+
         return ExitCode.Success;
     };
+
     /*
     ### Logging
 
@@ -283,7 +285,7 @@ forLoop:
     */
     builtinCommands["log"] = function(string path, Input input, Output output)
     {
-        auto formatName = input.kwargs.require("format", new String("default")).toString();
+        auto formatName = input.kwargs.require("format", new String("default")).toString;
         auto format = input.escopo.document.get!Dict(["logging", "formats", formatName], null);
 
         if (format is null)
@@ -408,7 +410,7 @@ forLoop:
 
     It's a kind of equivalent to `return`,
     so no need to "return [error ...]". Just
-    calling `error` will exit 
+    calling `error` will exit
 
     "Full" call:
     ---
@@ -980,6 +982,23 @@ forLoop:
             }
         }
 
+        return ExitCode.Success;
+    };
+    builtinCommands["loop"] = function(string path, Input input, Output output)
+    {
+        auto body = input.pop!SubProgram;
+    wLoop:
+        while (true)
+        {
+            auto exitCode = body.run(input.escopo, output);
+            switch (exitCode)
+            {
+                case ExitCode.Break:
+                    break wLoop;
+                default:
+                    continue;
+            }
+        }
         return ExitCode.Success;
     };
 

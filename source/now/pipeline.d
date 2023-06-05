@@ -45,10 +45,7 @@ class Pipeline
         {
             inputs = [];
         }
-        else
-        {
-            cmdOutput.items = inputs;
-        }
+        cmdOutput.items = inputs;
 
 forLoop:
         foreach(index, commandCall; commandCalls)
