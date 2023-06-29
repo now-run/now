@@ -5,7 +5,7 @@ import core.runtime;
 import core.sys.posix.dlfcn;
 import std.algorithm.searching : endsWith;
 import std.file : exists, isFile, read;
-import std.path : buildPath;
+import std.path : buildNormalizedPath, buildPath, dirName;
 import std.string : toStringz;
 import std.uni : toUpper;
 
@@ -82,8 +82,11 @@ class Document : Dict {
             "NOW_PATH",
             delegate (Dict d)
             {
+                // Default:
+                // [script path, current path]
+                auto parent = dirName(this.sourcePath.buildNormalizedPath);
                 auto pwd = d.get!string("PWD");
-                return pwd ~ "/now";
+                return [parent, pwd].join(":");
             }
         );
         this.nowPath = nowPath.split(":");
@@ -112,11 +115,11 @@ class Document : Dict {
             if (!success)
             {
                 throw new Exception(
-                    "Could not load package " ~ filename ~ "."
+                    "Could not load package " ~ filename ~ " ."
                 );
             }
         }
-
+        log("--- Packages imported.");
     }
     void loadConfiguration(Dict environmentVariables)
     {
@@ -272,6 +275,7 @@ class Document : Dict {
         auto procedures = data.getOrCreate!Dict("procedures");
         foreach (name, infoItem; procedures.values)
         {
+            log("-- ", name);
             auto info = cast(Dict)infoItem;
             this.procedures[name] = new Procedure(name, info);
         }
@@ -283,6 +287,7 @@ class Document : Dict {
         auto commandsDict = data.getOrCreate!Dict("commands");
         foreach (name, infoItem; commandsDict.values)
         {
+            log("-- ", name);
             auto info = cast(Dict)infoItem;
             commands[name] = new Procedure(name, info);
         }
@@ -294,6 +299,7 @@ class Document : Dict {
         auto system_commands = data.getOrCreate!Dict("system_commands");
         foreach (name, infoItem; system_commands.values)
         {
+            log("-- ", name);
             auto info = cast(Dict)infoItem;
             if (info is null)
             {
@@ -420,32 +426,32 @@ class Document : Dict {
         auto parser = new NowParser(path.read().to!string);
         auto library = parser.run();
         // Merge the library into the document:
-        foreach (key, value; library.values)
+        foreach (key, value; library.data)
         {
-            this.on(
+            this.data.on(
                 key,
                 delegate (Item localValue)
                 {
                     // Found both locally and in library:
-                    this.merge(key, localValue, value);
+                    this.dataMerge(key, localValue, value);
                 },
                 delegate ()
                 {
                     // Found in library, not found locally:
-                    this[key] = value;
+                    this.data[key] = value;
                 }
             );
         }
     }
-    void merge(string key, Item localValue, Item otherValue)
+    void dataMerge(string key, Item localValue, Item otherValue)
     {
         if (otherValue.type != ObjectType.Dict)
         {
-            this[key] = otherValue;
+            this.data[key] = otherValue;
         }
         else if (localValue.type != ObjectType.Dict)
         {
-            this[key] = otherValue;
+            this.data[key] = otherValue;
         }
         else
         {

@@ -55,8 +55,10 @@ int main(string[] args)
                     documentPath = stdin.name;
                     break;
 
+                // Commands to be called laters goes here.
                 case "repl":
                 case "cmd":
+                case "dump":
                     nowArgs ~= keyword;
                     break;
 
@@ -108,6 +110,7 @@ int main(string[] args)
         }
     }
 
+    // Don't forget to add these to the first switch/case!
     foreach (arg; nowArgs)
     {
         final switch (arg)
@@ -116,6 +119,8 @@ int main(string[] args)
                 return repl(document, documentArgs, nowArgs);
             case "cmd":
                 return cmd(document, documentArgs);
+            case "dump":
+                return dump(document, documentArgs);
         }
     }
 
@@ -376,6 +381,7 @@ int now_help()
     stdout.writeln("  No arguments: run ./", defaultFilepath, " if present");
     stdout.writeln("  :bash-complete - shell autocompletion");
     stdout.writeln("  :cmd <command> - run commands passed as arguments");
+    stdout.writeln("  :dump - prints the document as interpreted");
     stdout.writeln("  :f <file> - run a specific file");
     stdout.writeln("  :repl - enter interactive mode");
     stdout.writeln("  :stdin - read a document from standard input");
@@ -515,6 +521,33 @@ int cmd(Document document, string[] documentArgs)
 
     return 0;
 }
+int dump(Document document, string[] documentArgs)
+{
+    if (document is null)
+    {
+        return 1;
+    }
+
+    stdout.writeln("# Variables");
+    foreach (key, value; document)
+    {
+        stdout.writeln(key, ": ", value);
+    }
+
+    stdout.writeln("# Procedures");
+    foreach (name; document.procedures)
+    {
+        stdout.writeln(name);
+    }
+    stdout.writeln("# Commands");
+    foreach (name; document.commands)
+    {
+        stdout.writeln(name);
+    }
+    return 0;
+}
+
+
 
 int bashAutoComplete(NowParser parser)
 {
