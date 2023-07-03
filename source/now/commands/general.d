@@ -52,7 +52,7 @@ static this()
         }
         return ExitCode.Success;
     };
-    builtinCommands["type:name"] = function(string path, Input input, Output output)
+    builtinCommands["type.name"] = function(string path, Input input, Output output)
     {
         /*
         We can have types that behave like strings, for example, but
@@ -316,7 +316,7 @@ forLoop:
 
         return ExitCode.Success;
     };
-    builtinCommands["print:sameline"] = builtinCommands["print"];
+    builtinCommands["print.sameline"] = builtinCommands["print"];
 
     /**
     Read the entire stdin.
@@ -1058,7 +1058,7 @@ forLoop:
         output.push(digest.to!string);
         return ExitCode.Success;
     };
-    builtinCommands["uuid:sha1"] = function(string path, Input input, Output output)
+    builtinCommands["uuid.sha1"] = function(string path, Input input, Output output)
     {
         string source = input.pop!string();
         string result;

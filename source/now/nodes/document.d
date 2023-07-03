@@ -80,13 +80,15 @@ class Document : Dict {
     void setNowPath(Dict environmentVariables)
     {
         log("- Setting nowPath");
+        auto parent = dirName(this.sourcePath.buildNormalizedPath);
+        this["script_dir"] = new Path(parent);
+
         auto nowPath = environmentVariables.getOr!string(
             "NOW_PATH",
             delegate (Dict d)
             {
                 // Default:
                 // [script path, current path]
-                auto parent = dirName(this.sourcePath.buildNormalizedPath);
                 auto pwd = d.get!string("PWD");
                 return [parent, pwd].join(":");
             }

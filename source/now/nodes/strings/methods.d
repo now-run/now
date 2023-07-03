@@ -22,7 +22,7 @@ static this()
         */
         import now.grammar;
 
-        auto code = input.pop!string();
+        auto code = (cast(String)object).toString;
         SubProgram subprogram;
 
         auto parser = new NowParser(code);
@@ -39,7 +39,7 @@ static this()
         > "abcde" : get 2
         c
         */
-        String target = input.pop!String();
+        String target = cast(String)object;
 
         long i = input.pop!string().toLong();
         if (i < 0)
@@ -48,7 +48,7 @@ static this()
         }
         size_t index = cast(size_t)i;
 
-        output.push(target.repr[index]);
+        output.push(target.repr[index..index+1]);
         return ExitCode.Success;
     };
     stringMethods["."] = stringMethods["get"];
@@ -59,7 +59,7 @@ static this()
         > "abcde" : slice 1 3
         bc
         */
-        String target = input.pop!String();
+        String target = cast(String)object;
 
         auto s = input.pop!long;
         if (s < 0)
