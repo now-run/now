@@ -1,0 +1,12 @@
+[Data Sources Example]
+
+[data_sources/x]
+
+path "data.json" : read | json.decode | return
+
+
+[commands/run]
+
+assert (($x . "1") == "alfa")
+assert (($x . "2") == "beta")
+assert (($x . "3") == "gama")

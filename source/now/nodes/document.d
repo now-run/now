@@ -13,6 +13,7 @@ import std.uni : toUpper;
 import now.nodes;
 
 import now.base_command;
+import now.escopo;
 import now.grammar;
 import now.procedure;
 import now.shell_script;
@@ -73,6 +74,7 @@ class Document : Dict {
         loadDocumentCommands();
         loadSystemCommands();
         loadText();
+        loadDataSources();
     }
 
     void setNowPath(Dict environmentVariables)
@@ -332,6 +334,32 @@ class Document : Dict {
         }
 
         this["text"] = this.text;
+    }
+    void loadDataSources()
+    {
+        auto dataSources = data.get!Dict("data_sources", null);
+        if (dataSources is null)
+        {
+            return;
+        }
+
+        foreach (key, value; dataSources)
+        {
+            auto section = cast(Dict)value;
+            auto parser = new NowParser(section["body"].toString);
+            // XXX: not sure if this is right:
+            parser.line = value.documentLineNumber;
+
+            auto subprogram = parser.consumeSubProgram();
+            auto escopo = new Escopo(this, key);
+            auto output = new Output();
+            auto exitCode = subprogram.run(escopo, output);
+
+            if (exitCode == ExitCode.Return)
+            {
+                this[key] = output.items;
+            }
+        }
     }
 
     // Conversions
