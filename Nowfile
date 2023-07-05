@@ -33,48 +33,6 @@ license "MIT"
 "postBuildCommands" {
     - "strip dist/now"
 }
-"toolchainRequirements" {
-    # dmd no
-    # gdc no
-    ldc ">=1.28.0"
-}
-"subPackages" {
-    - {
-        name "dynamic"
-        "targetType" executable
-        libs {
-            - now_core
-        }
-        "sourcePaths" {
-            - "cli"
-        }
-        lflags {
-            - "-L\${PWD}/dist"
-        }
-        "targetPath" "dist"
-        "postBuildCommands" {
-            - "strip dist/now"
-        }
-    }
-    - {
-        name "core"
-        "targetType" "dynamicLibrary"
-        "sourcePaths" {
-            - "source/"
-        }
-        "targetPath" "dist"
-    }
-    - {
-        name "hello"
-        description "Test package to be loaded as a shared library"
-        "targetType" "dynamicLibrary"
-        "sourcePaths" {
-            - "source/"
-            - "packages/hello"
-        }
-        "targetPath" "dist"
-    }
-}
 
 
 [packages]
@@ -113,6 +71,18 @@ ignore {
 description "This section defines how the `log` command will behave"
 
 dict (timestamp = [unixtime]) (message = $message) | json.encode | return
+
+
+[system_commands/sysleep]
+parameters {
+    t {
+        type float
+    }
+}
+command {
+    - sleep
+    - $t
+}
 
 
 [system_commands/now]

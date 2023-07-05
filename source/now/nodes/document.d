@@ -2,7 +2,6 @@ module now.nodes.document;
 
 import core.runtime;
 
-import core.sys.posix.dlfcn;
 import std.algorithm.searching : endsWith;
 import std.file : exists, isFile, read;
 import std.path : buildNormalizedPath, buildPath, dirName;
@@ -408,46 +407,9 @@ class Document : Dict {
     // Packages
     void importPackage(string path)
     {
-        if (path.endsWith(".so"))
-        {
-            return importSharedLibrary(path);
-        }
-        else
+        if (path.endsWith(".now"))
         {
             return importNowLibrary(path);
-        }
-    }
-
-    void importSharedLibrary(string path)
-    {
-        // Clean up any old error messages:
-        dlerror();
-
-        // lh = "library handler"
-        // void* lh = dlopen(path.toStringz, RTLD_LAZY);
-        void* lh = rt_loadLibrary(path.toStringz);
-
-        auto error = dlerror();
-        if (error !is null)
-        {
-            // lastError = cast(char *)error;
-            throw new Exception(" dlerror: " ~ error.to!string);
-        }
-
-        // Initialize the package:
-        auto getCommands = cast(CommandsMap function(Document))dlsym(
-            lh, "getCommands"
-        );
-
-        error = dlerror();
-        if (error !is null)
-        {
-            throw new Exception("dlsym error: " ~ to!string(error));
-        }
-        auto commands = getCommands(this);
-        foreach (cmdName, cmd; commands)
-        {
-            builtinCommands[cmdName] = cmd;
         }
     }
 
