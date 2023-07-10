@@ -1,0 +1,33 @@
+[Batch Execution Example]
+
+Show how to execute a process multiple times and possibly in parallel.
+
+
+[system_command/sleep]
+parameters {
+    time {
+        type float
+    }
+}
+command {
+    - sleep
+    - $time
+}
+batch {
+    tasks ($cpus * 4)
+    timeout 30
+    retry {
+        max 10
+        backoff {
+            start 1
+            limit 30
+            factor 2
+        }
+    }
+}
+
+
+[commands/run]
+
+# batch (1 , ) (2 , ) (3 , ) (4 , ) (5 , ) | sleep
+print "Not implemented, yet"

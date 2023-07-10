@@ -72,10 +72,40 @@ class Library : SystemCommand
         pipes.stdin.writeln(json.toString);
         pipes.stdin.flush();
 
-        auto response = pipes.stdout.readln();
-        auto response_json = parseJSON(response);
-        output.push(JsonToItem(response_json));
-
-        return ExitCode.Success;
+        while (true)
+        {
+            auto response = pipes.stdout.readln();
+            auto response_json = parseJSON(response);
+            auto rpc = response_json["rpc"];
+            auto op = rpc["op"].str;
+            // TODO: extend handling of various operations.
+            /*
+               - return: returns a value
+               - error: throws an error
+               - call: calls a procedure
+            */
+            switch (op)
+            {
+                case "return":
+                    output.push(JsonToItem(response_json["result"]));
+                    return ExitCode.Success;
+                case "error":
+                    auto result = response_json["result"];
+                    throw new NowException(
+                        input.escopo,
+                        result["message"].str,
+                    );
+                case "call":
+                    throw new NotImplementedException(
+                        input.escopo,
+                        "Operation `call` not implemented, yet."
+                    );
+                default:
+                    throw new NowException(
+                        input.escopo,
+                        "Invalid operation returned: " ~ op,
+                    );
+            }
+        }
     }
 }
