@@ -105,7 +105,7 @@ static this()
                     [other.item],
                     null,
                 );
-                Output xoutput;
+                auto xoutput = new Output;
                 auto exitCode = item.runMethod("<", xinput, xoutput);
                 if (xoutput.pop.toBool)
                 {

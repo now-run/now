@@ -648,28 +648,3 @@ $ NOW_VERSION=$(dub describe now | jq -rc '.packages[0].version')
 $ cd ~/bin
 $ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
 ```
-
-## Statically linked versus dynamically linked
-
-`dub build` or `dub run` will work with the default version
-of Now, that is a somewhat "standalone" binary: it works
-perfectly fine, but **can't load packages distributed as
-dynamic libraries** (that is: `.so` files). If you don't
-plan to use any of these, this build is actually the best
-option for you.
-
-To be able to load shared objects, like in
-
-```toml
-[packages]
-- "dist/libnow_hello.so"
-```
-
-you'll need to build the `:dynamic` subpackage, like:
-
-```bash
-$ dub build :dynamic -b release
-```
-
-This will generate a `dist/now_dynamic` binary, that you can
-symlink to `now` in some directory present in your `$PATH`.

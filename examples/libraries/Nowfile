@@ -1,0 +1,16 @@
+[Supervisor Example]
+
+Runs a child process and communicate with it in a
+efficient manner.
+
+[libraries/test_lib]
+command {
+    - "$script_dir/library.sh"
+    - {
+        arg1 "argument-one"
+    }
+}
+
+[commands/run]
+
+test_lib start 1 (2 = 3) [dict (4 = 5) (6 = 7)] [list 8 9 10] | print "response:"

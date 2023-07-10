@@ -19,7 +19,7 @@ class SystemCommand : BaseCommand
     string keyValueSeparator;
     Item workdir;
 
-    this(string name, Dict info)
+    this(string name, Dict info, Document document)
     {
         super(name, info);
 
@@ -60,15 +60,21 @@ class SystemCommand : BaseCommand
         }
 
         string [] whichCmdLine;
+        auto escopo = new Escopo(document, this.name);
         info.on("which", delegate (item) {
             // XXX: check if this works:
             auto list = cast(List)item;
-            whichCmdLine = list.items.map!(x => x.toString).array;
+            foreach (cmdItem; list.items)
+            {
+                auto evaluationOutput = cmdItem.evaluate(escopo);
+                whichCmdLine ~= evaluationOutput.front.toString();
+            }
         }, delegate () {
             // TODO: run `which` (the system command) to
             // check if the requested command is available.
             whichCmdLine ~= "which";
-            whichCmdLine ~= this.command.items.front.toString;
+            auto evaluationOutput = this.command.items.front.evaluate(escopo);
+            whichCmdLine ~= evaluationOutput.front.toString();
         });
 
         int status;
@@ -140,58 +146,7 @@ class SystemCommand : BaseCommand
         }
         We must evaluate that before and running.
         */
-        Items cmdItems;
-        foreach (segment; command.items)
-        {
-            auto segmentOutput = segment.evaluate(input.escopo);
-            // XXX: we PROBABLY have only one item, here:
-            Item nextItem = segmentOutput.front;
-
-            if (nextItem.type == ObjectType.List)
-            {
-                auto list = cast(List)nextItem;
-                log("--- cmdItems ~= list: ", list);
-                // Expand Lists inside the command arguments:
-                cmdItems ~= list.items;
-            }
-            // dict (verbosity = 3)
-            // -> "--verbosity=3"
-            else if (nextItem.type == ObjectType.Dict)
-            {
-                auto dict = cast(Dict)nextItem;
-                log("--- cmdItems ~= dict: ", dict);
-                if (this.keyValueSeparator != " ")
-                {
-                    foreach (k, v; dict)
-                    {
-                        auto x = new String(
-                            this.optionPrefix
-                            ~ k
-                            ~ this.keyValueSeparator
-                            ~ v.toString()
-                        );
-                        cmdItems ~= x;
-                    }
-                }
-                else
-                {
-                    foreach (k, v; dict)
-                    {
-                        auto x = new String(this.optionPrefix ~ k);
-                        cmdItems ~= x;
-                        // SPACE
-                        x = new String(v.toString());
-                        cmdItems ~= x;
-                    }
-                }
-            }
-            else
-            {
-                log("-- cmdItems ~= ", nextItem);
-                cmdItems ~= nextItem;
-            }
-        }
-        List cmd = new List(cmdItems);
+        auto cmdline = this.getCommandLine(input.escopo);
 
         // set each variable on this Escopo as
         // a environment variable:
@@ -224,10 +179,63 @@ class SystemCommand : BaseCommand
         log(" -- inputStream: ", inputStream);
 
         output.items ~= new SystemProcess(
-            cmd, arguments, inputStream, env, workdirStr
+            cmdline, arguments, inputStream, env, workdirStr
         );
         return ExitCode.Success;
     }
+
+    string[] getCommandLine(Escopo escopo)
+    {
+        string[] cmdline;
+
+        foreach (segment; command.items)
+        {
+            auto segmentOutput = segment.evaluate(escopo);
+            // XXX: we PROBABLY have only one item, here:
+            Item nextItem = segmentOutput.front;
+
+            if (nextItem.type == ObjectType.List)
+            {
+                auto list = cast(List)nextItem;
+                // Expand Lists inside the command arguments:
+                cmdline ~= list.items.map!(x => x.toString()).array;
+            }
+            // dict (verbosity = 3)
+            // -> "--verbosity=3"
+            else if (nextItem.type == ObjectType.Dict)
+            {
+                auto dict = cast(Dict)nextItem;
+                if (this.keyValueSeparator != " ")
+                {
+                    foreach (k, v; dict)
+                    {
+                        auto x = this.optionPrefix
+                            ~ k
+                            ~ this.keyValueSeparator
+                            ~ v.toString();
+                        cmdline ~= x;
+                    }
+                }
+                else
+                {
+                    foreach (k, v; dict)
+                    {
+                        cmdline ~= this.optionPrefix ~ k;
+                        // SPACE
+                        cmdline ~= v.toString();
+                    }
+                }
+            }
+            else
+            {
+                auto evaluationOutput = nextItem.evaluate(escopo);
+                // XXX: what if evaluation returns a Sequence? Or a List?
+                cmdline ~= evaluationOutput.front.toString();
+            }
+        }
+        return cmdline;
+    }
+
 }
 
 
@@ -236,7 +244,6 @@ class SystemProcess : Item
     ProcessPipes pipes;
     std.process.Pid pid;
     Item inputStream;
-    List command;
     string[] arguments;
     string[] cmdline;
     int returnCode = 0;
@@ -244,26 +251,25 @@ class SystemProcess : Item
     string[string] env;
 
     this(
-        List command,
+        string[] cmdline,
         string[] arguments,
         Item inputStream=null,
         string[string] env=null,
         string workdir=null
     )
     {
-        log(": SystemProcess: ", command);
+        log(": SystemProcess: ", cmdline);
         log(":     arguments: ", arguments);
 
         this.type = ObjectType.SystemProcess;
         this.typeName = "system_process";
         this.methods = systemProcessMethods;
 
-        this.command = command;
         this.env = env;
         this.arguments = arguments;
         this.inputStream = inputStream;
 
-        this.cmdline ~= command.items.map!(x => x.toString()).array;
+        this.cmdline = cmdline;
         this.cmdline ~= arguments;
 
         if (inputStream is null)

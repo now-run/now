@@ -10,13 +10,13 @@ class ShellScript : SystemCommand
     string shellName;
     bool expandVariables = false;
 
-    this(string shellName, Dict shellInfo, string name, Dict info)
+    this(string shellName, Dict shellInfo, string name, Dict info, Document document)
     {
         this.shellName = shellName;
 
         // It's going to have no "parameters", since
         // we are passing the SHELL definition:
-        super(name, shellInfo);
+        super(name, shellInfo, document);
 
         // So we fix it now:
         this.parameters = info.getOrCreate!Dict("parameters");

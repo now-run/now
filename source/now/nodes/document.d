@@ -17,6 +17,7 @@ import now.grammar;
 import now.procedure;
 import now.shell_script;
 import now.system_command;
+import now.library;
 
 
 class Document : Dict {
@@ -27,10 +28,9 @@ class Document : Dict {
     Dict data;
     Dict text;
 
-    // CLI commands:
     Procedure[string] commands;
-    // Procedures:
     BaseCommand[string] procedures;
+    Library[string] libraries;
 
     string[] nowPath;
 
@@ -74,6 +74,7 @@ class Document : Dict {
         loadSystemCommands();
         loadText();
         loadDataSources();
+        loadLibraries();
     }
 
     void setNowPath(Dict environmentVariables)
@@ -264,7 +265,7 @@ class Document : Dict {
                 */
                 auto scriptInfo = cast(Dict)scriptInfoItem;
                 this.procedures[scriptName] = new ShellScript(
-                    shellName, shellInfo, scriptName, scriptInfo
+                    shellName, shellInfo, scriptName, scriptInfo, this
                 );
             }
         }
@@ -313,7 +314,7 @@ class Document : Dict {
             }
             // XXX: is it correct to save procedures and
             // syscmds in the same place???
-            this.procedures[name] = new SystemCommand(name, info);
+            this.procedures[name] = new SystemCommand(name, info, this);
         }
     }
     void loadText()
@@ -362,7 +363,31 @@ class Document : Dict {
             }
         }
     }
+    void loadLibraries()
+    {
+        log("- Preparing libraries");
 
+        auto libraries = data.getOrCreate!Dict("libraries");
+        foreach (name, infoItem; libraries)
+        {
+            log("-- ", name);
+            auto info = cast(Dict)infoItem;
+            if (info is null)
+            {
+                throw new Exception(
+                    "libraries/" ~ name
+                    ~ ".info is null"
+                );
+            }
+            // XXX: is it correct to save procedures and
+            // syscmds in the same place???
+            auto library = new Library(name, info, this);
+            library.spawn(this);
+            this.libraries[name] = library;
+            // TODO: will we use the same name? Can't we alias it somehow?
+            this.procedures[name] = library;
+        }
+    }
     // Conversions
     override string toString()
     {

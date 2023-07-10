@@ -4,7 +4,7 @@ module now.commands.http;
 import std.net.curl;
 
 import now;
-import now.commands.json;
+import now.json;
 
 
 struct Response {

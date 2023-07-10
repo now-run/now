@@ -1054,8 +1054,7 @@ forLoop:
     builtinCommands["md5"] = function(string path, Input input, Output output)
     {
         string target = input.pop!string();
-        char[] digest = target.hexDigest!MD5;
-        output.push(digest.to!string);
+        output.push(target.hexDigest!MD5.to!string);
         return ExitCode.Success;
     };
     builtinCommands["uuid.sha1"] = function(string path, Input input, Output output)
