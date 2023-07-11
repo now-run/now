@@ -1,11 +1,12 @@
-CC = ldc2
+# gdc -static-libphobos source/now/**/*.d cli/now/cli.d -O2 -o dist/now
+CC = gdc
 DIR = source/now
 BASE_CODE = ${DIR}/*.d ${DIR}/system_command/*.d ${DIR}/nodes/*.d ${DIR}/nodes/*/*.d
 SOURCE_CODE = ${BASE_CODE} ${DIR}/commands/*.d cli/now/cli.d
 
 dist/now: ${SOURCE_CODE}
-	${CC} $^ \
-		-O2 -of dist/now
+	${CC} -static-libphobos $^ \
+		-O2 -o dist/now
 
 release: dist/now
 	strip $^
