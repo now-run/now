@@ -113,7 +113,7 @@ class Library : SystemCommand
                     switch (callOutput.items.length)
                     {
                         case 0:
-                            return_result = JSONType.null_;
+                            return_result = JsonNull;
                             break;
                         case 1:
                             return_result = ItemToJson(callOutput.pop());

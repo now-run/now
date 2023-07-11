@@ -19,17 +19,19 @@ version (GNU)
     alias JsonArray = JSON_TYPE.ARRAY;
     alias JsonTrue = JSON_TYPE.TRUE;
     alias JsonFalse = JSON_TYPE.FALSE;
+    alias JsonNull = JSON_TYPE.NULL;
 }
 else
 {
-    alias JsonString = JSONType.STRING;
-    alias JsonInteger = JSONType.INTEGER;
-    alias JsonUInteger = JSONType.UINTEGER;
-    alias JsonFloat = JSONType.FLOAT;
-    alias JsonObject = JSONType.OBJECT;
-    alias JsonArray = JSONType.ARRAY;
-    alias JsonTrue = JSONType.TRUE;
-    alias JsonFalse = JSONType.FALSE;
+    alias JsonString = JSONType.string;
+    alias JsonInteger = JSONType.integer;
+    alias JsonUInteger = JSONType.uinteger;
+    alias JsonFloat = JSONType.float_;
+    alias JsonObject = JSONType.object;
+    alias JsonArray = JSONType.array;
+    alias JsonTrue = JSONType.true_;
+    alias JsonFalse = JSONType.false_;
+    alias JsonNull = JSONType.null_;
 }
 
 
