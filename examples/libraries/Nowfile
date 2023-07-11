@@ -11,6 +11,20 @@ command {
     }
 }
 
+[procedures/sum]
+parameters {
+    a {
+        type integer
+    }
+    b {
+        type integer
+    }
+}
+
+print "sum:"
+print "$a $b"
+return ([to.integer $a] + [to.integer $b])
+
 [commands/run]
 
 test_lib start 1 (2 = 3) [dict (4 = 5) (6 = 7)] [list 8 9 10] | print "response:"
@@ -19,3 +33,5 @@ try {
 } {
     print "Error (as expected): $error"
 }
+
+test_lib test_calls

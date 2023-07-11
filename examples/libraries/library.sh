@@ -7,13 +7,24 @@ echo "$0 spawned" >&2
 while read msg;do
     echo "lib/msg:$msg" >&2
 
-    rpc_name=$(echo $msg | jq -r ".rpc.name")
-    if [[ $rpc_name == "err" ]];then
-        echo '{"rpc":{"op":"error"},"result":{"message":"Self inflicted error"}}'
-        continue
-    fi
+    rpc_op=$(echo $msg | jq -r ".rpc.op")
+    procedure=$(echo $msg | jq -r ".procedure")
     args=$(echo $msg | jq -r ".args")
     kwargs=$(echo $msg | jq -r ".kwargs")
+
+    if [[ $procedure == "err" ]];then
+        echo '{"rpc":{"op":"error"},"message":"Self inflicted error"}'
+        continue
+    elif [[ $procedure == "test_calls" ]];then
+        call="{\"rpc\":{\"op\":\"call\"},\"procedure\":\"sum\",\"args\":[1,2],\"kwargs\":{}}"
+        echo $call
+        read response
+        response_op=$(echo $response | jq -r ".rpc.op")
+        echo "response.rpc.op:$response_op" >&2
+        response_result=$(echo $response | jq -r ".result")
+        echo "response.result:$response_result" >&2
+        # Fallthrough to respond initial call, that's still open.
+    fi
 
     response="{\"rpc\":{\"op\":\"return\"},\"result\":[$args,$kwargs]}"
 

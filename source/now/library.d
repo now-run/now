@@ -62,9 +62,10 @@ class Library : SystemCommand
         > http_server start arg1 arg2 arg3
         */
         auto rpc_name = input.pop!string;
-        JSONValue rpc_json = [ "name": rpc_name, "op": "call" ];
+        JSONValue rpc_json = [ "op": "call" ];
         JSONValue json = [
             "rpc": rpc_json,
+            "procedure": JSONValue(rpc_name),
             "args": ItemToJson(new List(input.popAll())),
             "kwargs": ItemToJson(new Dict(input.kwargs)),
         ];
@@ -90,16 +91,46 @@ class Library : SystemCommand
                     output.push(JsonToItem(response_json["result"]));
                     return ExitCode.Success;
                 case "error":
-                    auto result = response_json["result"];
+                    auto message = response_json["message"].str;
                     throw new NowException(
                         input.escopo,
-                        result["message"].str,
+                        message,
                     );
                 case "call":
-                    throw new NotImplementedException(
-                        input.escopo,
-                        "Operation `call` not implemented, yet."
-                    );
+                    auto procedure = response_json["procedure"].str;
+                    auto args = response_json["args"].array.map!(x => JsonToItem(x)).array;
+                    auto kwargs = (cast(Dict)(JsonToItem(response_json["kwargs"]))).values;
+
+                    auto callInput = Input(input.escopo, [], args, kwargs);
+                    auto callOutput = new Output();
+                    auto document = input.escopo.document;
+                    auto callExitCode = document.runProcedure(procedure, callInput, callOutput);
+                    // TODO: check callExitCode.
+
+                    JSONValue return_rpc = [ "op": "return" ];
+
+                    JSONValue return_result;
+                    switch (callOutput.items.length)
+                    {
+                        case 0:
+                            return_result = JSONType.null_;
+                            break;
+                        case 1:
+                            return_result = ItemToJson(callOutput.pop());
+                            break;
+                        default:
+                            return_result = ItemToJson(new List(callOutput.items));
+                    }
+
+                    JSONValue return_json = [
+                        "rpc": return_rpc,
+                        "result": return_result,
+                    ];
+
+                    pipes.stdin.writeln(return_json.toString);
+                    pipes.stdin.flush();
+                    break;
+
                 default:
                     throw new NowException(
                         input.escopo,
