@@ -608,18 +608,17 @@ $ now
 
 ## Install
 
-To build Now, you must have `ldc` and `dub` installed.
+To build Now, you must have `dub` installed.
 
 On Debian-based Linux distros:
 
 ```bash
-$ sudo apt-get install -y dub ldc
+$ sudo apt-get install -y dub
 ```
 
 On MacOS X:
 
 ```bash
-$ brew install ldc
 $ brew install dub
 ```
 
