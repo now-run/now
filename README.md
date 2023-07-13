@@ -22,6 +22,61 @@ use all the power not only of a POSIX shell but of any
 other tool available in your system in a well-organized
 manner!
 
+## Install
+
+To build Now, you must have `dub` installed.
+
+On Debian-based Linux distros:
+
+```bash
+$ sudo apt-get install -y dub
+```
+
+On MacOS X:
+
+```bash
+$ brew install dub
+```
+
+Now you can run Now using `dub`, like in
+
+```bash
+$ dub run now -b release
+```
+
+but probably you'll want to run it directly, so I recommend
+you create a symbolic link into some directory present in
+your `$PATH`. In my case, I have a `~/bin` for that, so it
+would be like this:
+
+```bash
+$ cd ~/bin
+$ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
+```
+
+Please notice you'll have to indicate the installed
+version. If you want to automate that, you can use
+`jq`:
+
+```bash
+$ NOW_VERSION=$(dub describe now | jq -rc '.packages[0].version')
+$ cd ~/bin
+$ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
+```
+
+## Run
+
+Considering there's a `program.now` in the current directory:
+
+```bash
+$ now <subcommand>
+```
+
+You can get a help text by calling `now` without arguments:
+
+```bash
+$ now
+```
 
 ## Extras
 
@@ -30,6 +85,7 @@ In the `extras/` directory you'll find:
 - A **vim syntax file**;
 - A **bash completion function** (`source extras/completions/bash_now.sh`).
 
+-----
 
 ## Syntax
 
@@ -587,63 +643,4 @@ print ($my_other_dict . s . x)
 # The following would also work
 print ($my_other_dict get s get x)
 # But, yeah, it would seem VERY strange...
-```
-
------
-
-
-## Running
-
-Considering there's a `program.now` in the current directory:
-
-```bash
-$ now <subcommand>
-```
-
-You can get a help text by calling `now` without arguments:
-
-```bash
-$ now
-```
-
-## Install
-
-To build Now, you must have `dub` installed.
-
-On Debian-based Linux distros:
-
-```bash
-$ sudo apt-get install -y dub
-```
-
-On MacOS X:
-
-```bash
-$ brew install dub
-```
-
-Now you can run Now using `dub`, like in
-
-```bash
-$ dub run now -b release
-```
-
-but probably you'll want to run it directly, so I recommend
-you create a symbolic link into some directory present in
-your `$PATH`. In my case, I have a `~/bin` for that, so it
-would be like this:
-
-```bash
-$ cd ~/bin
-$ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
-```
-
-Please notice you'll have to indicate the installed
-version. If you want to automate that, you can use
-`jq`:
-
-```bash
-$ NOW_VERSION=$(dub describe now | jq -rc '.packages[0].version')
-$ cd ~/bin
-$ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
 ```
