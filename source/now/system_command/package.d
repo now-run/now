@@ -105,7 +105,6 @@ class SystemCommand : BaseCommand
         */
         this.optionPrefix = info.get!string("option_prefix", "--");
         this.keyValueSeparator = info.get!string("key_value_separator", "=");
-        this.workdir = info.get("workdir", cast(Item)null);
     }
 
     override ExitCode doRun(string name, Input input, Output output)

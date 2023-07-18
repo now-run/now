@@ -12,7 +12,7 @@ Illustrate some aspects of Now's syntax.
 [procedures/methods]
 
 dict (k = v) | as dict
-$dict : get k | print "(dict . k) is "
+obj $dict : get k | print "(dict . k) is "
 
 
 [system_commands/wd]

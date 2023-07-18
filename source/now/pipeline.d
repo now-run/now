@@ -24,10 +24,9 @@ class Pipeline
 
     override string toString()
     {
-        auto s = to!string(commandCalls
+        return commandCalls
             .map!(x => x.toString())
-            .join(" | "));
-        return s;
+            .join(" | ").to!string;
     }
 
     ExitCode run(Escopo escopo, Output output)
@@ -36,34 +35,19 @@ class Pipeline
     }
     ExitCode run(Escopo escopo, Items inputs, Output output)
     {
-        CommandCall lastCommandCall = null;
         Item target;
         ExitCode exitCode;
 
-        auto cmdOutput = new Output;
         if (inputs is null)
         {
             inputs = [];
         }
+        auto cmdOutput = new Output;
         cmdOutput.items = inputs;
 
 forLoop:
         foreach(index, commandCall; commandCalls)
         {
-            if (lastCommandCall !is null)
-            {
-                if (lastCommandCall.isTarget)
-                {
-                    log("-- lastCommandCall ", lastCommandCall, " is target");
-                    target = cmdOutput.pop;
-                }
-                else
-                {
-                    log("-- lastCommandCall ", lastCommandCall, " is not target");
-                    target = null;
-                }
-            }
-
             // Before going to the next commandCall
             // (after re-entering this loop):
             inputs = cmdOutput.items;
@@ -145,13 +129,13 @@ forLoop:
             {
                 // -----------------
                 // Proc execution:
-                case ExitCode.Return:
-                    // That is what a `return` command returns.
-                    // Return should keep stopping SubPrograms
-                    // until a procedure or a program stops.
-                    // (Imagine a `return` inside some nested loops.)
-                    break forLoop;
 
+                // -----------------
+                // That is what a `return` command returns.
+                // Return should keep stopping SubPrograms
+                // until a procedure or a program stops.
+                // (Imagine a `return` inside some nested loops.)
+                case ExitCode.Return:
                 // -----------------
                 // Loops:
                 case ExitCode.Break:
@@ -168,8 +152,20 @@ forLoop:
                 this pipeline, if present.
                 */
                 case ExitCode.Success:
-                    lastCommandCall = commandCall;
-                    break;  // break the switch and proceed in the loop
+                    if (commandCall.isTarget)
+                    {
+                        // obj x : print
+                        //     ^
+                        //     |
+                        //     +----- target for "print", that is the
+                        //             next command in the pipeline.
+                        target = cmdOutput.pop;
+                    }
+                    else
+                    {
+                        target = null;
+                    }
+                    break;  // break THE SWITCH and proceed in the loop
             }
         }
         // Whatever is left in cmdOutput goes to output, now:
