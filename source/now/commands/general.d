@@ -549,17 +549,18 @@ forLoop:
     };
     builtinCommands["as"] = builtinCommands["set"];
 
-    builtinCommands["val"] = function(string path, Input input, Output output)
+    builtinCommands["get"] = function(string path, Input input, Output output)
     {
         /*
         > set x 10
-        > val x | print
+        > get x | print
         10
         */
         auto name = input.pop!string();
         output.push(input.escopo[name].evaluate(input.escopo));
         return ExitCode.Success;
     };
+    builtinCommands["val"] = builtinCommands["get"];
     builtinCommands["vars"] = function(string path, Input input, Output output)
     {
         Items items;

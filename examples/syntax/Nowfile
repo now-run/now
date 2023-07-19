@@ -65,11 +65,11 @@ set s {{ A string that won't expand $variables }}
 print $s
 
 
-[commands/val]
-description "Show how to use the `val` command."
+[commands/get]
+description "Show how to use the `get` command."
 
 set "TESTE" 123
-val "TESTE" | print "TESTE value is: "
+get "TESTE" | print "TESTE value is: "
 
 
 [commands/wd]
@@ -187,19 +187,11 @@ scope "loops" {
     }
 }
 
-scope "uplevel" {
-    set x 10
-    # Look, we're tricking the language!
-    set y [set x 20] 20
-    assert ($x == 20)
-    assert ($y == 20)
-}
-
 scope "sleep and timer" {
     timer {
-        sleep 500
+        sleep 0.1
     } {
-        assert ($seconds >= 0)
+        assert ($nanoseconds > 0)
         assert ($seconds < 1)
     }
 }

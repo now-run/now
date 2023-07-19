@@ -100,6 +100,7 @@ class Library : SystemCommand
                     auto procedure = response_json["procedure"].str;
                     auto args = response_json["args"].array.map!(x => JsonToItem(x)).array;
                     auto kwargs = (cast(Dict)(JsonToItem(response_json["kwargs"]))).values;
+                    auto user_data = response_json["user_data"];
 
                     auto callInput = Input(input.escopo, [], args, kwargs);
                     auto callOutput = new Output();
@@ -125,6 +126,7 @@ class Library : SystemCommand
                     JSONValue return_json = [
                         "rpc": return_rpc,
                         "result": return_result,
+                        "user_data": user_data,
                     ];
 
                     pipes.stdin.writeln(return_json.toString);
