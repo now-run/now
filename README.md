@@ -22,6 +22,25 @@ use all the power not only of a POSIX shell but of any
 other tool available in your system in a well-organized
 manner!
 
+## Features
+
+* REPl
+* `Nowfile` (like a `Makefile`)
+* Self-documenting command line interfaces
+* Syntax for structured data
+* Pipelines!
+* System Commands
+* Shells and Scripts (define external programs, like bash,
+  and code that are expected to be run by them in your
+  document/program)
+* Load configuration from environment variables automatically
+* Template System
+* Data Sources (you can easily define procedures that
+  load constants into your document before running it)
+* Libraries implemented as external processes (no dynamic
+  libraries / shared objects support required)
+* Sections of your document can be simply text
+
 ## Install
 
 To build Now, you must have `dub` installed.
