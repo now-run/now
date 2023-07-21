@@ -97,7 +97,6 @@ static this()
         {
             return elseBody.run(input.escopo, output);
         }
-        output.push(isConditionTrue);
         return ExitCode.Success;
     };
 }
