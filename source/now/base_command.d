@@ -15,7 +15,7 @@ class BaseCommand
     string name;
     Dict parameters;
     Dict info;
-    String workdir;
+    Item workdir;
 
     this(string name, Dict info)
     {
@@ -26,7 +26,7 @@ class BaseCommand
         // event handlers:
         this.loadEventHandlers(info);
 
-        this.workdir = info.get!String("workdir", null);
+        this.workdir = info.get!Item("workdir", null);
     }
     void loadEventHandlers(Dict info)
     {

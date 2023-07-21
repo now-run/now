@@ -17,7 +17,7 @@ class SystemCommand : BaseCommand
     List command;
     string optionPrefix;
     string keyValueSeparator;
-    Item workdir;
+    bool takeOver;
 
     this(string name, Dict info, Document document)
     {
@@ -105,6 +105,8 @@ class SystemCommand : BaseCommand
         */
         this.optionPrefix = info.get!string("option_prefix", "--");
         this.keyValueSeparator = info.get!string("key_value_separator", "=");
+
+        this.takeOver = info.get!bool("take_over", false);
     }
 
     override ExitCode doRun(string name, Input input, Output output)
@@ -178,7 +180,7 @@ class SystemCommand : BaseCommand
         log(" -- inputStream: ", inputStream);
 
         output.items ~= new SystemProcess(
-            cmdline, arguments, inputStream, env, workdirStr
+            cmdline, arguments, inputStream, env, workdirStr, takeOver
         );
         return ExitCode.Success;
     }
@@ -245,16 +247,18 @@ class SystemProcess : Item
     Item inputStream;
     string[] arguments;
     string[] cmdline;
+    bool takeOver;
+    string[string] env;
     int returnCode = 0;
     bool _isRunning;
-    string[string] env;
 
     this(
         string[] cmdline,
         string[] arguments,
         Item inputStream=null,
         string[string] env=null,
-        string workdir=null
+        string workdir=null,
+        bool takeOver=false
     )
     {
         log(": SystemProcess: ", cmdline);
@@ -271,28 +275,33 @@ class SystemProcess : Item
         this.cmdline = cmdline;
         this.cmdline ~= arguments;
 
-        if (inputStream is null)
+        if (takeOver)
         {
-            pipes = pipeProcess(
+            this.pid = spawnProcess(
                 cmdline,
-                Redirect.stdout,
-                this.env,
+                env,
                 Config(),
                 workdir
             );
         }
         else
         {
+            Redirect redirect = Redirect.stdout;
+            if (inputStream !is null)
+            {
+                redirect |= Redirect.stdin;
+            }
+
             pipes = pipeProcess(
                 cmdline,
-                Redirect.stdin | Redirect.stdout,
-                this.env,
+                redirect,
+                env,
                 Config(),
                 workdir
             );
-        }
 
-        this.pid = pipes.pid;
+            this.pid = pipes.pid;
+        }
     }
 
     override string toString()

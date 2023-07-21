@@ -22,9 +22,22 @@ parameters {
     }
 }
 command {
-    - ls
+    - pwd
 }
 workdir $directory
+
+
+[system_commands/cat]
+command {
+    - cat
+}
+take_over true
+
+
+[system_commands/date]
+command {
+    - date
+}
 
 
 [commands/uuid]
@@ -84,6 +97,19 @@ parameters {
 try {
     wd $directory | { print }
 }
+
+
+[commands/date]
+
+
+date | { print ">>> " }
+
+
+[commands/cat]
+description "Show how to call an interactive program"
+
+cat : check
+print "quitting..."
 
 
 [commands/booleans]
