@@ -43,6 +43,8 @@ manner!
 
 ## Install
 
+### Using dub
+
 To build Now, you must have `dub` installed.
 
 On Debian-based Linux distros:
@@ -83,9 +85,17 @@ $ cd ~/bin
 $ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
 ```
 
+### Using make
+
+- Have `ldc` installed (it's called `ldc2` on some systems);
+- Have `make` installed;
+- Clone the repository;
+- `make release`;
+- Symlink or copy `dist/now` to a directory under your `PATH`.
+
 ## Run
 
-Considering there's a `program.now` in the current directory:
+Considering there's a `Nowfile` in the current directory:
 
 ```bash
 $ now <subcommand>
