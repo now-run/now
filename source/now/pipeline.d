@@ -54,75 +54,10 @@ forLoop:
 
             // Run the command!
             cmdOutput.items.length = 0;
-            try
-            {
-                exitCode = commandCall.run(escopo, inputs, cmdOutput, target);
-            }
-            catch (NowException ex)
-            {
-                if (!ex.printed)
-                {
-                    stderr.writeln("e> ", ex.typename);
-                    stderr.writeln("m> ", ex.msg);
-                    stderr.writeln("s> ", escopo);
-                    stderr.writeln("p> ", this);
-                    if (documentLineNumber)
-                    {
-                        stderr.writeln("l> ", documentLineNumber);
-                    }
-                    ex.printed = true;
-                }
-                throw ex;
-            }
-            catch (Exception ex)
-            {
-                stderr.writeln("m> ", ex.msg);
-                stderr.writeln("s> ", escopo);
-                stderr.writeln("p> ", this);
-                if (documentLineNumber)
-                {
-                    stderr.writeln("l> ", documentLineNumber);
-                }
-                stderr.writeln(
-                    "This is an internal error."
-                );
-                stderr.writeln(
-                    "===== Exception ====="
-                );
-                stderr.writeln(ex);
 
-                auto ex2 = new DException(
-                    null,
-                    ex.msg
-                );
-                ex2.printed = true;
-                stderr.writeln(ex);
-                throw ex2;
-            }
-            catch (object.Error ex)
-            {
-                stderr.writeln("m> ", ex.msg);
-                stderr.writeln("s> ", escopo);
-                stderr.writeln("p> ", this);
-                if (documentLineNumber)
-                {
-                    stderr.writeln("l> ", documentLineNumber);
-                }
-                stderr.writeln(
-                    "This is an internal error, your program may not be wrong."
-                );
-                stderr.writeln(
-                    "===== Error ====="
-                );
-                stderr.writeln(ex);
-
-                auto ex2 = new DError(
-                    null,
-                    ex.msg,
-                );
-                ex2.printed = true;
-                throw ex2;
-            }
+            exitCode = errorHandler(escopo, this, {
+                return commandCall.run(escopo, inputs, cmdOutput, target);
+            });
             log("- Pipeline <- ", exitCode, " <- ", cmdOutput);
 
             final switch(exitCode)

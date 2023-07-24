@@ -39,7 +39,14 @@ class Erro : Item
         {
             s ~= " (" ~ classe ~ ")";
         }
-        s ~= " on " ~ escopo.toString();
+        if (subject !is null)
+        {
+            s ~= " subject " ~ subject.toString();
+        }
+        if (escopo !is null)
+        {
+            s ~= " on " ~ escopo.toString();
+        }
         return s;
     }
 }
@@ -49,7 +56,7 @@ Erro toError(NowException ex)
     return new Erro(
         ex.msg,
         ex.code,
-        "NowException",
+        ex.typename,
         ex.escopo,
         ex.subject,
         ex

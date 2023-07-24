@@ -132,6 +132,17 @@ run {
     }
 } : get k : eq 1 | assert "k should be 1"
 
+[commands/error]
+
+try {
+    to.integer "blebs"
+} {
+    print "error handled"
+    print $error
+}
+
+print "Unhandled error:"
+to.integer "abc"
 
 [commands/run]
 description "General syntax tests"

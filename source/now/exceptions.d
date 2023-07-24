@@ -5,27 +5,13 @@ import now.escopo;
 import now.nodes;
 
 
-template customException(string name)
-{
-    const string customException = "
-class " ~ name ~ " : Exception
-{
-    this(string msg)
-    {
-        super(msg);
-    }
-}
-    ";
-}
-
-
 class NowException : Exception
 {
     int code;
     Item subject;
     string typename;
     Escopo escopo;
-    bool printed = false;
+    Pipeline pipeline;
 
     this(Escopo escopo, string msg, int code=-1, Item subject=null)
     {
@@ -78,3 +64,70 @@ mixin(customNowException!"VariableNotFoundException");
 // mixin(customNowException!"");
 // mixin(customNowException!"");
 // mixin(customNowException!"");
+
+
+
+ExitCode errorHandler(Escopo escopo, Pipeline pipeline, ExitCode delegate() f)
+{
+    try
+    {
+        return f();
+    }
+    catch (Exception ex)
+    {
+        auto ex2 = new DException(
+            null,
+            ex.msg
+        );
+        ex2.pipeline = pipeline;
+        throw ex2;
+    }
+    catch (object.Error ex)
+    {
+        if (pipeline !is null)
+        {
+            stderr.writeln("p> ", pipeline);
+            if (pipeline.documentLineNumber)
+            {
+                stderr.writeln("l> ", pipeline.documentLineNumber);
+            }
+        }
+        stderr.writeln(
+            "This is an internal error, your program may not be wrong."
+        );
+        stderr.writeln(
+            "===== Error ====="
+        );
+        stderr.writeln(ex);
+
+        auto ex2 = new DError(
+            null,
+            ex.msg,
+        );
+        ex2.pipeline = pipeline;
+        throw ex2;
+    }
+}
+
+ExitCode errorPrinter(ExitCode delegate() f)
+{
+    try
+    {
+        return f();
+    }
+    catch (NowException ex)
+    {
+        stderr.writeln("e> ", ex.typename);
+        stderr.writeln("m> ", ex.msg);
+        stderr.writeln("s> ", ex.escopo);
+        if (ex.pipeline !is null)
+        {
+            stderr.writeln("p> ", ex.pipeline);
+            if (ex.pipeline.documentLineNumber)
+            {
+                stderr.writeln("l> ", ex.pipeline.documentLineNumber);
+            }
+        }
+        throw ex;
+    }
+}

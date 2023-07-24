@@ -5,6 +5,8 @@ SOURCE_CODE = ${BASE_CODE} ${DIR}/commands/*.d cli/now/cli.d
 
 dist/now: ${SOURCE_CODE}
 	${CC} $^ \
+		--checkaction=halt \
+		-od=build --oq \
 		-O2 -of dist/now
 
 release: dist/now
@@ -12,7 +14,7 @@ release: dist/now
 	ls -lh dist/
 
 dist/now.debug: ${SOURCE_CODE}
-	${CC} -fdebug $^ \
+	${CC} --d-debug $^ \
 		-O1 -of dist/now.debug
 
 clean:

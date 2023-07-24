@@ -394,11 +394,6 @@ class NowParser : Parser
         {
             return doConsumePipeline();
         }
-        catch (ParsingErrorException ex)
-        {
-            // XXX: if (!ex.printed) {...}
-            throw ex;
-        }
         catch (Exception ex)
         {
             stderr.writeln(getEntireCurrentLine());
@@ -417,7 +412,6 @@ class NowParser : Parser
                 "Error while consuming Pipeline",
                 cast(int)line,
             );
-            ex2.printed = true;
             throw ex2;
         }
         catch (AssertError ex)
@@ -434,7 +428,6 @@ class NowParser : Parser
                 "Error while consuming Pipeline",
                 cast(int)line,
             );
-            ex2.printed = true;
             throw ex2;
         }
     }

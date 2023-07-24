@@ -236,7 +236,9 @@ int runDocument(Document document, string commandName, string[] commandArgs)
     log("+ Running ", commandName, "...");
     try
     {
-        exitCode = command.run(commandName, input, output, true);
+        exitCode = errorPrinter({
+            return command.run(commandName, input, output, true);
+        });
     }
     catch (NowException ex)
     {
@@ -253,12 +255,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
             SubProgram handler = localParser.consumeSubProgram();
 
             auto newScope = escopo.addPathEntry("on.error");
-            auto error = new Erro(
-                ex.msg,
-                ex.code,
-                ex.typename,
-                escopo
-            );
+            auto error = ex.toError();
             // TODO: do not set "error" on parent scope too.
             newScope["error"] = error;
 
@@ -282,37 +279,34 @@ int runDocument(Document document, string commandName, string[] commandArgs)
             return 0;
         }
 
-        if (!ex.printed)
+        try
         {
-            try
-            {
-                throw ex;
-            }
-            catch (ProcedureNotFoundException ex)
-            {
-                stderr.writeln(
-                    "e> Procedure not found: ", ex.msg
-                );
-                return ex.code;
-            }
-            catch (MethodNotFoundException ex)
-            {
-                stderr.writeln(
-                    "e> Method not found: ", ex.msg,
-                    "; object: ", ex.subject
-                );
-                return ex.code;
-            }
-            catch (NotImplementedException ex)
-            {
-                stderr.writeln(
-                    "e> Not implemented: ", ex.msg
-                );
-                return ex.code;
-            }
-            // TODO: this "statement is not reachable"???
-            // stderr.writeln(ex);
+            throw ex;
         }
+        catch (ProcedureNotFoundException ex)
+        {
+            stderr.writeln(
+                "e> Procedure not found: ", ex.msg
+            );
+            return ex.code;
+        }
+        catch (MethodNotFoundException ex)
+        {
+            stderr.writeln(
+                "e> Method not found: ", ex.msg,
+                "; object: ", ex.subject
+            );
+            return ex.code;
+        }
+        catch (NotImplementedException ex)
+        {
+            stderr.writeln(
+                "e> Not implemented: ", ex.msg
+            );
+            return ex.code;
+        }
+        // TODO: this "statement is not reachable"???
+        // stderr.writeln(ex);
         return ex.code;
     }
 
@@ -452,7 +446,9 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
         }
         auto output = new Output;
         // TODO: handle exceptions.
-        auto exitCode = pipeline.run(escopo, output);
+        auto exitCode = errorPrinter({
+            return pipeline.run(escopo, output);
+        });
 
         // Print whatever is still in the stack:
         print_output(escopo, output);
@@ -495,7 +491,9 @@ int cmd(Document document, string[] documentArgs)
         output.items.length = 0;
         try
         {
-            exitCode = pipeline.run(escopo, output);
+            exitCode = errorPrinter({
+                return pipeline.run(escopo, output);
+            });
         }
         catch (NowException ex)
         {
