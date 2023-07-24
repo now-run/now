@@ -24,7 +24,7 @@ manner!
 
 ## Features
 
-* REPl
+* REPL
 * `Nowfile` (like a `Makefile`)
 * Self-documenting command line interfaces
 * Syntax for structured data
