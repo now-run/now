@@ -206,24 +206,32 @@ class SystemCommand : BaseCommand
             else if (nextItem.type == ObjectType.Dict)
             {
                 auto dict = cast(Dict)nextItem;
-                if (this.keyValueSeparator != " ")
+                foreach (k, v; dict)
                 {
-                    foreach (k, v; dict)
+                    Items vs;
+                    if (v.type == ObjectType.List)
                     {
-                        auto x = this.optionPrefix
-                            ~ k
-                            ~ this.keyValueSeparator
-                            ~ v.toString();
-                        cmdline ~= x;
+                        vs = (cast(List)v).items;
                     }
-                }
-                else
-                {
-                    foreach (k, v; dict)
+                    else
                     {
-                        cmdline ~= this.optionPrefix ~ k;
-                        // SPACE
-                        cmdline ~= v.toString();
+                        vs = [v];
+                    }
+
+                    foreach (iv; vs)
+                    {
+                        if (this.keyValueSeparator == " ")
+                        {
+                            cmdline ~= this.optionPrefix ~ k;
+                            cmdline ~= iv.toString();
+                        }
+                        else
+                        {
+                            cmdline ~= this.optionPrefix
+                                ~ k
+                                ~ this.keyValueSeparator
+                                ~ iv.toString();
+                        }
                     }
                 }
             }
