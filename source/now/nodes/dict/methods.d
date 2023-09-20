@@ -121,6 +121,10 @@ static this()
         escopo.values = dict.values;
 
         auto exitCode = subprogram.run(escopo, input.popAll, output);
+        if (exitCode == ExitCode.Return)
+        {
+            exitCode = ExitCode.Success;
+        }
 
         dict.order = escopo.order;
         dict.values = escopo.values;
