@@ -161,7 +161,7 @@ class Transformer : Item
             if (varName)
             {
                 log("- Transformer ", varName, " <- ", nextOutput.items);
-                // TODO: it should be a popAll, right?
+                // XXX: should it be a popAll?
                 escopo[varName] = nextOutput.items;
             }
             else

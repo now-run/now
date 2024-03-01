@@ -5,9 +5,9 @@ Show how to work with CSV files
 [commands/run]
 
 path "test.csv" : read | csv.decode | as lista
-assert (($lista : length) == 6)
+obj $lista : length : eq 6 | assert "lista length should be 6"
 obj $lista : get 0 | as first
-assert (($first : length) == 5)
+obj $first : length : eq 5 | assert "first length should be 5"
 
 # TODO: do not print stuff on `run`.
 # (Or change `now test` on main Nowfile to call

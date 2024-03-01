@@ -50,7 +50,7 @@ uuid.random | print "uuid.random="
 
 [commands/random]
 
-random 1 5 | print "random 0 5="
+random 1 5 | print "random 1 5="
 
 [commands/list_generation]
 description "Equivalent to 'list comprehensions' but without any special syntax."
@@ -100,7 +100,6 @@ try {
 
 
 [commands/date]
-
 
 date | { print ">>> " }
 

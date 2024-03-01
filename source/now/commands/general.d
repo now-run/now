@@ -170,7 +170,12 @@ forLoop:
             {
                 while (true)
                 {
-                    auto nextExitCode = generator.next(input.escopo, generatedOutput);
+                    // Reminder: `generatedOutput` will be
+                    // truncated on each call to `next`.
+                    auto nextOutput = new Output;
+                    auto nextExitCode = generator.next(input.escopo, nextOutput);
+                    generatedOutput.items ~= nextOutput.items;
+
                     if (nextExitCode == ExitCode.Break)
                     {
                         break forLoop;
@@ -421,8 +426,9 @@ forLoop:
     */
     builtinCommands["error"] = function(string path, Input input, Output output)
     {
-            string message = input.pop!string("An error ocurred");
+        string message = input.pop!string("An error ocurred");
         int code = cast(int)(input.pop!long(-1));
+        // TODO: classe
 
         throw new UserException(
             input.escopo,

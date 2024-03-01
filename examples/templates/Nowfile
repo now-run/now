@@ -1,6 +1,6 @@
-[Now Document Example]
+[Now Template System Example]
 
-Show how the document syntax works.
+Show how the template system works.
 
 [templates/html_base]
 description "Basic HTML structure."
@@ -31,8 +31,7 @@ extends html_base
 % --- %
 </div>
 
-[commands/run]
-description "Show how templates work."
+[procedures/render]
 
 template htmls (page_title = "Directory Listings Example") | as tpl
 
@@ -56,3 +55,15 @@ obj $rendered_template
     : find "<h2>Files in /home</h2>"
     : neq -1
     | assert "There should be a h2 header for /home"
+
+return $rendered_template
+
+[commands/run]
+description "Show how templates work."
+
+render
+
+[commands/render]
+description "Output a rendered template."
+
+render | print
