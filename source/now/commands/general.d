@@ -154,6 +154,8 @@ static this()
         }
         return ExitCode.Success;
     };
+    builtinCommands["o"] = builtinCommands["obj"];
+
     builtinCommands["collect"] = function(string path, Input input, Output output)
     {
         auto generatedOutput = new Output;

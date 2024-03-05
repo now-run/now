@@ -95,6 +95,9 @@ forLoop:
                         //     +----- target for "print", that is the
                         //             next command in the pipeline.
                         target = cmdOutput.pop;
+                        // XXX: but what about this?
+                        // obj a b c : print
+                        // ?????????????????????????
                     }
                     else
                     {

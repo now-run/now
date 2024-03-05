@@ -12,6 +12,7 @@ import now.parser;
 
 const PIPE = '|';
 const METHOD_SELECTOR = ':';
+const ERROR_HANDLER = '!';
 
 // Integers units:
 uint[char] units;
@@ -348,7 +349,6 @@ class NowParser : Parser
         }
         // Consume the opener:
         consumeChar();
-
         consumeWhitespaces();
         auto dict = consumeSectionDict();
         // XXX: this consumeSectionDict function is kinda weird...
@@ -455,6 +455,10 @@ class NowParser : Parser
                 // Mark the command as a target:
                 commandCall.isTarget = true;
             }
+            else if (currentChar == '!')
+            {
+                consumeErrorHandler(commandCall);
+            }
             else if (currentChar == SEMICOLON)
             {
                 consumeChar();
@@ -527,7 +531,10 @@ class NowParser : Parser
             {
                 consumeSpace();
                 // XXX: isn't it a isBlockCloser or STOPPERS?
-                if (currentChar.among!('}', ']', ')', '>', PIPE, METHOD_SELECTOR))
+                if (currentChar.among!(
+                    '}', ']', ')', '>',
+                    PIPE, METHOD_SELECTOR, ERROR_HANDLER
+                ))
                 {
                     break;
                 }
@@ -567,6 +574,38 @@ class NowParser : Parser
         result.documentLineNumber = line;
         result.documentColNumber = col;
         return result;
+    }
+    void consumeErrorHandler(CommandCall commandCall)
+    {
+        /*
+                \ /
+                 v
+        set d 10 ! * {print $error}
+        }>
+        */
+        auto mark = consumeChar();
+        consumeWhitespace();
+        auto error_type = consumeAtom();
+        consumeWhitespace();
+        auto opener = consumeChar();  // {
+        if (opener != '{')
+        {
+            throw new Exception(
+                "Invalid syntax: expecting subprogram opener"
+            );
+        }
+        auto handler = consumeSubProgram();
+        auto closer = consumeChar();  // }
+        if (closer != '}')
+        {
+            throw new Exception(
+                "Invalid syntax: expecting subprogram closer"
+            );
+        }
+
+        log("!!! ", error_type, " -> ", handler);
+
+        commandCall.eventHandlers[error_type.toString] = handler;
     }
     CommandCall foreachInline()
     {

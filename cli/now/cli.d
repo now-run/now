@@ -639,5 +639,4 @@ void print_output(Escopo escopo, Output output)
             stderr.writeln(">>> ", item);
         }
     }
-
 }

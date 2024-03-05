@@ -355,3 +355,19 @@ description "Generate dub.json file"
 
 path "dub.json" : write [json.encode $dub]
 # dub | { print }
+
+[commands/error_handling]
+description "Showcase the error handling system"
+
+print "# Local"
+error should_be_local
+    ! should_be_local { print "local error handler was called" }
+
+print "# Global"
+error should_be_global
+    ! other_thing { print "this message should never be printed!" }
+
+[commands/error_handling/on.error]
+
+print "on.error event handler for the command was called"
+print $error

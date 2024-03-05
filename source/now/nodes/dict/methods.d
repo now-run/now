@@ -68,8 +68,8 @@ static this()
     {
         /*
         > dict (a = 30) | as d
-        > set a [get $d a]
-        > print $a
+        > o $d : get a | as value
+        > print $value
         30
         */
         auto dict = cast(Dict)object;
