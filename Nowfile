@@ -203,14 +203,15 @@ print "POST ERROR: we should never reach this command."
 print "The following error occurred and was handled:"
 print "    $error"
 
+[commands]
 
-[commands/e]
+[+ e]
 description "Shows how errors can be handled."
 
 error_handling
 
 
-[commands/exit]
+[+ exit]
 description "Exits the program with an error code."
 parameters {
     code {
@@ -228,11 +229,7 @@ print "Exiting the program with code ${n}..."
 exit $n
 
 
-[commands/find_device/on.call]
-
-print "Starting find_device..."
-
-[commands/find_device]
+[+ find_device]
 description "Scans /dev for devices matching a name."
 parameters {
     name {
@@ -242,7 +239,13 @@ parameters {
 
 find_device $name | { print }
 
-[commands/find_device/on.return]
+[++ on.call]
+
+print "Starting find_device..."
+
+
+
+[++ on.return]
 
 print "find_device finished."
 
@@ -362,6 +365,10 @@ description "Showcase the error handling system"
 print "# Local"
 error should_be_local
     ! should_be_local { print "local error handler was called" }
+
+print "# Local with asterisk"
+error with_asterisk
+    ! * { print "catch-all errors is working!" }
 
 print "# Global"
 error should_be_global

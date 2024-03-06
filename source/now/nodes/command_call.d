@@ -101,6 +101,10 @@ class CommandCall
         {
             return *handlerPtr;
         }
+        else if (auto handlerPtr = ("*" in eventHandlers))
+        {
+            return *handlerPtr;
+        }
         else
         {
             return null;

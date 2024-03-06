@@ -52,7 +52,7 @@ class NowParser : Parser
     Document consumeDocument()
     {
         /*
-        hashbang line...
+        hashbang line
         */
         log("% consumeDocument");
         while (currentChar == '#')
