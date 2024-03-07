@@ -172,7 +172,7 @@ forLoop:
             {
                 while (true)
                 {
-                    // Reminder: `generatedOutput` will be
+                    // Reminder: `nextOutput` will be
                     // truncated on each call to `next`.
                     auto nextOutput = new Output;
                     auto nextExitCode = generator.next(input.escopo, nextOutput);
@@ -190,6 +190,39 @@ forLoop:
             }
         }
         output.push(new List(generatedOutput.items));
+        return ExitCode.Success;
+    };
+    builtinCommands["sequence"] = function(string path, Input input, Output output)
+    {
+forLoop:
+        foreach (generator; input.popAll)
+        {
+            if (generator.type == ObjectType.List)
+            {
+                auto list = cast(List)generator;
+                output.push(list.items);
+            }
+            else
+            {
+                while (true)
+                {
+                    // Reminder: `nextOutput` will be
+                    // truncated on each call to `next`.
+                    auto nextOutput = new Output;
+                    auto nextExitCode = generator.next(input.escopo, nextOutput);
+                    output.push(nextOutput.items);
+
+                    if (nextExitCode == ExitCode.Break)
+                    {
+                        break forLoop;
+                    }
+                    else if (nextExitCode == ExitCode.Skip)
+                    {
+                        continue;
+                    }
+                }
+            }
+        }
         return ExitCode.Success;
     };
 
