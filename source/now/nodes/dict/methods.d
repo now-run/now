@@ -131,4 +131,11 @@ static this()
 
         return exitCode;
     };
+
+    // To allow inheritance of every method, we
+    // prefix all the current ones with the type name.
+    foreach (k, v; dictMethods)
+    {
+        dictMethods["dict." ~ k] = v;
+    }
 }

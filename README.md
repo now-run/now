@@ -363,6 +363,30 @@ Show the basics of the syntax
     prefix : string = projects/
 ```
 
+## User-defined types
+
+```ini
+[types/server]
+description "A mock of a server."
+parameters {
+    name {
+        type string
+    }
+}
+
+dict (status = stopped) (name = $name) | return
+
+[types/server/methods/run]
+
+o $self | set (status = running)
+
+[commands/run]
+
+server teste | as test_server
+o $test_server : run
+o $test_server : get status | eq running : assert "Status should be `running`"
+```
+
 ## Why so much bureaucracy about "parameters"?
 
 You may be asking **why** such a significant part of a

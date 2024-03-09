@@ -1,10 +1,7 @@
 module now.procedure;
 
 
-import std.algorithm : canFind;
-
 import now;
-import now.exceptions;
 
 
 class Procedure : BaseCommand

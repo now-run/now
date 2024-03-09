@@ -1,0 +1,45 @@
+[Now User-Defined Types Example]
+
+Exemplify how to work with user-defined types.
+
+
+[types/server]
+description "A mock of a server of any kind."
+parameters {
+    name {
+        type string
+    }
+}
+
+log "New server instance is being created."
+
+dict (status = stopped)
+    | return
+
+[types/server/methods/run]
+
+log " method run..."
+o $self : set (status = running)
+log " status changed!"
+
+[types/server/methods/set]
+parameters {
+    pair {
+        type pair
+    }
+}
+
+log "server.set $pair"
+o $self : dict.set $pair
+
+[commands/run]
+description "Run the examples of user-defined types."
+
+server "teste-server" | as server
+log "Server status is: $($server . status)"
+o $server : run
+log "Server status now is: $($server . status)"
+log "Server type is $($server type)"
+log "Server typeName is $($server type.name)"
+o $server : set (teste = true)
+o $server : get teste | log

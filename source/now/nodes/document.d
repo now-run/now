@@ -17,6 +17,7 @@ import now.grammar;
 import now.procedure;
 import now.shell_script;
 import now.system_command;
+import now.user_defined_type;
 import now.library;
 
 
@@ -75,6 +76,7 @@ class Document : Dict {
         loadText();
         loadDataSources();
         loadLibraries();
+        loadUserDefinedTypes();
     }
 
     void setNowPath(Dict environmentVariables)
@@ -388,6 +390,21 @@ class Document : Dict {
             this.procedures[name] = library;
         }
     }
+    void loadUserDefinedTypes()
+    {
+        log("- Loading user-defined types");
+
+        // The document dict is loaded, now
+        // act accordingly on each different section.
+        auto types = data.getOrCreate!Dict("types");
+        foreach (name, infoItem; types.values)
+        {
+            log("-- ", name);
+            auto info = cast(Dict)infoItem;
+            this.procedures[name] = new UserDefinedType(name, info);
+        }
+    }
+
     // Conversions
     override string toString()
     {
