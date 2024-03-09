@@ -1,0 +1,7 @@
+[Example of how to set custom properties for values]
+
+[commands/run]
+
+set x 10 ~name dez
+log "x: $x"
+o $x | prop name | log "x name: "

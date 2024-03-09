@@ -13,6 +13,7 @@ import now.parser;
 const PIPE = '|';
 const METHOD_SELECTOR = ':';
 const ERROR_HANDLER = '!';
+const PROPERTY_TOKEN = '~';
 
 // Integers units:
 uint[char] units;
@@ -455,10 +456,6 @@ class NowParser : Parser
                 // Mark the command as a target:
                 commandCall.isTarget = true;
             }
-            else if (currentChar == '!')
-            {
-                consumeErrorHandler(commandCall);
-            }
             else if (currentChar == SEMICOLON)
             {
                 consumeChar();
@@ -501,15 +498,15 @@ class NowParser : Parser
             (args -- kwargs)
         */
 
-        // TODO: allow using References, like:
-        // > $dict | get key | print
         Name commandName = cast(Name)consumeAtom();
         Items args;
         Items kwargs;
+        SubProgram[string] errorHandlers;
 
         bool readingKwArgs = false;
 
         // That is: if the command HAS any argument:
+        Item arg;
         while (true)
         {
             if (currentChar == EOL)
@@ -530,12 +527,41 @@ class NowParser : Parser
             if (currentChar == SPACE)
             {
                 consumeSpace();
-                // XXX: isn't it a isBlockCloser or STOPPERS?
-                if (currentChar.among!(
+
+                // Properties:
+                if (currentChar == PROPERTY_TOKEN)
+                {
+                    do {
+                        log("PROPERTY!");
+                        log(consumeChar());
+                        auto key = consumeAtom();
+                        consumeSpace();
+                        auto value = consumeItem();
+                        log("~~~ ", key, " = ", value);
+                        consumeWhitespaces();
+
+                        if (arg !is null)
+                        {
+                            arg.properties[key.toString] = value;
+                        }
+                    } while (currentChar == PROPERTY_TOKEN);
+                    break;
+                }
+                else if (currentChar.among!(
                     '}', ']', ')', '>',
-                    PIPE, METHOD_SELECTOR, ERROR_HANDLER
+                    PIPE, METHOD_SELECTOR
                 ))
                 {
+                    break;
+                }
+                else if (currentChar == ERROR_HANDLER)
+                {
+                    log("ERROR HANDLER!");
+                    while (currentChar == ERROR_HANDLER)
+                    {
+                        errorHandlers = consumeErrorHandler(errorHandlers);
+                        log("errorHandlers:", errorHandlers);
+                    }
                     break;
                 }
                 else if (currentChar == SEMICOLON)
@@ -543,7 +569,7 @@ class NowParser : Parser
                     break;
                 }
 
-                auto arg = consumeItem();
+                arg = consumeItem();
                 // log("%% arg:", arg, ":", arg.type);
                 if (arg.type == ObjectType.Name && arg.toString() == "--")
                 {
@@ -573,9 +599,10 @@ class NowParser : Parser
         auto result = new CommandCall(commandName.toString(), args, kwargs);
         result.documentLineNumber = line;
         result.documentColNumber = col;
+        result.eventHandlers = errorHandlers;
         return result;
     }
-    void consumeErrorHandler(CommandCall commandCall)
+    SubProgram[string] consumeErrorHandler(SubProgram[string] handlers)
     {
         /*
                 \ /
@@ -583,6 +610,7 @@ class NowParser : Parser
         set d 10 ! * {print $error}
         }>
         */
+
         auto mark = consumeChar();
         consumeWhitespace();
         auto error_type = consumeAtom();
@@ -602,10 +630,12 @@ class NowParser : Parser
                 "Invalid syntax: expecting subprogram closer"
             );
         }
+        consumeWhitespaces();
 
         log("!!! ", error_type, " -> ", handler);
 
-        commandCall.eventHandlers[error_type.toString] = handler;
+        handlers[error_type.toString] = handler;
+        return handlers;
     }
     CommandCall foreachInline()
     {

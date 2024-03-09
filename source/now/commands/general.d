@@ -1151,6 +1151,24 @@ forLoop:
             return ExitCode.Success;
         }
     };
+    builtinCommands["prop"] = function(string path, Input input, Output output)
+    {
+        string key = input.pop!string;
+        auto target = input.pop!Item;
+
+        Item* p = (key in target.properties);
+        if (p is null)
+        {
+            throw new NowException(
+                input.escopo,
+                "property_not_found",
+                -1,
+                target
+            );
+        }
+        output.push(*p);
+        return ExitCode.Success;
+    };
 
     // OPERATORS
     /*

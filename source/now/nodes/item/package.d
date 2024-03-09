@@ -13,6 +13,7 @@ class Item
     ObjectType type;
     string typeName;
     MethodsMap methods;
+    Item[string] properties;
     size_t documentLineNumber;
     size_t documentColNumber;
 

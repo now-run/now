@@ -387,6 +387,23 @@ o $test_server : run
 o $test_server : get status | eq running : assert "Status should be `running`"
 ```
 
+## Properties
+
+Values can have *properties*. They are set using the following syntax:
+
+```ini
+$object ~key1 value1 ~key2 value2 ~key3 value3...
+```
+
+For example:
+
+```ini
+set x 10 ~name ten ~name_pt dez
+print $x  # 10
+o $x | prop name | print  # ten
+o $x | prop name_pt | print  # dez
+```
+
 ## Why so much bureaucracy about "parameters"?
 
 You may be asking **why** such a significant part of a
