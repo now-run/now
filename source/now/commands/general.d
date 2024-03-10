@@ -647,12 +647,10 @@ forLoop:
             Item value = pair.items.back;
             pair.items.popBack();
 
-            string lastKey = pair.items.back.toString();
+            string key = pair.items.back.toString();
             pair.items.popBack();
 
-            // XXX: autocreate is true?
-            auto nextDict = dict.navigateTo(pair.items);
-            nextDict[lastKey] = value;
+            dict[key] = value;
         }
         output.push(dict);
         return ExitCode.Success;
