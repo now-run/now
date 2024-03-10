@@ -518,6 +518,19 @@ class NowParser : Parser
                     consumeChar();
                     // consumeSpace();
                 }
+                else if (currentChar == ERROR_HANDLER)
+                {
+                    // Go back one char, back to the SPACE.
+                    index --;
+                    // XXX:
+                    /*
+                       This won't work:
+                       cmd a b c
+                       ! error_x { handler }
+                       There must be at least one SPACE before
+                       a continuation-style error handler.
+                    */
+                }
                 else
                 {
                     break;
