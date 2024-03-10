@@ -3,6 +3,7 @@
 set -e
 
 echo "$0 spawned" >&2
+echo "  arguments: $*" >&2
 
 while read msg;do
     echo "lib/msg:$msg" >&2
@@ -13,10 +14,10 @@ while read msg;do
     kwargs=$(echo $msg | jq -r ".kwargs")
 
     if [[ $procedure == "err" ]];then
-        echo '{"rpc":{"op":"error"},"message":"Self inflicted error"}'
+        echo '{"rpc":{"op":"error"},"message":"self_inflicted_error"}'
         continue
     elif [[ $procedure == "test_calls" ]];then
-        call="{\"rpc\":{\"op\":\"call\"},\"procedure\":\"sum\",\"args\":[1,2],\"kwargs\":{}}"
+        call="{\"rpc\":{\"op\":\"call\"},\"procedure\":\"sum\",\"args\":[1,2],\"kwargs\":{}, \"user_data\":null}"
         echo $call
         read response
         response_op=$(echo $response | jq -r ".rpc.op")
