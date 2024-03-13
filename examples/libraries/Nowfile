@@ -34,4 +34,5 @@ test_lib err
 
 print "Proceeding..."
 
-test_lib test_calls
+# The library is going to call a procedure from this document:
+test_lib test_calls 1 2 | == 3 | assert
