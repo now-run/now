@@ -24,6 +24,8 @@ public import now.nodes.execlist;
 
 public import now.nodes.dict;
 
+public import now.nodes.http;
+
 public import now.nodes.path;
 public import now.nodes.simpletemplate;
 
@@ -64,6 +66,10 @@ enum ObjectType
 
     Path,
     Template,
+
+    Tcp,
+    Http,
+    HttpResponse,
 
     Document,
     SystemProcess,

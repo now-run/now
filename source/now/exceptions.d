@@ -76,7 +76,7 @@ ExitCode errorHandler(Escopo escopo, Pipeline pipeline, ExitCode delegate() f)
     catch (Exception ex)
     {
         auto ex2 = new DException(
-            null,
+            escopo,
             ex.msg
         );
         ex2.pipeline = pipeline;

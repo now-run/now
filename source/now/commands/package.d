@@ -16,6 +16,8 @@ import now.nodes.list.methods;
 import now.nodes.strings.methods;
 import now.nodes.subprogram.methods;
 
+import now.nodes.http.methods;
+
 import now.nodes.path.methods;
 import now.nodes.simpletemplate.methods;
 

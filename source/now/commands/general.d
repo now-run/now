@@ -396,24 +396,25 @@ forLoop:
     builtinCommands["unixtime"] = function(string path, Input input, Output output)
     {
         SysTime today = Clock.currTime();
-        output.push(today.toUnixTime!long());
+        long t = today.toUnixTime!long();
+        log("- builtinCommands.unixtime.t:", t);
+        output.push(cast(int)t);
         return ExitCode.Success;
     };
-    /*
-    Examples:
-    ---
-    scope "test the timer" {
-        timer {
-            sleep 5000
-        } {
-            print "This scope ran for $seconds seconds"
-        }
-    }
-    # stderr> This scope ran for 5 seconds
-    ---
-    */
+
     builtinCommands["timer"] = function(string path, Input input, Output output)
     {
+        /*
+        scope "test the timer" {
+            timer {
+                sleep 5000
+            } {
+                print "This scope ran for $seconds seconds"
+            }
+        }
+        # stderr> This scope ran for 5 seconds
+        ---
+        */
         auto subprogram = input.pop!SubProgram;
         auto callback = input.pop!SubProgram;
 
@@ -698,6 +699,12 @@ forLoop:
             string path = item.toString;
             output.push(new Path(path));
         }
+        return ExitCode.Success;
+    };
+    builtinCommands["http"] = function (string name, Input input, Output output)
+    {
+        auto hostname = input.pop!String();
+        output.push(new Http(hostname));
         return ExitCode.Success;
     };
 

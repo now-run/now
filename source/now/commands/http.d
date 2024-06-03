@@ -83,7 +83,7 @@ void loadHttpCommands(CommandsMap commands)
     {
         /*
         > http.post "http://example.org"
-        >     . authorization = "bearer 4321")
+        >     . (authorization = "bearer 4321")
         >     . [dict (username = "John.Doe") (password = "1324")]
         */
         string address = input.pop!string();

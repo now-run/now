@@ -501,7 +501,7 @@ class NowParser : Parser
         Name commandName = cast(Name)consumeAtom();
         Items args;
         Items kwargs;
-        SubProgram[string] errorHandlers;
+        SubProgram[string] eventHandlers;
 
         bool readingKwArgs = false;
 
@@ -572,8 +572,8 @@ class NowParser : Parser
                     log("ERROR HANDLER!");
                     while (currentChar == ERROR_HANDLER)
                     {
-                        errorHandlers = consumeErrorHandler(errorHandlers);
-                        log("errorHandlers:", errorHandlers);
+                        eventHandlers = consumeEventHandler(eventHandlers);
+                        log("eventHandlers:", eventHandlers);
                     }
                     break;
                 }
@@ -612,10 +612,10 @@ class NowParser : Parser
         auto result = new CommandCall(commandName.toString(), args, kwargs);
         result.documentLineNumber = line;
         result.documentColNumber = col;
-        result.eventHandlers = errorHandlers;
+        result.eventHandlers = eventHandlers;
         return result;
     }
-    SubProgram[string] consumeErrorHandler(SubProgram[string] handlers)
+    SubProgram[string] consumeEventHandler(SubProgram[string] handlers)
     {
         /*
                 \ /

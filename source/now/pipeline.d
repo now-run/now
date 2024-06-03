@@ -55,7 +55,7 @@ forLoop:
             // Run the command!
             cmdOutput.items.length = 0;
 
-            exitCode = errorHandler(escopo, this, {
+            exitCode = escopo.errorHandler(this, {
                 return commandCall.run(escopo, inputs, cmdOutput, target);
             });
             log("- Pipeline <- ", exitCode, " <- ", cmdOutput);
