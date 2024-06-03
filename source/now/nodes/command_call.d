@@ -43,6 +43,37 @@ class CommandCall
         }
         return items;
     }
+    KwArgs evaluateKeywordArguments(Escopo escopo)
+    {
+        KwArgs kwargs;
+        Items items;
+
+        foreach(argument; this.kwargs)
+        {
+            items ~= argument.evaluate(escopo);
+        }
+
+        foreach(item; items)
+        {
+            if (item.type != ObjectType.Pair)
+            {
+                throw new InvalidArgumentsException(
+                    escopo,
+                    "All kwargs should be Pairs; found " ~ item.type.to!string,
+                    -1,
+                    item
+                );
+            }
+            else
+            {
+                auto pair = cast(Pair)item;
+                auto key = pair.items[0].toString;
+                auto value = pair.items[1];
+                kwargs[key] = value;
+            }
+        }
+        return kwargs;
+    }
 
     ExitCode run(Escopo escopo, Items inputs, Output output, Item target=null)
     {
@@ -53,9 +84,7 @@ class CommandCall
         }
         auto arguments = evaluateArguments(escopo);
         log("--- ", inputs, " | ", name, "  ", arguments);
-        // TODO:
-        // auto keywordArguments = evaluateKeywordArguments(escopo);
-        KwArgs keywordArguments;
+        auto keywordArguments = evaluateKeywordArguments(escopo);
 
         auto input = Input(
             escopo,
@@ -77,21 +106,29 @@ class CommandCall
         }
         catch (NowException ex)
         {
-            auto error = ex.toError();
-            auto message = error.message;
+            auto message = ex.msg;
             // XXX: we're using .message as the error type.
             // It's weird.
 
-            auto errorHandler = this.getEventHandler(message);
+            auto errorHandler = this.getEventHandler(ex.typename);
+            if (errorHandler is null)
+            {
+                errorHandler = this.getEventHandler(message);
+            }
+
             if (errorHandler is null)
             {
                 throw ex;
             }
             else
             {
-                auto errorScope = escopo.addPathEntry("error/" ~ message);
-                errorScope["error"] = error;
-                return handleEvent(message, errorHandler, errorScope, output);
+                auto errorScope = escopo.addPathEntry(
+                    "error/" ~ message
+                );
+                errorScope["error"] = ex.toError();
+                return handleEvent(
+                    message, errorHandler, errorScope, output
+                );
             }
         }
     }

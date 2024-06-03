@@ -2,6 +2,15 @@
 
 Show various forms of calling system commands.
 
+[system_commands/env]
+command {
+    - env
+}
+which {
+    - env
+    - --help
+}
+
 [system_commands/ls]
 parameters {
     path {
@@ -52,6 +61,7 @@ parameters {
 }
 
 print "It is not supposed to print the output of ls..."
+print "But the program should end successfully"
 ls $path : check
 
 
@@ -59,3 +69,12 @@ ls $path : check
 
 ls . | { print "ls> " }
 ls_no_which . | { print "lsnw> " }
+
+print "==================="
+
+env -- (test_variable = 123)
+    | transform x {
+        when ([o $x : match "test" | list : length] > 0) { return $x }
+        default { skip }
+    }
+    | { print }

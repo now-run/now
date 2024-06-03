@@ -145,13 +145,17 @@ class SystemCommand : BaseCommand
             - $options
             - $path
         }
-        We must evaluate that before and running.
+        We must evaluate that before running.
         */
         auto cmdline = this.getCommandLine(input.escopo);
 
         // set each variable on this Escopo as
         // a environment variable:
         string[string] env;
+
+        // input.escopo = whatever goes in `parameters`, basically.
+        // also `args` and `inputs`.
+        // (That is: it's the newly create scope, not the caller one.)
         foreach (key, value; input.escopo)
         {
             // TODO:
@@ -165,7 +169,7 @@ class SystemCommand : BaseCommand
             }
             else
             {
-                env[key] = "";
+                env[key] = value.toString;
             }
         }
 

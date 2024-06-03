@@ -207,13 +207,12 @@ static this()
     stringMethods["match"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        # Returns the index of the FIRST match
-        > "http://example.com" : match "^http:.\+"
-        0
+        # Returns the FIRST match
+        > "http://example.com" : match "^//.\+"
+        //example.com
         */
         auto target = (cast(String)object).toString;
         string expression = input.pop!string();
-        // XXX: is it really right?
         foreach(m; target.matchFirst(expression))
         {
             output.push(m);
