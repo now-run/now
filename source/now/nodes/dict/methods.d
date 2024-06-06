@@ -104,11 +104,7 @@ static this()
     dictMethods["pairs"] = function (Item object, string path, Input input, Output output)
     {
         auto dict = cast(Dict)object;
-        foreach (key, _; dict)
-        {
-            auto value = dict[key];
-            output.push(new Pair([new String(key), value]));
-        }
+        output.push(cast(Items)(dict.asPairs));
         return ExitCode.Success;
     };
     dictMethods["run"] = function (Item object, string path, Input input, Output output)

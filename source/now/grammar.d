@@ -702,7 +702,22 @@ class NowParser : Parser
             consumeChar();
 
             // Consume any opening newlines and spaces:
-            consumeWhitespaces();
+            if (currentChar == '\n')
+            {
+                /*
+                set s {{
+                  keep indentation of this line unchanged!
+                }}
+                */
+                consumeChar();
+            }
+            else
+            {
+                /*
+                set s {{ a b c }}
+                */
+                consumeWhitespaces();
+            }
 
             char[] token;
             while (true)
@@ -735,7 +750,7 @@ class NowParser : Parser
                 else if (currentChar == '\n')
                 {
                     token ~= consumeChar();
-                    consumeWhitespaces();
+                    // consumeWhitespaces();
                     continue;
                 }
                 token ~= consumeChar();

@@ -27,7 +27,6 @@ import now.commands.markdown;
 import now.commands.simpletemplate;
 import now.commands.terminal;
 import now.commands.url;
-import now.commands.yaml;
 
 
 static this()
@@ -1251,5 +1250,4 @@ forLoop:
     loadTemplateCommands(builtinCommands);
     loadTerminalCommands(builtinCommands);
     loadUrlCommands(builtinCommands);
-    loadYamlCommands(builtinCommands);
 }

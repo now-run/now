@@ -137,7 +137,6 @@ class SystemCommand : BaseCommand
         // arguments = input.args.map!(x => to!string(x)).array;
         // TODO: run further tests to make sure we really shouldn't
         // be revisiting input.args again.
-        // XXX: Next: should we handle kwargs?
 
         /*
         command {

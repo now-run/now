@@ -72,9 +72,15 @@ ls_no_which . | { print "lsnw> " }
 
 print "==================="
 
-env -- (test_variable = 123)
+dict
+    . (test_1 = 123)
+    . (test_2 = 234)
+    . (test_3 = 345)
+    | as vars
+
+env -- $vars
     | transform x {
-        when ([o $x : match "test" | list : length] > 0) { return $x }
+        when ([o $x : match "test_" | list : length] > 0) { return $x }
         default { skip }
     }
     | { print }
