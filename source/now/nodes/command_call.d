@@ -55,7 +55,25 @@ class CommandCall
 
         foreach(item; items)
         {
-            if (item.type != ObjectType.Pair)
+            if (item.type == ObjectType.Pair)
+            {
+                auto pair = cast(Pair)item;
+                auto key = pair.key.toString;
+                kwargs[key] = pair.value;
+            }
+            else if (item.type == ObjectType.Dict)
+            {
+                /*
+                dict (a = b) (c = d)
+                print "x" -- $dict
+                */
+                auto dict = cast(Dict)item;
+                foreach (pair; dict.asPairs)
+                {
+                    kwargs[pair.key.toString] = pair.value;
+                }
+            }
+            else
             {
                 throw new InvalidArgumentsException(
                     escopo,
@@ -63,13 +81,6 @@ class CommandCall
                     -1,
                     item
                 );
-            }
-            else
-            {
-                auto pair = cast(Pair)item;
-                auto key = pair.items[0].toString;
-                auto value = pair.items[1];
-                kwargs[key] = value;
             }
         }
         return kwargs;

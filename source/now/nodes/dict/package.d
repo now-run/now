@@ -41,6 +41,18 @@ class Dict : Item
         return s;
     }
 
+    Pair[] asPairs()
+    {
+        Pair[] pairs;
+
+        foreach (key, value; values)
+        {
+            pairs ~= new Pair([new String(key), value]);
+        }
+
+        return pairs;
+    }
+
     // ------------------
     // Operators
     Item opIndex(string key)

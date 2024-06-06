@@ -53,4 +53,13 @@ class Pair : List
             .map!(x => to!string(x))
             .join(" = ")) ~ ")";
     }
+
+    Item key()
+    {
+        return items[0];
+    }
+    Item value()
+    {
+        return items[1];
+    }
 }
