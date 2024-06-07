@@ -381,6 +381,9 @@ forLoop:
     {
         auto ms = input.pop!long;
 
+        // TODO: why is that?
+        // Probably a reminiscence from the times
+        // we used to support FIBERS...
         auto sw = StopWatch(AutoStart.yes);
         while(true)
         {

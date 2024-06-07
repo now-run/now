@@ -2,6 +2,7 @@ module now.cli;
 
 extern(C) int isatty(int);
 
+import core.thread : Thread;
 import std.algorithm : among;
 import std.algorithm.searching : canFind, startsWith;
 import std.datetime.stopwatch;
@@ -58,6 +59,7 @@ int main(string[] args)
                 // Commands to be called laters goes here.
                 case "repl":
                 case "cmd":
+                case "watch":
                 case "dump":
                     nowArgs ~= keyword;
                     break;
@@ -121,6 +123,8 @@ int main(string[] args)
                 return cmd(document, documentArgs);
             case "dump":
                 return dump(document, documentArgs);
+            case "watch":
+                return watch(document, documentArgs);
         }
     }
 
@@ -544,7 +548,46 @@ int dump(Document document, string[] documentArgs)
     }
     return 0;
 }
+int watch(Document document, string[] documentArgs)
+{
+    if (document is null)
+    {
+        document = new Document("watch", "Watch for changes in a file");
+        document.initialize(envVars);
+    }
 
+    auto escopo = new Escopo(document, "watch");
+    escopo["env"] = envVars;
+    auto output = new Output;
+
+    if (documentArgs.length == 0)
+    {
+        throw new Exception("You must define one file to be watched.");
+    }
+    string filepath = documentArgs[0];
+
+    auto lastModified = filepath.timeLastModified;
+
+    while (filepath.exists) {
+        auto parser = new NowParser(filepath.read.to!string);
+        auto subprogram = parser.consumeSubProgram();
+        auto exitCode = subprogram.run(escopo, output);
+        print_output(escopo, output);
+
+        while (true)
+        {
+            Thread.sleep(2500.msecs);
+            auto t = filepath.timeLastModified;
+            if (t != lastModified)
+            {
+                lastModified = t;
+                stderr.writeln("=== ", filepath, " ", t);
+                break;
+            }
+        }
+    }
+    return 0;
+}
 
 
 int bashAutoComplete(NowParser parser)
@@ -561,7 +604,7 @@ int bashAutoComplete(NowParser parser)
 
         if (filepath.exists)
         {
-            parser = new NowParser(read(filepath).to!string);
+            parser = new NowParser(filepath.read.to!string);
             document = parser.run();
         }
         else
