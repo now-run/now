@@ -83,6 +83,12 @@ class Item
     {
         return [this];
     }
+
+    // Iteration:
+    Item range()
+    {
+        return new ItemsRange([this]);
+    }
     ExitCode next(Escopo escopo, Output output)
     {
         auto input = Input(
@@ -112,5 +118,30 @@ class Item
                 ~ " for type " ~ type.to!string
             );
         }
+    }
+}
+
+class ItemsRange : Item
+{
+    Items items;
+    size_t index;
+    this(Items items)
+    {
+        this.type = ObjectType.Range;
+        this.typeName = "items_range";
+
+        this.items = items;
+        this.index = 0;
+    }
+
+    override ExitCode next(Escopo escopo, Output output)
+    {
+        if (index >= items.length)
+        {
+            return ExitCode.Break;
+        }
+
+        output.push(items[index++]);
+        return ExitCode.Continue;
     }
 }

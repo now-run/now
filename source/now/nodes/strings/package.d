@@ -71,6 +71,15 @@ class String : Item
 
         return bytes;
     }
+
+    override Item range()
+    {
+        return new ItemsRange(
+            cast(Items)(this.repr
+                .map!(x => new String(x.to!string))
+                .array)
+        );
+    }
 }
 
 

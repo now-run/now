@@ -27,6 +27,13 @@ class List : Item
             .map!(x => to!string(x))
             .join(" , ")) ~ ")";
     }
+    // TODO: allow `foreach(item; list)` instead
+    // of using `list.items`.
+
+    override Item range()
+    {
+        return new ItemsRange(items);
+    }
 }
 
 class Pair : List

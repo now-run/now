@@ -362,6 +362,11 @@ forLoop:
     */
     builtinCommands["read"] = function(string path, Input input, Output output)
     {
+        /*
+        TODO:
+        read | {print "stdin>"}
+        read 4 | {print "fd4>"}
+        */
         string content = stdin.byLine.join("\n").to!string;
         output.push(content);
         return ExitCode.Success;
@@ -869,74 +874,41 @@ forLoop:
 
         foreach (target; input.popAll)
         {
-            // TODO: encapsulate all this into proper functions/methods.
-            if (target.type == ObjectType.List)
-            {
-                auto list = cast(List)target;
-                foreach (item; list.items)
-                {
-                    log("- foreach.item: ", item);
-                    input.escopo[argName] = item;
+            auto range = target.range();
 
-                    auto exitCode = argBody.run(input.escopo, [], output);
-                    /*
-                    This exitCode check is different from the
-                    check of .next method! Here we don't have
-                    the possibility of .next returning
-                    break or continue because we
-                    don't even have a .next
-                    in the case of a List!
-                    */
-                    if (exitCode == ExitCode.Break)
-                    {
-                        break;
-                    }
-                    else if (exitCode == ExitCode.Return)
-                    {
-                        /*
-                        Return propagates up into the
-                        processes stack:
-                        */
-                        return ExitCode.Success;
-                    }
-                }
-            }
-            else
-            {
             forLoop:
-                while (true)
+            while (true)
+            {
+                auto nextOutput = new Output;
+                auto exitCode = range.next(input.escopo, nextOutput);
+                final switch (exitCode)
                 {
-                    auto nextOutput = new Output;
-                    auto exitCode = target.next(input.escopo, nextOutput);
-                    final switch (exitCode)
-                    {
-                        case ExitCode.Break:
-                            break forLoop;
-                        case ExitCode.Skip:
-                            continue;
-                        case ExitCode.Continue:
-                            break;  // <-- break the switch, not the while.
-                        case ExitCode.Return:
-                        case ExitCode.Success:
-                            return exitCode;
-                    }
+                    case ExitCode.Break:
+                        break forLoop;
+                    case ExitCode.Skip:
+                        continue;
+                    case ExitCode.Continue:
+                        break;  // <-- break the switch, not the while.
+                    case ExitCode.Return:
+                    case ExitCode.Success:
+                        return exitCode;
+                }
 
-                    input.escopo[argName] = nextOutput.items;
-                    exitCode = argBody.run(input.escopo, output);
+                input.escopo[argName] = nextOutput.items;
+                exitCode = argBody.run(input.escopo, output);
 
-                    if (exitCode == ExitCode.Break)
-                    {
-                        break;
-                    }
-                    else if (exitCode == ExitCode.Return)
-                    {
-                        /*
-                        Return propagates up into the
-                        processes stack and we
-                        don't want that.
-                        */
-                        return ExitCode.Success;
-                    }
+                if (exitCode == ExitCode.Break)
+                {
+                    break;
+                }
+                else if (exitCode == ExitCode.Return)
+                {
+                    /*
+                    Return propagates up into the
+                    processes stack and we
+                    don't want that.
+                    */
+                    return ExitCode.Success;
                 }
             }
         }
@@ -960,73 +932,41 @@ forLoop:
         uint index = 0;
         foreach (target; input.popAll)
         {
-            // TODO: encapsulate all this into proper functions/methods.
-            if (target.type == ObjectType.List)
-            {
-                auto list = cast(List)target;
-                foreach (item; list.items)
-                {
-                    log("- foreach.inline.item: ", item);
-                    // use item as inputs for argBody:
-                    auto exitCode = argBody.run(input.escopo, [item], output);
-                    /*
-                    This exitCode check is different from the
-                    check of .next method! Here we don't have
-                    the possibility of .next returning
-                    break or continue because we
-                    don't even have a .next
-                    in the case of a List!
-                    */
-                    if (exitCode == ExitCode.Break)
-                    {
-                        break;
-                    }
-                    else if (exitCode == ExitCode.Return)
-                    {
-                        /*
-                        Return propagates up into the
-                        processes stack:
-                        */
-                        return ExitCode.Success;
-                    }
-                }
-            }
-            else
-            {
+            auto range = target.range();
+
             forLoop:
-                while (true)
+            while (true)
+            {
+                auto nextOutput = new Output;
+                auto exitCode = range.next(input.escopo, nextOutput);
+                final switch (exitCode)
                 {
-                    auto nextOutput = new Output;
-                    auto exitCode = target.next(input.escopo, nextOutput);
-                    final switch (exitCode)
-                    {
-                        case ExitCode.Break:
-                            break forLoop;
-                        case ExitCode.Skip:
-                            continue;
-                        case ExitCode.Continue:
-                            break;  // <-- break the switch, not the while.
-                        case ExitCode.Return:
-                        case ExitCode.Success:
-                            return exitCode;
-                    }
+                    case ExitCode.Break:
+                        break forLoop;
+                    case ExitCode.Skip:
+                        continue;
+                    case ExitCode.Continue:
+                        break;  // <-- break the switch, not the while.
+                    case ExitCode.Return:
+                    case ExitCode.Success:
+                        return exitCode;
+                }
 
-                    // use nextOutput as inputs for argBody:
-                    log("-- foreach.inline argBody inputs: ", nextOutput.items);
-                    exitCode = argBody.run(input.escopo, nextOutput.items, output);
+                // use nextOutput as inputs for argBody:
+                log("-- foreach.inline argBody inputs: ", nextOutput.items);
+                exitCode = argBody.run(input.escopo, nextOutput.items, output);
 
-                    if (exitCode == ExitCode.Break)
-                    {
-                        break;
-                    }
-                    else if (exitCode == ExitCode.Return)
-                    {
-                        /*
-                        Return propagates up into the
-                        processes stack:
-                        */
-                        return ExitCode.Success;
-                    }
+                if (exitCode == ExitCode.Break)
+                {
+                    break;
+                }
+                else if (exitCode == ExitCode.Return)
+                {
+                    /*
+                    Return propagates up into the
+                    processes stack:
+                    */
+                    return ExitCode.Success;
                 }
             }
         }

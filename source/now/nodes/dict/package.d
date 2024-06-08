@@ -40,17 +40,21 @@ class Dict : Item
         );
         return s;
     }
-
     Pair[] asPairs()
     {
         Pair[] pairs;
 
-        foreach (key, value; values)
+        foreach (key; order)
         {
+            auto value = values[key];
             pairs ~= new Pair([new String(key), value]);
         }
 
         return pairs;
+    }
+    override Item range()
+    {
+        return new ItemsRange(cast(Items)asPairs);
     }
 
     // ------------------
