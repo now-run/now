@@ -377,6 +377,11 @@ forLoop:
         output.push(content);
         return ExitCode.Success;
     };
+    builtinCommands["read.lines"] = function(string path, Input input, Output output)
+    {
+        output.push(new PathFileRange(stdin));
+        return ExitCode.Success;
+    };
 
     // ---------------------------------------------
     /**
@@ -874,7 +879,15 @@ forLoop:
 
         foreach (target; input.popAll)
         {
-            auto range = target.range();
+            Item range;
+            if (target.type == ObjectType.Range)
+            {
+                range = target;
+            }
+            else
+            {
+                range = target.range();
+            }
 
             forLoop:
             while (true)
@@ -932,7 +945,15 @@ forLoop:
         uint index = 0;
         foreach (target; input.popAll)
         {
-            auto range = target.range();
+            Item range;
+            if (target.type == ObjectType.Range)
+            {
+                range = target;
+            }
+            else
+            {
+                range = target.range();
+            }
 
             forLoop:
             while (true)

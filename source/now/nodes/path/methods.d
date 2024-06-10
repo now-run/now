@@ -72,17 +72,6 @@ static this()
         output.push(new PathFileRange(path));
         return ExitCode.Success;
     };
-    pathMethods["write.lines"] = function (Item object, string name, Input input, Output output)
-    {
-        // TODO
-        auto path = cast(Path)object;
-        throw new NotImplementedException(
-            input.escopo,
-            "Not implemented yet",
-            -1,
-            path
-        );
-    };
     pathMethods["write"] = function (Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
@@ -102,17 +91,6 @@ static this()
             path.path.append(content);
         }
         return ExitCode.Success;
-    };
-    pathMethods["append.lines"] = function (Item object, string name, Input input, Output output)
-    {
-        // TODO
-        auto path = cast(Path)object;
-        throw new NotImplementedException(
-            input.escopo,
-            "Not implemented yet",
-            -1,
-            path
-        );
     };
 
     pathMethods["size"] = function (Item object, string name, Input input, Output output)

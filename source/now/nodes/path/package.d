@@ -38,13 +38,17 @@ class PathFileRange : Item
 
     this(Path path)
     {
+        this(File(path.path));
+    }
+    this(File file)
+    {
         this.type = ObjectType.Range;
         this.typeName = "path_file_range";
-        this.file = File(path.path);
+        this.file = file;
     }
     override string toString()
     {
-        return "PathFileRange";
+        return "PathFileRange for file " ~ file.name;
     }
     override ExitCode next(Escopo escopo, Output output)
     {
