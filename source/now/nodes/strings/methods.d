@@ -219,10 +219,55 @@ static this()
         }
         return ExitCode.Success;
     };
+    stringMethods["contains"] = function (Item object, string path, Input input, Output output)
+    {
+        /*
+        > "http://example.com" : contains "^//.\+"
+        true
+        */
+        auto target = (cast(String)object).toString;
+        string expression = input.pop!string();
+        foreach(m; target.matchFirst(expression))
+        {
+            output.push(true);
+            return ExitCode.Success;
+        }
+        // else
+        output.push(false);
+        return ExitCode.Success;
+    };
+    stringMethods["replace"] = function (Item object, string path, Input input, Output output)
+    {
+        /*
+        > o "http://example.com" : replace "http" "ftp"
+        "ftp://example.com"
+        */
+        auto s = (cast(String)object).toString;
+
+        string search, replacement;
+
+        while (true)
+        {
+            try
+            {
+                search = input.pop!string();
+                replacement = input.pop!string();
+            }
+            catch (EmptyException)
+            {
+                break;
+            }
+
+            s = s.replace(search, replacement);
+        }
+        output.push(s);
+        return ExitCode.Success;
+    };
     stringMethods["range"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        > range "12345" -> 1 , 2 , 3 , 4 , 5
+        > o "12345" : range | collect
+        (1 , 2 , 3 , 4 , 5)
         */
         class StringRange : Item
         {
