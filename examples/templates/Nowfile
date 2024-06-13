@@ -33,15 +33,21 @@ extends html_base
 
 [procedures/render]
 
-template htmls (page_title = "Directory Listings Example") | as tpl
+template htmls
+    . (page_title = "Directory Listings Example")
+    | as tpl
 
-list "/home" "/opt" | foreach directory {
-    obj $tpl : emit "body"
-    list a b c d | foreach file {
-        obj $tpl : emit "file"
+list "/home" "/opt"
+    | foreach directory {
+        obj $tpl : emit "body"
+        list a b c d
+            | foreach file {
+                obj $tpl : emit "file"
+            }
     }
-}
-obj $tpl : render | as rendered_template
+obj $tpl
+    : render
+    | as rendered_template
 
 obj $rendered_template
     : split "\n"
