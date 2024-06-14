@@ -57,15 +57,33 @@ description "Equivalent to 'list comprehensions' but without any special syntax.
 reference "http://xahlee.info/comp/list_comprehension.html"
 
 # Python:
-# [2 * n for n in range(0,9) if ((n % 2) == 0)]
+# 
 # Ruby:
 # (0..9).select{|n| n.even?}.map{|n| 2*n}
-range 0 8 | transform x {
-    when ($x % 2 != 0) { skip }
-    default ($x * 2)
-} | collect | as result
-print $result
-assert ($result == (0 , 4 , 8 , 12 , 16))
+scope "python: [2 * n for n in range(0,9) if ((n % 2) == 0)]" {
+    range 0 8
+        | transform x {
+            when ($x % 2 != 0) { skip }
+            default { o ($x * 2) }
+        }
+        | collect
+        : eq (0 , 4 , 8 , 12 , 16)
+        : assert
+}
+
+scope "python: [u.name for name in users_list]" {
+    list
+        . [dict (n = 1)]
+        . [dict (n = 2)]
+        . [dict (n = 3)]
+        | as lista
+
+    o $lista
+        | transform x {o $x : get n}
+        | collect
+        : eq (1 , 2 , 3)
+        : assert
+}
 log "ok!"
 
 [commands/strings]

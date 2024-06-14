@@ -55,7 +55,9 @@ static this()
 
     floatMethods["eq"] = function (Item object, string path, Input input, Output output)
     {
-        int pivot = cast(int)((cast(Float)object).toFloat * 1000);
+        auto f = cast(Float)object;
+        int pivot = cast(int)(f.toFloat * 1000);
+
         foreach (item; input.popAll)
         {
             int x = cast(int)(item.toFloat() * 1000);
@@ -73,10 +75,12 @@ static this()
 
     floatMethods["neq"] = function (Item object, string path, Input input, Output output)
     {
-        float pivot = cast(int)(input.pop!float() * 1000);
+        auto f = cast(Float)object;
+        float pivot = cast(int)(f.toFloat * 1000);
+
         foreach (item; input.popAll)
         {
-            float x = cast(int)(item.toFloat() * 1000);
+            float x = cast(int)(item.toFloat * 1000);
             if (pivot == x)
             {
                 output.push(false);

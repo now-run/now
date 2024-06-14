@@ -99,4 +99,36 @@ static this()
         }
         return ExitCode.Success;
     };
+    booleanMethods["assert"] = function(Item object, string path, Input input, Output output)
+    {
+        bool isConditionTrue = (cast(Boolean)object).toBool;
+        string message = "assertion error";
+        foreach (item; input.popAll)
+        {
+            if (item.type == ObjectType.String)
+            {
+                message = item.toString;
+            }
+            else
+            {
+                throw new InvalidArgumentsException(
+                    input.escopo,
+                    path ~ " should receive only one string as argument.",
+                    -1,
+                    item
+                );
+            }
+        }
+
+        if (!isConditionTrue)
+        {
+            throw new AssertionError(
+                input.escopo,
+                message,
+                -1,
+                object
+            );
+        }
+        return ExitCode.Success;
+    };
 }

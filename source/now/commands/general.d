@@ -349,6 +349,8 @@ forLoop:
                 );
                 newScope["message"] = item;
                 // A logger is not a handler, so we ignore the exitCode:
+                // TODO: review this. Maybe we should take the exitCode
+                // in consideration after all...
                 subprogram.run(newScope, output);
             }
         }
