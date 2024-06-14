@@ -79,7 +79,7 @@ scope "python: [u.name for name in users_list]" {
         | as lista
 
     o $lista
-        | transform x {o $x : get n}
+        | {o : get n}
         | collect
         : eq (1 , 2 , 3)
         : assert

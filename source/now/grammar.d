@@ -490,6 +490,15 @@ class NowParser : Parser
                 nextCall.name = "transform.inline";
                 consumeWhitespaces();
             }
+            else
+            {
+                consumeWhitespaces();
+                if (currentChar == '|')
+                {
+                    nextCall.name = "transform.inline";
+                }
+            }
+
             return nextCall;
         }
 
