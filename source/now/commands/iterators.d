@@ -81,10 +81,15 @@ class Transformer : Item
         this.type = ObjectType.Range;
         this.typeName = "transformer";
 
-        this.targets = targets;
         this.varName = varName;
         this.body = body;
         this.escopo = escopo;
+
+        // Get all ranges from targets:
+        foreach (target; targets)
+        {
+            this.targets ~= target.range();
+        }
     }
 
     override string toString()
@@ -100,80 +105,39 @@ class Transformer : Item
         */
         auto target = targets[targetIndex];
 
-        if (target.type == ObjectType.List)
+        auto nextOutput = new Output;
+        auto exitCode = target.next(escopo, nextOutput);
+
+        switch (exitCode)
         {
-            auto list = cast(List)target;
-            Item nextItem;
-            if (currentListIndex >= list.items.length)
-            {
-                currentListIndex = 0;
+            case ExitCode.Break:
                 targetIndex++;
                 if (targetIndex < targets.length)
                 {
                     return next(escopo, output);
                 }
-                else
-                {
-                    return ExitCode.Break;
-                }
-            }
-            else
-            {
-                nextItem = list.items[currentListIndex++];
-            }
-
-            if (varName)
-            {
-                escopo[varName] = nextItem;
-            }
-            else
-            {
-                output.push(nextItem);
-            }
+                goto case;
+            case ExitCode.Skip:
+                return exitCode;
+            case ExitCode.Continue:
+                break;
+            default:
+                throw new IteratorException(
+                    escopo,
+                    to!string(target)
+                    ~ ".next returned "
+                    ~ to!string(exitCode)
+                );
         }
-        else
+
+        if (varName)
         {
-            auto nextOutput = new Output;
-            auto exitCode = target.next(escopo, nextOutput);
-
-            switch (exitCode)
-            {
-                case ExitCode.Break:
-                    targetIndex++;
-                    if (targetIndex < targets.length)
-                    {
-                        return next(escopo, output);
-                    }
-                    goto case;
-                case ExitCode.Skip:
-                    return exitCode;
-                case ExitCode.Continue:
-                    break;
-                default:
-                    throw new IteratorException(
-                        escopo,
-                        to!string(target)
-                        ~ ".next returned "
-                        ~ to!string(exitCode)
-                    );
-            }
-
-            if (varName)
-            {
-                log("- Transformer ", varName, " <- ", nextOutput.items);
-                // XXX: should it be a popAll?
-                escopo[varName] = nextOutput.items;
-            }
-            else
-            {
-                foreach (item; nextOutput.items)
-                {
-                    output.push(item);
-                }
-            }
+            log("- Transformer ", varName, " <- ", nextOutput.items);
+            escopo[varName] = nextOutput.items;
+            nextOutput.items = [];
         }
 
-        auto execExitCode = body.run(escopo, output);
+        auto execExitCode = body.run(escopo, nextOutput.items, output);
         log("-- Transformer.body.exitCode: ", execExitCode, " <- ", output.items);
 
         switch(execExitCode)

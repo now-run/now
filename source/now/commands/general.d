@@ -881,15 +881,7 @@ forLoop:
 
         foreach (target; input.popAll)
         {
-            Item range;
-            if (target.type == ObjectType.Range)
-            {
-                range = target;
-            }
-            else
-            {
-                range = target.range();
-            }
+            Item range = target.range();
 
             forLoop:
             while (true)
@@ -947,15 +939,7 @@ forLoop:
         uint index = 0;
         foreach (target; input.popAll)
         {
-            Item range;
-            if (target.type == ObjectType.Range)
-            {
-                range = target;
-            }
-            else
-            {
-                range = target.range();
-            }
+            Item range = target.range();
 
             forLoop:
             while (true)

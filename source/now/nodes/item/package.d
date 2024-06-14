@@ -87,7 +87,14 @@ class Item
     // Iteration:
     Item range()
     {
-        return new ItemsRange([this]);
+        if (this.type == ObjectType.Range)
+        {
+            return this;
+        }
+        else
+        {
+            return new ItemsRange([this]);
+        }
     }
     ExitCode next(Escopo escopo, Output output)
     {
