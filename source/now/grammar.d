@@ -456,15 +456,6 @@ class NowParser : Parser
                 // Mark the command as a target:
                 commandCall.isTarget = true;
             }
-            else if (currentChar == SEMICOLON)
-            {
-                consumeChar();
-                if (currentChar == SPACE)
-                {
-                    consumeWhitespace();
-                }
-                continue;
-            }
             else
             {
                 break;
@@ -588,6 +579,9 @@ class NowParser : Parser
                 }
                 else if (currentChar == SEMICOLON)
                 {
+                    // Do absolutely the same as in the case of a EOL:
+                    consumeChar();
+                    consumeWhitespaces();
                     break;
                 }
 
