@@ -70,6 +70,7 @@ static this()
     };
 
     mixin(CreateOperator!("sum", "+"));
+    mixin(CreateOperator!("add", "+"));
     mixin(CreateOperator!("sub", "-"));
     mixin(CreateOperator!("mul", "*"));
     mixin(CreateOperator!("div", "/"));

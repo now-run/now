@@ -1171,6 +1171,8 @@ forLoop:
         > run { print 123 }
         123
 
+        > o 1 | run {as x ; o 1 : add $x} : eq 2 : assert
+
         Specially useful in conjunction with `when`:
         > set x 1
         > run {
@@ -1182,13 +1184,15 @@ forLoop:
         */
         auto body = input.pop!SubProgram;
         auto escopo = input.escopo.addPathEntry("run");
-        auto exitCode = body.run(escopo, output);
+        auto exitCode = body.run(escopo, input.popAll, output);
+        // exitCode = argBody.run(input.escopo, nextOutput.items, output);
         if (exitCode == ExitCode.Return)
         {
             exitCode = ExitCode.Success;
         }
         return exitCode;
     };
+    builtinCommands["->"] = builtinCommands["run"];
 
     // Others
     loadBase64Commands(builtinCommands);
