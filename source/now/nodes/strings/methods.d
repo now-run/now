@@ -32,7 +32,6 @@ static this()
         return subprogram.run(input.escopo, input.inputs, output);
     };
 
-
     stringMethods["get"] = function (Item object, string path, Input input, Output output)
     {
         /*
@@ -52,6 +51,73 @@ static this()
         return ExitCode.Success;
     };
     stringMethods["."] = stringMethods["get"];
+
+    stringMethods["netstrings"] = function (Item object, string path, Input input, Output output)
+    {
+        /*
+        > "5:hello," : netstrings
+        ("hello")
+        */
+        string target = (cast(String)object).toString;
+
+        while (target.length > 0)
+        {
+            log("netstring target: ", target);
+            auto colonIndex = target.indexOf(':');
+            log("- colonIndex: ", colonIndex);
+            if (colonIndex == -1)
+            {
+                break;
+            }
+            auto size = target[0..colonIndex].to!int;
+            auto start = colonIndex + 1;
+            auto end = start + size;
+            log("- size, start, end: ", size, " ", start, " ", end);
+            if (target[end] != ',')
+            {
+                throw new InvalidArgumentsException(
+                    input.escopo,
+                    "Netstrings must end with a comma.",
+                    -1,
+                    object
+                );
+            }
+            auto substring = target[start..end];
+            log("- substring: ", substring);
+            output.push(substring);
+            target = target[end..$];
+        }
+        return ExitCode.Success;
+    };
+    stringMethods["c.strings"] = function (Item object, string path, Input input, Output output)
+    {
+        /*
+        > "key\0value\0key2\0value2\0\k3\0v3" : c.strings
+        (key value key2 value2 k3 v3)
+        */
+        string target = (cast(String)object).toString;
+        foreach (c; target)
+        {
+            log("c=", c, "/", cast(byte)c);
+        }
+        while (target.length > 0)
+        {
+            auto end = target.indexOf('\0');
+            if (end == -1)
+            {
+                log("c.strings: can't find NULL in the string: ", target);
+                break;
+            }
+            auto substring = target[0..end];
+            output.push(substring);
+            log("c.strings end: ", end);
+            log("- substring: ", substring);
+            auto start = end + 1;
+            log("- start: ", start);
+            target = target[start..$];
+        }
+        return ExitCode.Success;
+    };
 
     stringMethods["slice"] = function (Item object, string path, Input input, Output output)
     {

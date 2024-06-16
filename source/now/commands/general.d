@@ -162,29 +162,23 @@ static this()
 forLoop:
         foreach (generator; input.popAll)
         {
-            if (generator.type == ObjectType.List)
-            {
-                auto list = cast(List)generator;
-                generatedOutput.push(list.items);
-            }
-            else
-            {
-                while (true)
-                {
-                    // Reminder: `nextOutput` will be
-                    // truncated on each call to `next`.
-                    auto nextOutput = new Output;
-                    auto nextExitCode = generator.next(input.escopo, nextOutput);
-                    generatedOutput.items ~= nextOutput.items;
+            auto range = generator.range();
 
-                    if (nextExitCode == ExitCode.Break)
-                    {
-                        break forLoop;
-                    }
-                    else if (nextExitCode == ExitCode.Skip)
-                    {
-                        continue;
-                    }
+            while (true)
+            {
+                // Reminder: `nextOutput` will be
+                // truncated on each call to `next`.
+                auto nextOutput = new Output;
+                auto nextExitCode = range.next(input.escopo, nextOutput);
+                generatedOutput.items ~= nextOutput.items;
+
+                if (nextExitCode == ExitCode.Break)
+                {
+                    break forLoop;
+                }
+                else if (nextExitCode == ExitCode.Skip)
+                {
+                    continue;
                 }
             }
         }

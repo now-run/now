@@ -3,6 +3,7 @@ module now.nodes.list.methods;
 
 import std.algorithm : map, sort;
 import std.algorithm.searching : canFind;
+import std.range : chunks;
 
 import now;
 
@@ -30,6 +31,7 @@ static this()
         return ExitCode.Success;
     };
     listMethods["."] = listMethods["get"];
+
     listMethods["as"] = function (Item object, string path, Input input, Output output)
     {
         List l = cast(List)object;
@@ -40,6 +42,37 @@ static this()
         return ExitCode.Success;
     };
 
+
+    listMethods["first"] = function (Item object, string path, Input input, Output output)
+    {
+        List l = cast(List)object;
+        if (l.items.length == 0)
+        {
+            throw new EmptyException(
+                input.escopo,
+                "List is empty",
+                -1,
+                l
+            );
+        }
+        output.push(l.items[0]);
+        return ExitCode.Success;
+    };
+    listMethods["last"] = function (Item object, string path, Input input, Output output)
+    {
+        List l = cast(List)object;
+        if (l.items.length == 0)
+        {
+            throw new EmptyException(
+                input.escopo,
+                "List is empty",
+                -1,
+                l
+            );
+        }
+        output.push(l.items[$ - 1]);
+        return ExitCode.Success;
+    };
     listMethods["slice"] = function (Item object, string path, Input input, Output output)
     {
         /*
@@ -83,6 +116,31 @@ static this()
 
         return ExitCode.Success;
     };
+    listMethods["to.pairs"] = function (Item object, string path, Input input, Output output)
+    {
+        /*
+        > list a 1 b 2 c 3 : to.pairs
+        (a = 1) (b = 2) (c = 3)
+        */
+        List l = cast(List)object;
+        if (l.items.length % 2 != 0)
+        {
+            throw new InvalidArgumentsException(
+                input.escopo,
+                "List has odd number of items.",
+                -1,
+                l
+            );
+        }
+
+        foreach (pair; l.items.chunks(2))
+        {
+            output.push(new Pair(pair));
+        }
+
+        return ExitCode.Success;
+    };
+
     listMethods["sort"] = function (Item object, string path, Input input, Output output)
     {
         class Comparator

@@ -192,6 +192,10 @@ class Parser
     // --------------------------------------------
     string consume_string(char opener, bool limit_to_eol=false)
     {
+        /*
+        Caution: grammar.d implements its own consumeString,
+        that won't call *this* method!
+        */
         string token;
 
         ulong index = 0;
@@ -208,6 +212,10 @@ class Parser
                 switch (currentChar)
                 {
                     // XXX: this cases could be written at compile time.
+                    case '0':
+                        token ~= cast(char)null;
+                        consumeChar();
+                        break;
                     case 'b':
                         token ~= '\b';
                         consumeChar();
@@ -226,6 +234,7 @@ class Parser
                         break;
                     // TODO: \u1234
                     default:
+                        stderr.writeln("not escaped: ", currentChar);
                         token ~= consumeChar();
                 }
             }

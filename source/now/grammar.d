@@ -982,6 +982,10 @@ class NowParser : Parser
                     http://odin-lang.org/docs/overview/#escape-characters
                     */
                     // XXX: this cases could be written at compile time.
+                    case '0':
+                        token ~= '\0';
+                        consumeChar();
+                        break;
                     case 'b':
                         token ~= '\b';
                         consumeChar();
