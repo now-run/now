@@ -22,3 +22,5 @@ import now.nodes.path.methods;
 import now.nodes.simpletemplate.methods;
 
 import now.system_command.methods;
+
+import now.nodes.tcp.methods;

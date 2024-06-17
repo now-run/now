@@ -1,0 +1,66 @@
+[Sockets Usage Example]
+
+This document shows how to serve a TCP Socket
+using Now.
+
+
+[procedures/connection_handler]
+parameters {
+    connection {
+        type tcp_connection
+    }
+}
+
+print "connection_handler: $connection"
+
+o $connection | {
+    as data
+
+    # TESTE: echo server
+    print "received: $data"
+    o $connection : send $data
+
+    break
+
+    scope "SCGI" {
+        o $data
+            | -> {print "data: " ; return $data}
+            : netstrings
+            : first
+            | as headers_string
+            | -> {as hs ; o $hs : c.strings : to.pairs | dict | as headers ; return $hs}
+            : length
+            | -> {as length ; o $data : slice $length end}
+            | as body
+
+        print "Data: <<$data>>"
+        print "Headers string: $headers_string"
+        print "Headers: $headers"
+        print "Body: $body"
+
+        o $connection : send {{
+            Status: 200 OK
+            Content-Type: text/plain
+
+            Hello, world!
+        }}
+        break
+    }
+}
+print "closing connection"
+o $connection : close
+
+[commands/run]
+parameters {
+    port {
+        type integer
+        default 5000
+    }
+    host {
+        type string
+        default localhost
+    }
+}
+
+tcp.serve $host $port
+    | {connection_handler}

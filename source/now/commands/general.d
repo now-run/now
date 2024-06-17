@@ -26,6 +26,7 @@ import now.commands.json;
 import now.commands.markdown;
 import now.commands.simpletemplate;
 import now.commands.terminal;
+import now.commands.tcp;
 import now.commands.url;
 
 
@@ -1161,6 +1162,9 @@ forLoop:
     // SubProgram related:
     builtinCommands["run"] = function (string path, Input input, Output output)
     {
+        // TODO: create an alternative version that return the same thing
+        // received as input.
+
         /*
         > run { print 123 }
         123
@@ -1197,5 +1201,6 @@ forLoop:
     loadMarkdownCommands(builtinCommands);
     loadTemplateCommands(builtinCommands);
     loadTerminalCommands(builtinCommands);
+    loadTCPCommands(builtinCommands);
     loadUrlCommands(builtinCommands);
 }

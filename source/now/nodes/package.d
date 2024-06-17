@@ -29,6 +29,8 @@ public import now.nodes.http;
 public import now.nodes.path;
 public import now.nodes.simpletemplate;
 
+public import now.nodes.tcp;
+
 public import now.nodes.error;
 
 // Document execution
@@ -67,7 +69,8 @@ enum ObjectType
     Path,
     Template,
 
-    Tcp,
+    TcpConnection,
+    TcpServer,
     Http,
     HttpResponse,
 
