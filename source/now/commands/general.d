@@ -350,6 +350,8 @@ forLoop:
             }
         }
 
+        stderr.flush();
+
         return ExitCode.Success;
     };
     builtinCommands["print.sameline"] = builtinCommands["print"];
