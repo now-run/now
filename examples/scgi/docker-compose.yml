@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  nginx:
+    build:
+      context: .
+    restart: "${DOCKER_RESTART:-unless-stopped}"
+    volumes:
+      - ./site.conf:/etc/nginx/conf.d/site.conf
+      - ./Nowfile:/Nowfile
+      - ./now.sh:/docker-entrypoint.d/now.sh
+      - ./logs:/var/log/nginx
+    ports:
+      - "${NGINX_PORT:-8000:8000}"

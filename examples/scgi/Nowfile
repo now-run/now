@@ -1,0 +1,92 @@
+[Sockets Usage Example]
+
+This document shows how to serve a TCP Socket
+using Now.
+
+[system_commands/compose]
+parameters {
+    operation {
+        type string
+        default up
+    }
+}
+command {
+    - docker
+    - compose
+    - $operation
+}
+which {
+    - echo
+    - "ignoring which for docker inside docker"
+}
+take_over true
+
+[procedures/connection_handler]
+parameters {
+    connection {
+        type tcp_connection
+    }
+}
+
+log "connection_handler: $connection"
+
+o $connection | foreach data {
+    log "data: <<$data>>"
+    log "Data length: " ($data : length)
+
+    scope "SCGI" {
+        o $data
+            : netstrings
+            | -> {
+                o : as headers_strings body
+                log "Headers strings: $headers_strings"
+                log "Body: $body"
+                return $headers_strings
+            }
+            : first
+            | as headers_string
+            : c.strings
+            : to.pairs
+            | dict
+            | as headers
+
+        log "Headers: $headers"
+        log "Header string length: " ($headers_string : length)
+
+        o $connection : send {{
+Status: 200 OK
+Content-Type: text/plain
+
+Hello, world!
+        }}
+        break
+    }
+}
+log "closing connection"
+o $connection : close
+
+[commands/scgi]
+parameters {
+    port {
+        type integer
+        default 5000
+    }
+    host {
+        type string
+        default localhost
+    }
+}
+
+tcp.serve $host $port
+    | foreach connection {
+        connection_handler $connection
+            ! * {
+                log "Error! Closing connection."
+                log $error
+                o $connection : close
+            }
+    }
+
+[commands/run]
+
+compose up
