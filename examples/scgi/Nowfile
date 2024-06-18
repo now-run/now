@@ -15,10 +15,7 @@ command {
     - compose
     - $operation
 }
-which {
-    - echo
-    - "ignoring which for docker inside docker"
-}
+which false
 take_over true
 
 [procedures/connection_handler]
@@ -37,8 +34,10 @@ o $connection | foreach data {
     scope "SCGI" {
         o $data
             : netstrings
-            | -> {
-                o : as headers_strings body
+            | run {
+                o : as
+                    . headers_strings
+                    . body
                 log "Headers strings: $headers_strings"
                 log "Body: $body"
                 return $headers_strings
@@ -52,6 +51,23 @@ o $connection | foreach data {
 
         log "Headers: $headers"
         log "Header string length: " ($headers_string : length)
+
+        o $headers
+            | -> {
+                o : get "REQUEST_URI"
+                    | as path
+                    | log "Path: "
+            }
+            | -> {
+                o : get "QUERY_STRING"
+                    | as query_params
+                    | log "Query parameters: "
+            }
+            | -> {
+                o : get "REQUEST_METHOD"
+                    | as request_method
+                    | log "Request method: "
+            }
 
         o $connection : send {{
 Status: 200 OK
@@ -89,4 +105,4 @@ tcp.serve $host $port
 
 [commands/run]
 
-compose up
+compose up : check

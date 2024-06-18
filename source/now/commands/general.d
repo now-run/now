@@ -685,7 +685,6 @@ forLoop:
 
     // set pair (a = b)
     // -> set pair [= a b]
-    // --> set pairt [list a b]
     builtinCommands["="] = function(string path, Input input, Output output)
     {
         auto key = input.pop!Item();
@@ -1164,9 +1163,6 @@ forLoop:
     // SubProgram related:
     builtinCommands["run"] = function (string path, Input input, Output output)
     {
-        // TODO: create an alternative version that return the same thing
-        // received as input.
-
         /*
         > run { print 123 }
         123
@@ -1185,14 +1181,37 @@ forLoop:
         auto body = input.pop!SubProgram;
         auto escopo = input.escopo.addPathEntry("run");
         auto exitCode = body.run(escopo, input.popAll, output);
-        // exitCode = argBody.run(input.escopo, nextOutput.items, output);
         if (exitCode == ExitCode.Return)
         {
             exitCode = ExitCode.Success;
         }
         return exitCode;
     };
-    builtinCommands["->"] = builtinCommands["run"];
+    builtinCommands["bypass"] = function (string path, Input input, Output output)
+    {
+        /*
+        > o teste | bypass { print "-> " } | print ">> "
+        -> teste
+        >> teste
+
+        Alternative syntax:
+        > o teste | --- { print "-> " } | print ">> "
+        */
+        auto body = input.pop!SubProgram;
+        auto escopo = input.escopo.addPathEntry("run");
+        auto newOutput = new Output;
+        auto exitCode = body.run(escopo, input.popAll, newOutput);
+
+        // Pass along whatever is coming through the input pipe:
+        output.push(input.inputs);
+
+        if (exitCode == ExitCode.Return)
+        {
+            exitCode = ExitCode.Success;
+        }
+        return exitCode;
+    };
+    builtinCommands["->"] = builtinCommands["bypass"];
 
     // Others
     loadBase64Commands(builtinCommands);

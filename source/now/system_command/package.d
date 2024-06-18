@@ -62,12 +62,25 @@ class SystemCommand : BaseCommand
         string [] whichCmdLine;
         auto escopo = new Escopo(document, this.name);
         info.on("which", delegate (item) {
-            // XXX: check if this works:
-            auto list = cast(List)item;
-            foreach (cmdItem; list.items)
+            if (item.type == ObjectType.Boolean)
             {
-                auto evaluationOutput = cmdItem.evaluate(escopo);
-                whichCmdLine ~= evaluationOutput.front.toString();
+                auto b = (cast(Boolean)item).toBool;
+                if (b is true)
+                {
+                    // REPETITION!
+                    whichCmdLine ~= "which";
+                    auto evaluationOutput = this.command.items.front.evaluate(escopo);
+                    whichCmdLine ~= evaluationOutput.front.toString();
+                }
+            }
+            else if (item.type == ObjectType.List)
+            {
+                auto list = cast(List)item;
+                foreach (cmdItem; list.items)
+                {
+                    auto evaluationOutput = cmdItem.evaluate(escopo);
+                    whichCmdLine ~= evaluationOutput.front.toString();
+                }
             }
         }, delegate () {
             // TODO: run `which` (the system command) to
