@@ -55,10 +55,11 @@ static this()
     stringMethods["netstrings"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        > "5:hello," : netstrings
-        ("hello")
+        > "5:hello,5:world,blebs" : netstrings
+        ("hello" , "world") blebs
         */
         string target = (cast(String)object).toString;
+        Items items;
 
         while (target.length > 0)
         {
@@ -84,9 +85,16 @@ static this()
             }
             auto substring = target[start..end];
             log("- substring: ", substring);
-            output.push(substring);
-            target = target[end..$];
+            items ~= new String(substring);
+            target = target[end+1..$];
         }
+
+        output.push(
+            new List([
+                new List(items),
+                new String(target)]
+            )
+        );
         return ExitCode.Success;
     };
     stringMethods["c.strings"] = function (Item object, string path, Input input, Output output)
@@ -96,10 +104,9 @@ static this()
         (key value key2 value2 k3 v3)
         */
         string target = (cast(String)object).toString;
-        foreach (c; target)
-        {
-            log("c=", c, "/", cast(byte)c);
-        }
+
+        Items items;
+
         while (target.length > 0)
         {
             auto end = target.indexOf('\0');
@@ -109,13 +116,14 @@ static this()
                 break;
             }
             auto substring = target[0..end];
-            output.push(substring);
+            items ~= new String(substring);
             log("c.strings end: ", end);
             log("- substring: ", substring);
             auto start = end + 1;
             log("- start: ", start);
             target = target[start..$];
         }
+        output.push(new List(items));
         return ExitCode.Success;
     };
 
