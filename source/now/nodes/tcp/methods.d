@@ -20,10 +20,10 @@ static this()
         TcpConnection c = cast(TcpConnection)object;
         log("socket send input.items=", input.items);
         string msg = input.pop!string;
-
         log("socket send msg=", msg);
+
         auto sent = c.socket.send(msg);
-        if (sent == Socket.ERROR)
+        if (sent == Socket.ERROR || sent < msg.length)
         {
             throw new TcpSocketException(
                 input.escopo,

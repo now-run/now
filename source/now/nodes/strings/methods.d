@@ -406,18 +406,19 @@ static this()
     };
     stringMethods["!="] = stringMethods["neq"];
 
-    /*
-    stringMethods["to.ascii"] = function (Item object, string path, Input input, Output output)
+    stringMethods["to.bytes"] = function (Item object, string path, Input input, Output output)
     {
-        > "ab" : to.ascii
+        /*
+        > "ab" : to.bytes
         (97 , 98)
-        auto target = (cast(String)object).toString;
-        auto items = target.toBytes()
-            .map!(x => new IntegerAtom(x))
-            .map!(x => cast(Item)x)
-            .array;
+        */
+        auto target = cast(String)object;
+        auto items = cast(Items)(
+            target.toBytes()
+                .map!(x => new Integer(x))
+                .array
+        );
         output.push(new List(items));
         return ExitCode.Success;
     };
-    */
 }

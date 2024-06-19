@@ -73,7 +73,11 @@ o $connection | foreach data {
 Status: 200 OK
 Content-Type: text/plain
 
+
+
 Hello, world!
+
+!
         }}
         break
     }
@@ -106,3 +110,43 @@ tcp.serve $host $port
 [commands/run]
 
 compose up : check
+
+[commands/get]
+parameters {
+    port {
+        type integer
+        default 8000
+    }
+    host {
+        type string
+        default localhost
+    }
+}
+
+set request "GET /index.php HTTP/1.1
+Host: localhost
+User-Agent: Now
+Accept: text/html
+
+"
+
+log "request: <<$request>>"
+
+tcp.connect $host $port
+    | -> {
+        o : send $request
+    }
+    | -> {
+        o
+        | {o : split "\n"}
+        | foreach response_lines {
+            o $response_lines
+                | foreach line {
+                    o $line
+                    | -> {o | print ">> "}
+                    | -> {o : to.bytes | print ">> "}
+                }
+            break
+        }
+    }
+    : close

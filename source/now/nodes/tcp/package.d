@@ -15,12 +15,10 @@ const BUFFER_INCREMENT = 1024;
 
 class TcpConnection : Item
 {
-    TcpServer server;
     Socket socket;
 
-    this(TcpServer server, Socket socket)
+    this(Socket socket)
     {
-        this.server = server;
         this.socket = socket;
 
         this.type = ObjectType.TcpConnection;
@@ -99,9 +97,9 @@ class TcpServer : Item
         log("tcp_server next");
         auto connection = socket.accept();
         log("- connection: ", connection);
-        auto server = new TcpConnection(this, connection);
+        auto client = new TcpConnection(connection);
 
-        output.push(server);
+        output.push(client);
         return ExitCode.Continue;
     }
 }
