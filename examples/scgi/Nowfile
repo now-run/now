@@ -69,15 +69,15 @@ o $connection | foreach data {
                     | log "Request method: "
             }
 
-        o $connection : send {{
-Status: 200 OK
+        set msg "Hello, world!"
+            : length
+            | as content_length
+
+        o $connection : send "Status: 200 OK
 Content-Type: text/plain
+Content-Length: $content_length
 
-
-
-Hello, world!
-
-!
+$msg"
         }}
         break
     }
@@ -143,8 +143,7 @@ tcp.connect $host $port
             o $response_lines
                 | foreach line {
                     o $line
-                    | -> {o | print ">> "}
-                    | -> {o : to.bytes | print ">> "}
+                    | -> {o | print}
                 }
             break
         }
