@@ -3,20 +3,26 @@
 This document shows how to serve a TCP Socket
 using Now.
 
-[system_commands/compose]
-parameters {
-    operation {
-        type string
-        default up
-    }
-}
+[system_commands/docker]
 command {
     - docker
-    - compose
-    - $operation
+    - $args
 }
 which false
 take_over true
+
+[procedures/compose]
+parameters {
+    operation {
+        type string
+    }
+}
+
+docker compose up : check
+
+[procedures/compose/on.return]
+
+docker compose down : check
 
 [procedures/connection_handler]
 parameters {
