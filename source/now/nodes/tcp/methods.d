@@ -8,7 +8,12 @@ import now;
 
 static this()
 {
-    // About whatever the path points to:
+    tcpConnectionMethods["next"] = function (Item object, string name, Input input, Output output)
+    {
+        TcpConnection c = cast(TcpConnection)object;
+        return c.next(input.escopo, output);
+    };
+
     tcpConnectionMethods["close"] = function (Item object, string name, Input input, Output output)
     {
         TcpConnection c = cast(TcpConnection)object;

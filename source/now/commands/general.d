@@ -823,7 +823,7 @@ forLoop:
         auto targets = input.popAll();
         if (targets.length == 0)
         {
-            auto msg = "no target to transform";
+            auto msg = "no target to transform.inline";
             throw new SyntaxErrorException(
                 input.escopo,
                 msg
@@ -1187,31 +1187,6 @@ forLoop:
         }
         return exitCode;
     };
-    builtinCommands["bypass"] = function (string path, Input input, Output output)
-    {
-        /*
-        > o teste | bypass { print "-> " } | print ">> "
-        -> teste
-        >> teste
-
-        Alternative syntax:
-        > o teste | --- { print "-> " } | print ">> "
-        */
-        auto body = input.pop!SubProgram;
-        auto escopo = input.escopo.addPathEntry("run");
-        auto newOutput = new Output;
-        auto exitCode = body.run(escopo, input.popAll, newOutput);
-
-        // Pass along whatever is coming through the input pipe:
-        output.push(input.inputs);
-
-        if (exitCode == ExitCode.Return)
-        {
-            exitCode = ExitCode.Success;
-        }
-        return exitCode;
-    };
-    builtinCommands["->"] = builtinCommands["bypass"];
 
     // Others
     loadBase64Commands(builtinCommands);

@@ -1,7 +1,16 @@
 module now.nodes.command_call;
 
 
+import std.algorithm.searching : startsWith;
+
 import now;
+
+
+struct NamedSubProgram
+{
+    string name;
+    SubProgram subprogram;
+}
 
 
 class CommandCall
@@ -15,6 +24,7 @@ class CommandCall
 
     // For handling error locally:
     SubProgram[string] eventHandlers;
+    SubProgram[] bypasses;
 
     this(string name, Items args, Items kwargs)
     {
@@ -22,6 +32,25 @@ class CommandCall
         this.args = args;
         this.kwargs = kwargs;
         this.isTarget = false;
+    }
+    this(string name, Items args, Items kwargs, NamedSubProgram[] eventHandlers)
+    {
+        this(name, args, kwargs);
+
+        foreach (pair; eventHandlers)
+        {
+            auto k = pair.name;
+            auto v = pair.subprogram;
+
+            if (k[0] == '.' && k.startsWith(".B "))
+            {
+                this.bypasses ~= v;
+            }
+            else
+            {
+                this.eventHandlers[k] = v;
+            }
+        }
     }
 
     override string toString()
@@ -87,6 +116,18 @@ class CommandCall
     }
 
     ExitCode run(Escopo escopo, Items inputs, Output output, Item target=null)
+    {
+        auto exitCode = _run(escopo, inputs, output, target);
+
+        auto bpOutput = new Output;
+        foreach (bypass; bypasses)
+        {
+            bypass.run(escopo, output.items, bpOutput);
+        }
+
+        return exitCode;
+    }
+    ExitCode _run(Escopo escopo, Items inputs, Output output, Item target=null)
     {
         log("- CommandCall.run: ", this);
         if (isTarget)

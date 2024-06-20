@@ -53,17 +53,17 @@ o $connection | foreach data {
         log "Header string length: " ($headers_string : length)
 
         o $headers
-            | -> {
+            ! >> {
                 o : get "REQUEST_URI"
                     | as path
                     | log "Path: "
             }
-            | -> {
+            ! >> {
                 o : get "QUERY_STRING"
                     | as query_params
                     | log "Query parameters: "
             }
-            | -> {
+            ! >> {
                 o : get "REQUEST_METHOD"
                     | as request_method
                     | log "Request method: "
@@ -78,7 +78,6 @@ Content-Type: text/plain
 Content-Length: $content_length
 
 $msg"
-        }}
         break
     }
 }
@@ -133,19 +132,20 @@ Accept: text/html
 log "request: <<$request>>"
 
 tcp.connect $host $port
-    | -> {
+    ! * {print "Whoops! And error! $error" ; return $error}
+    ! >> {
+        print "connection object: "
+    }
+    ! >> {
         o : send $request
     }
-    | -> {
-        o
-        | {o : split "\n"}
-        | foreach response_lines {
-            o $response_lines
-                | foreach line {
-                    o $line
-                    | -> {o | print}
-                }
-            break
-        }
+    ! >> {
+        o | {print ; break}
+    }
+    ! >> {
+        as _
+        print "Closing socket..."
     }
     : close
+
+print "Quit."

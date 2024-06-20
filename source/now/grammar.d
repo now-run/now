@@ -12,7 +12,7 @@ import now.parser;
 
 const PIPE = '|';
 const METHOD_SELECTOR = ':';
-const ERROR_HANDLER = '!';
+const EVENT_HANDLER = '!';
 const PROPERTY_TOKEN = '~';
 
 // Integers units:
@@ -499,9 +499,12 @@ class NowParser : Parser
         */
 
         Name commandName = cast(Name)consumeAtom();
+        auto cLine = line;
+        auto cCol = col;
+
         Items args;
         Items kwargs;
-        SubProgram[string] eventHandlers;
+        NamedSubProgram[] eventHandlers;
 
         bool readingKwArgs = false;
 
@@ -518,7 +521,7 @@ class NowParser : Parser
                     consumeChar();
                     // consumeSpace();
                 }
-                else if (currentChar == ERROR_HANDLER)
+                else if (currentChar == EVENT_HANDLER)
                 {
                     // Go back one char, back to the SPACE.
                     index --;
@@ -567,14 +570,11 @@ class NowParser : Parser
                 {
                     break;
                 }
-                else if (currentChar == ERROR_HANDLER)
+                else if (currentChar == EVENT_HANDLER)
                 {
-                    log("ERROR HANDLER!");
-                    while (currentChar == ERROR_HANDLER)
-                    {
-                        eventHandlers = consumeEventHandler(eventHandlers);
-                        log("eventHandlers:", eventHandlers);
-                    }
+                    log("Event handlers found");
+                    eventHandlers = consumeEventHandlers();
+                    log("- eventHandlers:", eventHandlers);
                     break;
                 }
                 else if (currentChar == SEMICOLON)
@@ -612,13 +612,17 @@ class NowParser : Parser
             }
         }
 
-        auto result = new CommandCall(commandName.toString(), args, kwargs);
-        result.documentLineNumber = line;
-        result.documentColNumber = col;
-        result.eventHandlers = eventHandlers;
+        auto result = new CommandCall(
+            commandName.toString(),
+            args, kwargs,
+            eventHandlers
+        );
+        result.documentLineNumber = cLine;
+        result.documentColNumber = cCol;
+
         return result;
     }
-    SubProgram[string] consumeEventHandler(SubProgram[string] handlers)
+    NamedSubProgram[] consumeEventHandlers()
     {
         /*
                 \ /
@@ -627,30 +631,28 @@ class NowParser : Parser
         }>
         */
 
-        auto mark = consumeChar();
-        consumeWhitespace();
-        auto error_type = consumeAtom();
-        consumeWhitespace();
-        auto opener = consumeChar();  // {
-        if (opener != '{')
-        {
-            throw new Exception(
-                "Invalid syntax: expecting subprogram opener"
-            );
-        }
-        auto handler = consumeSubProgram();
-        auto closer = consumeChar();  // }
-        if (closer != '}')
-        {
-            throw new Exception(
-                "Invalid syntax: expecting subprogram closer"
-            );
-        }
-        consumeWhitespaces();
+        NamedSubProgram[] handlers;
 
-        log("!!! ", error_type, " -> ", handler);
+        auto bpIndex = 0;
+        while (currentChar == EVENT_HANDLER)
+        {
+            auto mark = consumeChar();
+            consumeWhitespace();
+            auto eventName = consumeAtom().toString;
+            consumeWhitespace();
+            auto handler = consumeSubList();
+            consumeWhitespaces();
 
-        handlers[error_type.toString] = handler;
+            if (eventName == ">>")
+            {
+                // ".B 0"
+                eventName = ".B " ~ (bpIndex.to!string);
+                bpIndex++;
+            }
+
+            log("!!! ", eventName, " -> ", handler);
+            handlers ~= NamedSubProgram(eventName, handler);
+        }
         return handlers;
     }
     CommandCall foreachInline()
