@@ -340,6 +340,10 @@ class SystemProcess : Item
             return s;
         }
     }
+    override Item range()
+    {
+        return this;
+    }
 
     bool isRunning()
     {

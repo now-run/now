@@ -48,11 +48,10 @@ o $connection | foreach data {
             : to.pairs
             | dict
             | as headers
-
-        log "Headers: $headers"
-        log "Header string length: " ($headers_string : length)
-
-        o $headers
+            ! >> {
+                log "Headers: $headers"
+                log "Header string length: " ($headers_string : length)
+            }
             ! >> {
                 o : get "REQUEST_URI"
                     | as path
