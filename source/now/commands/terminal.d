@@ -4,14 +4,6 @@ module now.commands.terminal;
 import now;
 
 
-extern(C) int isatty(int);
-
-bool isTTY()
-{
-    return cast(bool)isatty(stdout.fileno);
-}
-
-
 auto reverseVideo = "\033[7m";
 auto fgPrefix = "\033[38;2;";
 auto bgPrefix = "\033[48;2;";

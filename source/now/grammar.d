@@ -444,7 +444,7 @@ class NowParser : Parser
             auto commandCall = consumeCommandCall();
             commandCalls ~= commandCall;
 
-            if (currentChar == PIPE)
+            if (currentChar.among!(PIPE,SEMICOLON))
             {
                 consumeChar();
                 consumeSpace();
@@ -475,19 +475,11 @@ class NowParser : Parser
         if (currentChar == '{')
         {
             CommandCall nextCall = foreachInline();
-            if (!isEndOfLine)
+            // The above function will consume a SubList
+            consumeWhitespaces();
+            if (currentChar == '|')
             {
-                // Whops! It's not a foreach.inline, but a transform.inline!
                 nextCall.name = "transform.inline";
-                consumeWhitespaces();
-            }
-            else
-            {
-                consumeWhitespaces();
-                if (currentChar == '|')
-                {
-                    nextCall.name = "transform.inline";
-                }
             }
 
             return nextCall;
@@ -579,9 +571,6 @@ class NowParser : Parser
                 }
                 else if (currentChar == SEMICOLON)
                 {
-                    // Do absolutely the same as in the case of a EOL:
-                    consumeChar();
-                    consumeWhitespaces();
                     break;
                 }
 
@@ -619,6 +608,8 @@ class NowParser : Parser
         );
         result.documentLineNumber = cLine;
         result.documentColNumber = cCol;
+        log("command call: ", result);
+        log("currentChar: ", currentChar);
 
         return result;
     }

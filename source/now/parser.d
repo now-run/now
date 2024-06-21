@@ -234,7 +234,7 @@ class Parser
                         break;
                     // TODO: \u1234
                     default:
-                        stderr.writeln("not escaped: ", currentChar);
+                        // stderr.writeln("not escaped: ", currentChar);
                         token ~= consumeChar();
                 }
             }

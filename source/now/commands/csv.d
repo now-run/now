@@ -85,10 +85,9 @@ void loadCsvCommands(CommandsMap commands)
             separator = (*separator_ptr).toString;
         }
 
-        string s;
-        foreach (lineItem; source.items)
+        string[] encodedLines;
+        foreach (line; source.items.map!(x => cast(List)x))
         {
-            auto line = cast(List)lineItem;
             string[] items;
             foreach (item; line.items)
             {
@@ -109,11 +108,10 @@ void loadCsvCommands(CommandsMap commands)
                     items ~= item.toString();
                 }
             }
-            s ~= items.join(separator);
-            s ~= "\n";
+            encodedLines ~= items.join(separator);
         }
 
-        output.push(s);
+        output.push(encodedLines.join("\n"));
         return ExitCode.Success;
     };
 }

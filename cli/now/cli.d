@@ -59,6 +59,7 @@ int main(string[] args)
                 // Commands to be called laters goes here.
                 case "repl":
                 case "cmd":
+                case "lp":
                 case "watch":
                 case "dump":
                     nowArgs ~= keyword;
@@ -121,6 +122,8 @@ int main(string[] args)
                 return repl(document, documentArgs, nowArgs);
             case "cmd":
                 return cmd(document, documentArgs);
+            case "lp":
+                return lineProcessor(document, documentArgs);
             case "dump":
                 return dump(document, documentArgs);
             case "watch":
@@ -279,7 +282,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
             User should be able to recover gracefully from
             errors, so this output should be considered "good"...
             */
-            print_output(newScope, errorOutput);
+            printOutput(newScope, errorOutput);
             return 0;
         }
 
@@ -455,7 +458,7 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
         });
 
         // Print whatever is still in the stack:
-        print_output(escopo, output);
+        printOutput(escopo, output);
 
         if (exitCode != ExitCode.Success)
         {
@@ -475,7 +478,7 @@ int cmd(Document document, string[] documentArgs)
 
     auto escopo = new Escopo(document, "cmd");
     escopo["env"] = envVars;
-    Items inputs = [new PathFileRange(stdin)];
+
     auto output = new Output;
 
     foreach (line; documentArgs)
@@ -497,7 +500,7 @@ int cmd(Document document, string[] documentArgs)
         try
         {
             exitCode = errorPrinter({
-                return pipeline.run(escopo, inputs, output);
+                return pipeline.run(escopo, output);
             });
         }
         catch (NowException ex)
@@ -520,7 +523,107 @@ int cmd(Document document, string[] documentArgs)
     }
 
     // Print the output of the last command:
-    print_output(escopo, output);
+    printOutput(escopo, output);
+
+    return 0;
+}
+int lineProcessor(Document document, string[] documentArgs)
+{
+    if (document is null)
+    {
+        document = new Document("cmd", "Run commands passed as arguments");
+        document.initialize(envVars);
+    }
+
+    auto escopo = new Escopo(document, "cmd");
+    escopo["env"] = envVars;
+    Items inputs = [new PathFileRange(stdin)];
+    auto output = new Output;
+
+    ExitCode exitCode;
+
+    foreach (line; documentArgs)
+    {
+        auto parser = new NowParser(line);
+        Pipeline pipeline;
+        try
+        {
+            pipeline = parser.consumePipeline();
+        }
+        catch (Exception ex)
+        {
+            return -1;
+        }
+
+        auto filter = new CommandCall(
+            "transform.inline",
+            [new SubProgram([pipeline])], []
+        );
+
+        // Reset output before running a new filter:
+        output.items.length = 0;
+        try
+        {
+            exitCode = errorPrinter({
+                return filter.run(escopo, inputs, output);
+            });
+        }
+        catch (NowException ex)
+        {
+            auto error = new Erro(
+                ex.msg,
+                ex.code,
+                ex.typename,
+                escopo
+            );
+            stderr.writeln(error.toString());
+            stderr.writeln("----------");
+            return error.code;
+        }
+
+        if (exitCode != ExitCode.Success)
+        {
+            stderr.writeln(exitCode.to!string);
+        }
+
+        // Prepare for next command:
+        inputs = output.items;
+    }
+
+    // `| {print}`
+    auto printCommand = new CommandCall("print", [], []);
+    auto printer = new CommandCall(
+        "foreach.inline",
+        [new SubProgram([new Pipeline([printCommand])])], []
+    );
+
+    auto printerOutput = new Output;
+    try
+    {
+        exitCode = errorPrinter({
+            return printer.run(escopo, output.items, printerOutput);
+        });
+    }
+    catch (NowException ex)
+    {
+        auto error = new Erro(
+            ex.msg,
+            ex.code,
+            ex.typename,
+            escopo
+        );
+        stderr.writeln(error.toString());
+        stderr.writeln("----------");
+        return error.code;
+    }
+
+    if (exitCode != ExitCode.Success)
+    {
+        stderr.writeln(exitCode.to!string);
+    }
+
+    // Print the output of the last command:
+    printOutput(escopo, printerOutput);
 
     return 0;
 }
@@ -573,7 +676,7 @@ int watch(Document document, string[] documentArgs)
         auto parser = new NowParser(filepath.read.to!string);
         auto subprogram = parser.consumeSubProgram();
         auto exitCode = subprogram.run(escopo, output);
-        print_output(escopo, output);
+        printOutput(escopo, output);
 
         while (true)
         {
@@ -649,9 +752,9 @@ int bashAutoComplete(NowParser parser)
 }
 
 
-void print_output(Escopo escopo, Output output)
+void printOutput(Escopo escopo, Output output)
 {
-    log("+ print_output:", escopo, output);
+    log("+ printOutput:", escopo, output);
     foreach (item; output.items)
     {
         debug{stderr.writeln(item.type.to!string, " ");}
