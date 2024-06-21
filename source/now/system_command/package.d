@@ -83,8 +83,6 @@ class SystemCommand : BaseCommand
                 }
             }
         }, delegate () {
-            // TODO: run `which` (the system command) to
-            // check if the requested command is available.
             whichCmdLine ~= "which";
             auto evaluationOutput = this.command.items.front.evaluate(escopo);
             whichCmdLine ~= evaluationOutput.front.toString();
@@ -143,21 +141,12 @@ class SystemCommand : BaseCommand
             );
         }
 
-        // Arguments:
-        // TESTE: all "args" were already used bound to
-        // proper variables in this scope, so no need
-        // to revisit it again.
-        // arguments = input.args.map!(x => to!string(x)).array;
-        // TODO: run further tests to make sure we really shouldn't
-        // be revisiting input.args again.
-
         /*
         command {
             - "ls"
             - $options
             - $path
         }
-        We must evaluate that before running.
         */
         auto cmdline = this.getCommandLine(input.escopo);
 
@@ -170,14 +159,33 @@ class SystemCommand : BaseCommand
         // (That is: it's the newly create scope, not the caller one.)
         foreach (key, value; input.escopo)
         {
-            // TODO:
-            // set x 1 2 3
-            // env["x"] = ?
+            /*
+            > set a 1
+            env["a"] = "1"
+            > set b 1 2 3
+            env["b"] = "(1 2 3)"
+            */
             if (value.type == ObjectType.Sequence)
             {
                 auto sequence = cast(Sequence)value;
-                // XXX: should we try to emulate a bash array or something?
-                env[key] = sequence.items.front.toString();
+                auto l = sequence.items.length;
+                if (l == 0)
+                {
+                    continue;
+                }
+                else if (l == 1)
+                {
+                    env[key] = sequence.items.front.toString;
+                }
+                else
+                {
+                    // Emulate a bash array:
+                    env[key] = (
+                        "("
+                        ~ sequence.items.map!(x => x.toString()).join(" ")
+                        ~ ")"
+                    );
+                }
             }
             else
             {

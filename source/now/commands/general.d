@@ -295,7 +295,10 @@ forLoop:
         {
             stdout.write(item);
         }
-        stdout.writeln();
+        if (path != "print.sameline")
+        {
+            stdout.writeln();
+        }
 
         return ExitCode.Success;
     };

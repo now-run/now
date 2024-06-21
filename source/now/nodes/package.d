@@ -114,7 +114,7 @@ struct Input
         this.inputs = inputs;
         this.args = args;
         this.kwargs = kwargs;
-        // TODO: we can get rid of ".array" if we can find
+        // XXX: we can get rid of ".array" if we can find
         // the correct type declaration for "Items items"!
         this.items = chain(args, inputs).array;
     }

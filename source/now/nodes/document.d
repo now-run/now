@@ -139,8 +139,16 @@ class Document : Dict {
         auto configuration = data.getOrCreate!Dict("configuration");
         foreach (configSectionName, configSection; configuration)
         {
-            // TODO: check if the key is already present:
             auto scopeDict = new Dict();
+            if (this.get(configSectionName, null) !is null)
+            {
+                throw new InvalidConfigurationException(
+                    null,
+                    "Configuration section"
+                    ~ configSectionName
+                    ~ " is repeated."
+                );
+            }
             this[configSectionName] = scopeDict;
             // Example: configSectionName = "http"
 
@@ -386,7 +394,6 @@ class Document : Dict {
             auto library = new Library(name, info, this);
             library.spawn(this);
             this.libraries[name] = library;
-            // TODO: will we use the same name? Can't we alias it somehow?
             this.procedures[name] = library;
         }
     }

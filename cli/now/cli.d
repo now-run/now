@@ -475,6 +475,7 @@ int cmd(Document document, string[] documentArgs)
 
     auto escopo = new Escopo(document, "cmd");
     escopo["env"] = envVars;
+    Items inputs = [new PathFileRange(stdin)];
     auto output = new Output;
 
     foreach (line; documentArgs)
@@ -496,7 +497,7 @@ int cmd(Document document, string[] documentArgs)
         try
         {
             exitCode = errorPrinter({
-                return pipeline.run(escopo, output);
+                return pipeline.run(escopo, inputs, output);
             });
         }
         catch (NowException ex)

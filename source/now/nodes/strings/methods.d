@@ -216,10 +216,10 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
-    stringMethods["strip:left"] = function (Item object, string path, Input input, Output output)
+    stringMethods["strip.left"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        > "xabcxxxyy" : strip:left "yx"
+        > "xabcxxxyy" : strip.left "yx"
         abcxxxyy
         */
         auto target = (cast(String)object).toString;
@@ -233,7 +233,7 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
-    stringMethods["strip:right"] = function (Item object, string path, Input input, Output output)
+    stringMethods["strip.right"] = function (Item object, string path, Input input, Output output)
     {
         /*
         > "xabcxxxyy" : strip "yx"
