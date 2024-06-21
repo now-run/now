@@ -62,15 +62,30 @@ void loadCsvCommands(CommandsMap commands)
         // 1- accept multiple arguments;
         // 2- if argument is Path, use a CsvReader class.
         string content = input.pop!string();
-        auto parser = new CsvParser(content);
+
+        char separator = ',';
+        auto separator_ptr = ("separator" in input.kwargs);
+        if (separator_ptr !is null)
+        {
+            separator = (*separator_ptr).toString[0];
+        }
+
+        auto parser = new CsvParser(content, separator);
         output.push(parser.run());
         return ExitCode.Success;
     };
     commands["csv.encode"] = function (string path, Input input, Output output)
     {
         auto source = input.pop!List();
-        string s;
 
+        string separator = ",";
+        auto separator_ptr = ("separator" in input.kwargs);
+        if (separator_ptr !is null)
+        {
+            separator = (*separator_ptr).toString;
+        }
+
+        string s;
         foreach (lineItem; source.items)
         {
             auto line = cast(List)lineItem;
@@ -84,6 +99,7 @@ void loadCsvCommands(CommandsMap commands)
 
                     if (value.canFind("\""))
                     {
+                        // TODO: create/use a proper escaping function
                         value = value.replace("\"", "\\\"");
                     }
                     items ~= "\"" ~ value ~ "\"";
@@ -93,7 +109,7 @@ void loadCsvCommands(CommandsMap commands)
                     items ~= item.toString();
                 }
             }
-            s ~= items.join(",");
+            s ~= items.join(separator);
             s ~= "\n";
         }
 
