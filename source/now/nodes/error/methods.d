@@ -27,12 +27,11 @@ static this()
             case "message":
                 output.push(target.message);
                 return ExitCode.Success;
-            case "class":
-                output.push(target.classe);
-                return ExitCode.Success;
             case "subject":
                 if (target.subject is null)
                 {
+                    // XXX: should we really throw
+                    // or simplu return ""?
                     throw new UndefinedException(
                         input.escopo,
                         "No subject defined for this error",

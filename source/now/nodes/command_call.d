@@ -158,14 +158,10 @@ class CommandCall
         }
         catch (NowException ex)
         {
-            auto message = ex.msg;
-            // XXX: we're using .message as the error type.
-            // It's weird.
-
-            auto errorHandler = this.getEventHandler(ex.typename);
+            auto errorHandler = this.getEventHandler(ex.classe);
             if (errorHandler is null)
             {
-                errorHandler = this.getEventHandler(message);
+                errorHandler = this.getEventHandler(ex.code.to!string);
             }
 
             if (errorHandler is null)
@@ -175,11 +171,11 @@ class CommandCall
             else
             {
                 auto errorScope = escopo.addPathEntry(
-                    "error/" ~ message
+                    "error/" ~ ex.classe
                 );
                 errorScope["error"] = ex.toError();
                 return handleEvent(
-                    message, errorHandler, errorScope, output
+                    ex.classe, errorHandler, errorScope, output
                 );
             }
         }

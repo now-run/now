@@ -9,16 +9,16 @@ class NowException : Exception
 {
     int code;
     Item subject;
-    string typename;
+    string classe;
     Escopo escopo;
     Pipeline pipeline;
 
-    this(Escopo escopo, string msg, int code=-1, Item subject=null)
+    this(Escopo escopo, string msg, Item subject=null, int code=-1)
     {
         super(msg);
         this.escopo = escopo;
-        this.code = code;
         this.subject = subject;
+        this.code = code;
     }
 }
 
@@ -27,10 +27,20 @@ template customNowException(string name)
     const string customNowException = "
 class " ~ name ~ " : NowException
 {
-    this(Escopo escopo, string msg, int code=-1, Item subject=null)
+    this(Escopo escopo, string msg, int code)
     {
-        super(escopo, msg, code, subject);
-        this.typename = \"" ~ name ~ "\";
+        super(escopo, msg, null, code);
+        this.classe = \"" ~ name ~ "\";
+    }
+    this(Escopo escopo, string msg, int code, Item subject=null)
+    {
+        super(escopo, msg, subject, code);
+        this.classe = \"" ~ name ~ "\";
+    }
+    this(Escopo escopo, string msg, Item subject=null, int code=-1)
+    {
+        super(escopo, msg, subject, code);
+        this.classe = \"" ~ name ~ "\";
     }
 }
     ";
@@ -74,12 +84,16 @@ ExitCode errorHandler(Escopo escopo, Pipeline pipeline, ExitCode delegate() f)
     {
         return f();
     }
+    catch (NowException ex)
+    {
+        throw ex;
+    }
     catch (Exception ex)
     {
         log(ex);
         auto ex2 = new DException(
             escopo,
-            ex.msg
+            ex.msg,
         );
         ex2.pipeline = pipeline;
         throw ex2;
@@ -119,9 +133,9 @@ ExitCode errorPrinter(ExitCode delegate() f)
     }
     catch (NowException ex)
     {
-        stderr.writeln("e> ", ex.typename);
-        stderr.writeln("m> ", ex.msg);
+        stderr.writeln("c> ", ex.classe);
         stderr.writeln("s> ", ex.escopo);
+        stderr.writeln("m> ", ex.msg);
         if (ex.pipeline !is null)
         {
             stderr.writeln("p> ", ex.pipeline);

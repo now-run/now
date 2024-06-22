@@ -505,12 +505,7 @@ int cmd(Document document, string[] documentArgs)
         }
         catch (NowException ex)
         {
-            auto error = new Erro(
-                ex.msg,
-                ex.code,
-                ex.typename,
-                escopo
-            );
+            auto error = ex.toError;
             stderr.writeln(error.toString());
             stderr.writeln("----------");
             return error.code;
@@ -570,12 +565,7 @@ int lineProcessor(Document document, string[] documentArgs)
         }
         catch (NowException ex)
         {
-            auto error = new Erro(
-                ex.msg,
-                ex.code,
-                ex.typename,
-                escopo
-            );
+            auto error = ex.toError;
             stderr.writeln(error.toString());
             stderr.writeln("----------");
             return error.code;
@@ -606,12 +596,7 @@ int lineProcessor(Document document, string[] documentArgs)
     }
     catch (NowException ex)
     {
-        auto error = new Erro(
-            ex.msg,
-            ex.code,
-            ex.typename,
-            escopo
-        );
+        auto error = ex.toError;
         stderr.writeln(error.toString());
         stderr.writeln("----------");
         return error.code;

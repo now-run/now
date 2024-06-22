@@ -250,8 +250,8 @@ forLoop:
                     throw new NowException(
                         erro.escopo,
                         erro.message,
-                        erro.code,
-                        erro.subject
+                        erro.subject,
+                        erro.code
                     );
                 }
             }
@@ -1112,11 +1112,11 @@ forLoop:
         Item* p = (key in target.properties);
         if (p is null)
         {
-            throw new NowException(
+            throw new NotFoundException(
                 input.escopo,
-                "property_not_found",
-                -1,
-                target
+                "property not found: " ~ key,
+                target,
+                -1
             );
         }
         output.push(*p);

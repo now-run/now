@@ -29,7 +29,8 @@ def run():
             if name not in procedures:
                 response(
                     rpc={"op": "error"},
-                    message=f"invalid_procedure: {name}"
+                    classe="invalid_procedure",
+                    message=name
                 )
                 continue
 
@@ -46,6 +47,7 @@ def run():
                 cls = ex.__class__.__name__
                 response(
                     rpc={"op": "error"},
-                    message=f"{cls}: {ex}"
+                    classe=cls,
+                    message=str(ex)
                 )
             continue

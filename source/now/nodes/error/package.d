@@ -10,39 +10,55 @@ MethodsMap errorMethods;
 class Erro : Item
 {
     int code = -1;
-    string classe;
     string message;
     Item subject;
     Escopo escopo;
     NowException exception;
 
-    this(string message, int code, string classe, Escopo escopo, Item subject=null, NowException ex=null)
+    this(
+        string typeName, string message,
+        Escopo escopo=null, Item subject=null,
+        int code=-1
+    )
     {
+        this(typeName, message, escopo, subject, null, code);
+    }
+    this(
+        string typeName, string message,
+        Escopo escopo=null, Item subject=null,
+        NowException ex=null, int code=-1
+    )
+    {
+        this.typeName = typeName;
         this.message = message;
-        this.code = code;
-        this.classe = classe;
         this.escopo = escopo;
         this.subject = subject;
+        this.code = code;
 
         this.type = ObjectType.Error;
         this.exception = ex;
 
-        this.typeName = "error";
         this.methods = errorMethods;
     }
 
     // Conversions:
     override string toString()
     {
-        string s = "Error " ~ to!string(code)
-                   ~ ": " ~ message;
-        if (classe)
+        string s = "Error";
+
+        if (code != -1)
         {
-            s ~= " (" ~ classe ~ ")";
+            s ~= " " ~ to!string(code);
+        }
+        s ~= ": " ~ typeName;
+
+        if (message)
+        {
+            s ~= " :" ~ message;
         }
         if (subject !is null)
         {
-            s ~= " subject " ~ subject.toString();
+            s ~= "; subject=<" ~ subject.toString() ~ ">";
         }
         if (escopo !is null)
         {
@@ -55,11 +71,11 @@ class Erro : Item
 Erro toError(NowException ex)
 {
     return new Erro(
+        ex.classe,
         ex.msg,
-        ex.code,
-        ex.typename,
         ex.escopo,
         ex.subject,
-        ex
+        ex,
+        ex.code
     );
 }
