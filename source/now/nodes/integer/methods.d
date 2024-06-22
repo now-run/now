@@ -1,6 +1,7 @@
 module now.nodes.integer.methods;
 
 
+import std.datetime.systime;
 import now;
 
 
@@ -50,22 +51,23 @@ static this()
 {
     integerMethods["to.char"] = function (Item object, string path, Input input, Output output)
     {
-        foreach (item; input.popAll)
-        {
-            long x = item.toLong();
-            output.push(to!string(cast(char)x));
-        }
+        long x = object.toLong();
+        output.push(to!string(cast(char)x));
         return ExitCode.Success;
     };
     integerMethods["to.ascii"] = function (Item object, string path, Input input, Output output)
     {
-        foreach (item; input.popAll)
-        {
-            long l = item.toLong();
-            char c = cast(char)(l);
-            string s = "" ~ c;
-            output.push(s);
-        }
+        long l = object.toLong();
+        char c = cast(char)(l);
+        string s = "" ~ c;
+        output.push(s);
+        return ExitCode.Success;
+    };
+    integerMethods["to.isotime"] = function (Item object, string path, Input input, Output output)
+    {
+        long l = object.toLong();
+        auto st = SysTime.fromUnixTime(l);
+        output.push(st.toISOExtString());
         return ExitCode.Success;
     };
 

@@ -210,6 +210,10 @@ class Output
     {
         items ~= new Integer(thing);
     }
+    void push(long thing)
+    {
+        items ~= new Integer(thing);
+    }
     void push(float thing)
     {
         items ~= new Float(thing);

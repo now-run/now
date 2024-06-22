@@ -18,12 +18,13 @@ class Erro : Item
 
     this(string message, int code, string classe, Escopo escopo, Item subject=null, NowException ex=null)
     {
-        this.subject = subject;
         this.message = message;
         this.code = code;
         this.classe = classe;
-        this.type = ObjectType.Error;
         this.escopo = escopo;
+        this.subject = subject;
+
+        this.type = ObjectType.Error;
         this.exception = ex;
 
         this.typeName = "error";

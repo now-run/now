@@ -11,10 +11,12 @@ MethodsMap stringMethods;
 class String : Item
 {
     string repr;
+    bool hasSubstitutions;
 
-    this(string s)
+    this(string s, bool hasSubstitutions=false)
     {
         this.repr = s;
+        this.hasSubstitutions = hasSubstitutions;
         this.type = ObjectType.String;
         this.typeName = "string";
         this.methods = stringMethods;
@@ -90,7 +92,7 @@ class SubstString : String
 
     this(Items parts)
     {
-        super("");
+        super("", true);
         this.parts = parts;
         this.type = ObjectType.String;
     }
@@ -115,6 +117,6 @@ class SubstString : String
             }
         }
 
-        return [new String(result)];
+        return [new String(result, true)];
     }
 }

@@ -412,7 +412,7 @@ forLoop:
         SysTime today = Clock.currTime();
         long t = today.toUnixTime!long();
         log("- builtinCommands.unixtime.t:", t);
-        output.push(cast(int)t);
+        output.push(cast(long)t);
         return ExitCode.Success;
     };
 
