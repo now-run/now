@@ -15,6 +15,10 @@ class Pipeline
     this(CommandCall[] commandCalls)
     {
         this.commandCalls = commandCalls;
+        foreach (cc; commandCalls)
+        {
+            cc.pipeline = this;
+        }
     }
 
     ulong size()

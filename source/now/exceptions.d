@@ -86,20 +86,23 @@ ExitCode errorHandler(Escopo escopo, Pipeline pipeline, ExitCode delegate() f)
     }
     catch (NowException ex)
     {
+        log("escopo.errorHandler NowException: ", ex);
         throw ex;
     }
     catch (Exception ex)
     {
-        log(ex);
+        log("escopo.errorHandler Exception: ", ex);
         auto ex2 = new DException(
             escopo,
             ex.msg,
         );
         ex2.pipeline = pipeline;
+        log(" -> ", ex2);
         throw ex2;
     }
     catch (object.Error ex)
     {
+        log("escopo.errorHandler object.Error: ", ex);
         if (pipeline !is null)
         {
             stderr.writeln("p> ", pipeline);

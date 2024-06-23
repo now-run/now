@@ -148,15 +148,27 @@ run {
 
 [commands/error]
 
-try {
-    to.integer "blebs"
-} {
-    print "error handled"
-    print $error
+scope "Error handling with `try`" {
+    try {
+        to.integer "A"
+    } {
+        print "try> error handled"
+        print "try> $error"
+    }
 }
 
-print "Unhandled error:"
-to.integer "abc"
+scope "Error handling with event handlers" {
+    to.integer "A"
+        ! * {
+            print "event> error handled"
+            print "event> $error"
+        }
+}
+
+scope "Unhandled error" {
+    print "Unhandled error:"
+    to.integer "C"
+}
 
 [commands/run]
 description "General syntax tests"

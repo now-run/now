@@ -21,6 +21,7 @@ class CommandCall
     bool isTarget;
     size_t documentLineNumber;
     size_t documentColNumber;
+    Pipeline pipeline;
 
     // For handling error locally:
     SubProgram[string] eventHandlers;
@@ -147,17 +148,20 @@ class CommandCall
 
         try
         {
-            if (target !is null)
-            {
-                return target.runMethod(name, input, output);
-            }
-            else
-            {
-                return escopo.document.runProcedure(name, input, output);
-            }
+            return escopo.errorHandler(this.pipeline, {
+                if (target !is null)
+                {
+                    return target.runMethod(name, input, output);
+                }
+                else
+                {
+                    return escopo.document.runProcedure(name, input, output);
+                }
+            });
         }
         catch (NowException ex)
         {
+            log(">>> CommandCall ", this.name, " NowException ", ex);
             auto errorHandler = this.getEventHandler(ex.classe);
             if (errorHandler is null)
             {
