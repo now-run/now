@@ -9,6 +9,16 @@ Illustrate some aspects of Now's syntax.
 > but this can only work on section dicts, not inside SubPrograms!
 > (And each `>` will be turned into a `-`, so Dict implementation won't even see what is happening.)
 
+[shells/bash/scripts/bashdate]
+parameters {
+    format {
+        type string
+        default "%Y-%m-%d"
+    }
+}
+
+date +$format
+
 [procedures/methods]
 
 dict (k = v) | as dict
@@ -305,4 +315,11 @@ scope "collect" {
 scope "call" {
     call set x 10
     assert ($x == 10)
+}
+
+scope "system_commands" {
+    bashdate "%Y"
+        | collect
+        : first
+        | print "The current year is: "
 }
