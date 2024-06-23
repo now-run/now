@@ -5,17 +5,333 @@ dist_dir "dist"
 
 [Pages/index.html]
 page_title "Home"
-header "Now"
-subheader "Your code is ready. Now run."
+header "Why you absolutely should avoid Now"
 
 [Pages/index.html/content]
-- "Now is a tool (and a form of programming language)
-intended as a complement to software
-projects written in other languages. Think `make` or
-shell scripts, for instance. The idea is not to replace
-your favorite language, but to make it easier to build,
-run, deploy and share a common set of commands between
-a team."
+- {
+    type header
+    format h2
+    content "The syntax is inspired by Tcl!"
+}
+- "The author really liked to write in Tcl (he says that it's the only
+language in which he can go back to a project after a year and continue
+working as if it was day 2 -- see, we're not even talking about Now itself
+and already concluded the author is stupid!), but was annoyed by some clunky
+constructions using multiple nested command execution, like when a command
+is used as argument to another command, especially noticeable when indexing
+lists or dicts."
+> So, instead of writing this:
+- {
+    type snippet
+    format code
+    content {
+        > set lista [list a "This value gets printed" c d]
+        > puts [lindex $lista 1]
+        > # This value gets printed
+    }
+}
+> In Now you could write this:
+- {
+    type snippet
+    format code
+    content {
+        > set lista [list a "This value gets printed" c d]
+        > print [o \$lista : get 1]
+        > # This value gets printed
+    }
+}
+- {
+    type header
+    format h3
+    content "Yeah, but no. The syntax is actually crazy!"
+}
+- "I know you're looking into the above example and thinking: \"why?\".
+Of course! Why try to improve a syntax that's awful from the beginning?
+Why keep building over such a terrible foundation?"
+- "Well, that's not even half of the problem. You could write that same
+code in yet another manner. The first line, for instance, could be written
+as that:"
+- {
+    type snippet
+    format code
+    content {
+        > list a "This value gets printed" c d | as lista
+    }
+}
+> Actually, there's even a preferred way of writing these "pipelines":
+- {
+    type snippet
+    format code
+    content {
+        > list a "This value gets printed" c d
+        >     | as lista
+    }
+}
+- "The \"pipe\" (`|`) has a special meaning. Or not. It depends on how each
+ \"command\" decides to interpret it."
+> You can understand it better by looking into how `print` works:
+- {
+    type snippet
+    format code
+    content {
+        > print "--> " [list 1 2 3]
+        > # --> (1 , 2 , 3)
+        > list  10 20 30 | print "--> "
+        > # --> (10 , 20 , 30)
+    }
+}
+- "You see? A pipe will basically make the result of the previous command
+to be used as the last argument for the next one."
+- {
+    type header
+    format h3
+    content "And it gets worse"
+}
+- "Getting an item from a list was done using `:`, that is like a pipe, but
+indicates that the next command is a <strong>method</strong> of the previous
+command's result. So, in this case:"
+- {
+    type snippet
+    format code
+    content {
+        > print [o \$lista : get 1]
+    }
+}
+- "You're basically telling Now to get the <em>object</em> \"lista\",
+call the method \"get\" with \"1\" as argument, then print the result
+of that."
+> But, as you already know, we could also write it as:
+- {
+    type snippet
+    format code
+    content {
+        > o \$lista
+        >     : get 1
+        >     | print
+    }
+}
+- {
+    type header
+    format h3
+    content "But what is that \"o\"???"
+}
+- "I hear you. What is that `o`?"
+- "You see, in Now there's only one strict format for doing the most basic
+thing, that is <em>calling commands</em>, and that is:"
+- {
+    type snippet
+    format code
+    content {
+        > command arguments?
+    }
+}
+> So, this works fine:
+- {
+    type snippet
+    format code
+    content {
+        > print
+    }
+}
+> And also this:
+- {
+    type snippet
+    format code
+    content {
+        > print $lista
+    }
+}
+> But <strong>not this</strong>:
+- {
+    type snippet
+    format code
+    content {
+        > \$lista | print
+    }
+}
+- "Because `\$lista` is <strong>not</strong> a <em>command</em>. It's simply
+a value."
+- "So we need a command to <em>reference</em> a value. And this command
+is <em>o</em>. It takes some arguments and returns exactly these same
+arguments."
+- {
+    code {
+        > o \$lista
+        >     | print
+        > # (1 , 2 , 3 , 4 , "etc")
+    }
+}
+- {
+    h3 "And there's yet another way to \"get\"..."
+}
+- {
+    code {
+        > print (\$lista . 1)
+    }
+}
+- "You remember I just said there's \"only one way\" of doing things
+in Now? Well, it seems that rule is already broken!"
+- "Actually what happens is that the parentheses are a form of
+<em>syntatic sugar</em>: what they do is to turn an prefix notation into
+<strong>infix notation</strong>."
+> For instance, in this case:
+- {
+    code {
+        > print (1 + 2 + 3 + 4 + 5)
+        > # 15
+    }
+}
+> What is <em>actually</em> happening is:
+- {
+    code {
+        > print [+ 1 2 3 4 5]
+        > # 15
+    }
+}
+- 'The "language" sacrifices being coherent in the name of being easier to the
+developer. Preposterous!'
+- {
+    h2 "It focus too much on pipelines"
+}
+- 'Instead of mimicking the battle-tested behavior of good old languages, Now
+focuses on having <strong>powerful pipelines</strong>. The idea is to be able
+to do most of what you need without having to break the flow of the data from
+the first command to the last.'
+> Again, preposterous
+- 'So stopping your train of thought to set a new variable is kinda
+considered an anti-pattern in Now.'
+- {
+    h3 "A normal person would write code like this"
+}
+- {
+    code {
+        > # Remove the current user from /etc/passwd
+        > o \$env
+        >     : get "USER"
+        >     | as username
+        > path "/etc/passwd"
+        >     | as filepath
+        > o \$filepath
+        >     : read.lines
+        >     | as lines
+        > o \$lines
+        >     | foreach line {
+        >         if [o \$line : contains \$username] {
+        >             skip
+        >         } {
+        >             print \$line
+        >         }
+        >     }
+    }
+}
+- {
+    h3 "But a seasoned Now programmer would write this, instead"
+}
+- {
+    code {
+        > scope "Remove the current user from /etc/passwd" {
+        >     o \$env
+        >         : get "USER"
+        >         | as username
+        >     path "/etc/passwd"
+        >         : read.lines
+        >         | transform line {
+        >               o $line
+        >                   : contains \$username
+        >                   : then
+        >                       . {skip}
+        >                       . {return $line}
+        >         }
+        >         | {print}
+        > }
+    }
+}
+- {
+    h3 "Line-continuation is marked by a dot"
+}
+- "Again, instead of doing things the way everybody does, that is, escaping
+the newline character using a <strong>\\</strong> in the end of one line, Now
+let the end of the line alone and indicates that <strong>the next line</strong>
+is, in fact, a continuation of the previous one."
+> So, this:
+- {
+    code {
+        > print alfa beta gama
+    }
+}
+> Can also be written like this:
+- {
+    code {
+        > print
+        >     . alfa beta gama
+    }
+}
+> Or even:
+- {
+    code {
+        > print
+        >     . alfa
+        >     . beta
+        >     . gama
+    }
+}
+> Is this supposed to look like some sort of ASCII art???
+> What a joke!
+- {
+    type header
+    format h2
+    content "It's not a multi-purpose programming language"
+}
+- {
+    type header
+    format h2
+    content "It's not even a programming language!"
+}
+- {
+    type header
+    format h2
+    content "It lives in a gray area between a shell and a real programming language"
+}
+- {
+    type header
+    format h2
+    content "It's written in D -- and nobody uses D"
+}
+- {
+    type header
+    format h2
+    content "It barely has standard library"
+}
+- {
+    type header
+    format h2
+    content "It has zero database connectivity baked in"
+}
+- {
+    type header
+    format h2
+    content "It can't even work with YAML!"
+}
+- {
+    type header
+    format h2
+    content "It implements weird concepts like \"shells\" and \"commands\""
+}
+- {
+    type header
+    format h2
+    content ""
+}
+- {
+    type header
+    format h2
+    content ""
+}
+- {
+    type header
+    format h2
+    content ""
+}
 > What follows is a sample Now document:
 - {
     type reference
@@ -164,6 +480,24 @@ $content
     % ------- %
     </p>
 
+[templates/h2]
+
+    <h2>
+    % content %
+    $content
+    % ------- %
+    </h2>
+
+[templates/h3]
+
+    <h3>
+    % content %
+    $content
+    % ------- %
+    </h3>
+
+
+
 [templates/code]
 
     <pre>
@@ -197,8 +531,25 @@ when ($t == string) {
     template p : emit content : render | list | return
 }
 when ($t == dict) {
-    set format ($content . format)
-    set type ($content . type)
+    o $content
+        : keys
+        | as keys
+        ! >> {print "keys="}
+        : contains "type"
+        : then {
+            set format ($content . format)
+            set type ($content . type)
+        } {
+            set type none
+            o $keys
+                : first
+                | as format
+                | print "format="
+
+            o $content
+                : set (content = ($content . $format))
+        }
+
     template $format | as tpl
 
     when ($type == sequence) {
@@ -222,6 +573,7 @@ when ($t == dict) {
             when ($type == reference) {
                 obj $content
                     : get reference
+                    ! >> {print "?> "}
                     : to.sequence
                     | . $text
                     | as content
@@ -231,7 +583,16 @@ when ($t == dict) {
                 set href ($content . href)
             }
             default {
-                set content ($content . content)
+                o $content
+                    : get content
+                    | as content
+                    | type
+                    : eq list
+                    : then {
+                        o $content
+                            : join "\n"
+                            | as content
+                    }
             }
         }
         obj $tpl : emit content : render | list | return
@@ -268,7 +629,7 @@ scope "page content" {
 
 scope "page body" {
     # obj $tpl : emit content
-    obj $tpl : emit subheader [obj $data : pairs]
+    # obj $tpl : emit subheader [obj $data : pairs]
     path "$dist_dir/$filename" : write [obj $tpl : render]
     obj $tpl : render | print
 }
@@ -296,4 +657,20 @@ obj $text : get "Pages" : pairs | list | foreach pair {
     set filename ($pair . 0)
     set data ($pair . 1)
     render_page $filename $data
+}
+
+[commands/passwd]
+
+scope "Remove the current user from /etc/passwd" {
+    o $env
+        : get "USER"
+        | as username
+    path "/etc/passwd"
+        : read.lines
+        | transform line {
+            o $line
+              : contains $username
+              : then {skip} {return $line}
+        }
+        | {print}
 }
