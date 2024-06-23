@@ -161,7 +161,8 @@ class CommandCall
         }
         catch (NowException ex)
         {
-            log(">>> CommandCall ", this.name, " NowException ", ex);
+            log(">>> CommandCall <", this.name, "> NowException <", ex.classe, ">");
+            log("    eventHandlers: ", this.eventHandlers);
             auto errorHandler = this.getEventHandler(ex.classe);
             if (errorHandler is null)
             {
@@ -196,6 +197,7 @@ class CommandCall
         }
         else
         {
+            log("     no eventHandlers found for <", eventName, ">");
             return null;
         }
     }

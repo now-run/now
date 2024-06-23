@@ -629,7 +629,8 @@ class NowParser : Parser
         {
             auto mark = consumeChar();
             consumeWhitespace();
-            auto eventName = consumeAtom().toString;
+            auto eventName = consumeItem().toString;
+            log(" eventName: <", eventName, ">");
             consumeWhitespace();
             auto handler = consumeSubList();
             consumeWhitespaces();

@@ -86,12 +86,12 @@ ExitCode errorHandler(Escopo escopo, Pipeline pipeline, ExitCode delegate() f)
     }
     catch (NowException ex)
     {
-        log("escopo.errorHandler NowException: ", ex);
+        log("escopo.errorHandler NowException: <", ex.classe, ">");
         throw ex;
     }
     catch (Exception ex)
     {
-        log("escopo.errorHandler Exception: ", ex);
+        log("escopo.errorHandler Exception: <", ex, ">");
         auto ex2 = new DException(
             escopo,
             ex.msg,
@@ -102,7 +102,7 @@ ExitCode errorHandler(Escopo escopo, Pipeline pipeline, ExitCode delegate() f)
     }
     catch (object.Error ex)
     {
-        log("escopo.errorHandler object.Error: ", ex);
+        log("escopo.errorHandler object.Error: <", ex, ">");
         if (pipeline !is null)
         {
             stderr.writeln("p> ", pipeline);
@@ -147,6 +147,11 @@ ExitCode errorPrinter(ExitCode delegate() f)
                 stderr.writeln("l> ", ex.pipeline.documentLineNumber);
             }
         }
+        if (ex.subject !is null)
+        {
+            stderr.writeln("o> ", ex.subject);
+        }
+        stderr.writeln("n> ", ex.code);
         throw ex;
     }
 }

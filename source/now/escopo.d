@@ -70,7 +70,10 @@ class Escopo : Dict
         }
         if (v is null)
         {
-            throw new VariableNotFoundException(this, "key " ~ k ~ " not found");
+            throw new VariableNotFoundException(
+                this,
+                "key " ~ k ~ " not found"
+            );
         }
 
         return v;
