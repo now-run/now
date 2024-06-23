@@ -10,43 +10,641 @@
     </h1>
     <div id='content'>
     <h2>
+    The syntax is inspired by Tcl!
+    </h2>
+
+    <p>
+    The author really liked to write in Tcl (he says that it's the only
+language in which he can go back to a project after a year and continue
+working as if it was day 2 -- see, we're not even talking about Now itself
+and already concluded the author is stupid!), but was annoyed by some clunky
+constructions using multiple nested command execution, like when a command
+is used as argument to another command, especially noticeable when indexing
+lists or dicts.
+    </p>
+
+    <p>
+    So, instead of writing this:
+    </p>
+
+    <pre>
+set lista [list a "This value gets printed" c d]
+puts [lindex lista 1]
+# This value gets printed
+    </pre>
+
+    <p>
+    In Now you could write this:
+    </p>
+
+    <pre>
+set lista [list a "This value gets printed" c d]
+print [o $lista : get 1]
+# This value gets printed
+    </pre>
+
+    <h3>
+    Yeah, but no. The syntax is actually crazy!
+    </h3>
+
+    <p>
+    I know you're looking into the above example and thinking: "why?".
+Of course! Why try to improve a syntax that's awful from the beginning?
+Why keep building over such a terrible foundation?
+    </p>
+
+    <p>
+    Well, that's not even half of the problem. You could write that same
+code in yet another manner. The first line, for instance, could be written
+as that:
+    </p>
+
+    <pre>
+list a "This value gets printed" c d | as lista
+    </pre>
+
+    <p>
+    Actually, there's even a preferred way of writing these "pipelines":
+    </p>
+
+    <pre>
+list a "This value gets printed" c d
+    | as lista
+    </pre>
+
+    <p>
+    The "pipe" (`|`) has a special meaning. Or not. It depends on how each
+ "command" decides to interpret it.
+    </p>
+
+    <p>
+    You can understand it better by looking into how `print` works:
+    </p>
+
+    <pre>
+print "--> " [list 1 2 3]
+# --> (1 , 2 , 3)
+list  10 20 30 | print "--> "
+# --> (10 , 20 , 30)
+    </pre>
+
+    <p>
+    You see? A pipe will basically make the result of the previous command
+to be used as the last argument for the next one.
+    </p>
+
+    <h3>
+    And it gets worse
+    </h3>
+
+    <p>
+    Getting an item from a list was done using `:`, that is like a pipe, but
+indicates that the next command is a <strong>method</strong> of the previous
+command's result. So, in this case:
+    </p>
+
+    <pre>
+print [o $lista : get 1]
+    </pre>
+
+    <p>
+    You're basically telling Now to get the <em>object</em> "lista",
+call the method "get" with "1" as argument, then print the result
+of that.
+    </p>
+
+    <p>
+    But, as you already know, we could also write it as:
+    </p>
+
+    <pre>
+o $lista
+    : get 1
+    | print
+    </pre>
+
+    <h3>
+    But what is that "o"???
+    </h3>
+
+    <p>
+    I hear you. What is that `o`?
+    </p>
+
+    <p>
+    You see, in Now there's only one strict format for doing the most basic
+thing, that is <em>calling commands</em>, and that is:
+    </p>
+
+    <pre>
+command arguments?
+    </pre>
+
+    <p>
+    So, this works fine:
+    </p>
+
+    <pre>
+print
+    </pre>
+
+    <p>
+    And also this:
+    </p>
+
+    <pre>
+print lista
+    </pre>
+
+    <p>
+    But <strong>not this</strong>:
+    </p>
+
+    <pre>
+$lista | print
+    </pre>
+
+    <p>
+    Because `$lista` is <strong>not</strong> a <em>command</em>. It's simply
+a value.
+    </p>
+
+    <p>
+    So we need a command to <em>reference</em> a value. And this command
+is <em>o</em>. It takes some arguments and returns exactly these same
+arguments.
+    </p>
+
+    <pre>
+o $lista
+    | print
+# (1 , 2 , 3 , 4 , "etc")
+    </pre>
+
+    <h3>
+    And there's yet another way to "get"...
+    </h3>
+
+    <pre>
+print ($lista . 1)
+    </pre>
+
+    <p>
+    You remember I just said there's "only one way" of doing things
+in Now? Well, it seems that rule is already broken!
+    </p>
+
+    <p>
+    Actually what happens is that the parentheses are a form of
+<em>syntatic sugar</em>: what they do is to turn an prefix notation into
+<strong>infix notation</strong>.
+    </p>
+
+    <p>
+    For instance, in this case:
+    </p>
+
+    <pre>
+print (1 + 2 + 3 + 4 + 5)
+# 15
+    </pre>
+
+    <p>
+    What is <em>actually</em> happening is:
+    </p>
+
+    <pre>
+print [+ 1 2 3 4 5]
+# 15
+    </pre>
+
+    <p>
+    The "language" sacrifices being coherent in the name of being easier to the
+developer. Preposterous!
+    </p>
+
+    <h2>
+    It focus too much on pipelines
+    </h2>
+
+    <p>
+    Instead of mimicking the battle-tested behavior of good old languages, Now
+focuses on having <strong>powerful pipelines</strong>. The idea is to be able
+to do most of what you need without having to break the flow of the data from
+the first command to the last.
+    </p>
+
+    <p>
+    Again, preposterous
+    </p>
+
+    <p>
+    So stopping your train of thought to set a new variable is kinda
+considered an anti-pattern in Now.
+    </p>
+
+    <h3>
+    A normal person would write code like this
+    </h3>
+
+    <pre>
+# Remove the current user from /etc/passwd
+o $env
+    : get "USER"
+    | as username
+path "/etc/passwd"
+    | as filepath
+o $filepath
+    : read.lines
+    | as lines
+o $lines
+    | foreach line {
+        if [o $line : contains $username] {
+            skip
+        } {
+            print $line
+        }
+    }
+    </pre>
+
+    <h3>
+    But a seasoned Now programmer would write this, instead
+    </h3>
+
+    <pre>
+scope "Remove the current user from /etc/passwd" {
+    o $env
+        : get "USER"
+        | as username
+    path "/etc/passwd"
+        : read.lines
+        | filter {o : contains $username : eq false}
+        | {print}
+}
+    </pre>
+
+    <h3>
+    Explicit is better than implicit, amiright?
+    </h3>
+
+    <p>
+    Did you noticed there's this weird `| {print}` in the end of the above
+program? That's an <strong>implicit foreach</strong>. And we all know that
+"explicit is better than implicit". Because it is.
+    </p>
+
+    <p>
+    But Now, instead of following this divine rule, tries to make the developer
+life easy by avoiding to write this all the time:
+    </p>
+
+    <pre>
+    | foreach line {
+        print line
+    }
+    </pre>
+
+    <p>
+    And you know what? There's even a <strong>implicit transform</strong>!
+    </p>
+
+    <pre>
+list  1 2 3
+   | {o : mul 10}  # this thing
+   | {print}
+# 10
+# 20
+# 30
+    </pre>
+
+    <p>
+    But we won't bend to this sloppy way of thinking, of course we would write
+this much more correct, more explicit!, version:
+    </p>
+
+    <pre>
+list 1 2 3
+    | transform x {
+        return (x * 10)
+    }
+    | foreach x {
+        print x
+    }
+    </pre>
+
+    <p>
+    Ah, much better! Look how many characters we are typing, now.
+    </p>
+
+    <h3>
+    Line-continuation is marked by a dot
+    </h3>
+
+    <p>
+    Again, instead of doing things the way everybody does, that is, escaping
+the newline character using a <strong>\</strong> in the end of one line, Now
+let the end of the line alone and indicates that <strong>the next line</strong>
+is, in fact, a continuation of the previous one.
+    </p>
+
+    <p>
+    So, this:
+    </p>
+
+    <pre>
+print alfa beta gama
+    </pre>
+
+    <p>
+    Can also be written like this:
+    </p>
+
+    <pre>
+print
+    . alfa beta gama
+    </pre>
+
+    <p>
+    Or even:
+    </p>
+
+    <pre>
+print
+    . alfa
+    . beta
+    . gama
+    </pre>
+
+    <p>
+    Is this supposed to look like some sort of ASCII art???
+    </p>
+
+    <p>
+    What a joke!
+    </p>
+
+    <h3>
+    You can handle errors inside the pipeline
+    </h3>
+
+    <p>
+    We all love a good <strong>block</strong> of try/catch, right? But Now
+decided it's too normal for it to implement and, instead, have this thing
+called "events" that also serve to handle errors.
+    </p>
+
+    <p>
+    Like this:
+    </p>
+
+    <pre>
+http.get "http://example.com/teste"
+    ! 500 {print "Maybe the server is down?" ; return error}
+    ! 404 {print "Shit, this page doesn't even exist!" ; return error}
+    ! * {print "Shit, some other error occurred..." ; return error}
+    | return
+    </pre>
+
+    <h2>
     It's not a multi-purpose programming language
     </h2>
+
+    <p>
+    If it's not supposed to solve every possible problem, how can it be
+any useful?
+    </p>
 
     <h2>
     It's not even a programming language!
     </h2>
 
-    <h2>
-    It occupies a gray area between a shell, maybe a Makefile and a real programming language
-    </h2>
+    <p>
+    The author is emphatic in calling it <em>a tool</em>...
+    </p>
+
+    <h3>
+    You don't write programs, you write documents
+    </h3>
 
     <p>
-    What follows is a sample Now document:
+    This may be the worst part.
+    </p>
+
+    <p>
+    Imagine that! Instead of writing a "script" or a "program",
+you are supposed to write a <strong>document!</strong> With a title,
+a description and... and... <strong>sections!</strong>
+    </p>
+
+    <p>
+    Just like this:
     </p>
 
     <pre>
-    [Sample Document]
-    reference "http://github.com/now-run/now"
+[Example Document]
 
-    This document serves as a sample for the
-    format/language.
+This document exemplifies some of the syntax
+of a Now document.
 
-    [commands/run]
+[procedures/hello]
+parameters {
+    who {
+        type string
+    }
+}
 
-    # This command simply runs the program title and description
-    print "# $($text . title)"
-    print ($text . description)
+print "Hello, $who!"
 
-    print "Every section starting with capital letters are"
-    print "included inside \$text."
+[commands/run]
+parameters {
+    who {
+        type string
+        default "world"
+    }
+}
 
+hello $who
+    </pre>
+
+    <p>
+    Like... you can't simply shove code into a file and call it a day. No,
+you have to follow the proper form, just like some ascient COBOL code.
+    </p>
+
+    <h3>
+    And what about these 'commands'?
+    </h3>
+
+    <p>
+    A Now document saved as `Nowfile` in the current directory will make
+running `now` without any arguments drop this in your terminal:
+    </p>
+
+    <pre>
+$ now
+Now Website
+
+ passwd ---------> Test the code for 'grepping -v' the /etc/passwd file
+ build ----------> Build the Website.
+    </pre>
+
+    <p>
+    Now you see why Now forces you to write a title for your document...
+    </p>
+
+    <p>
+    In order to actually do something, you call one of the available
+<em>commands</em>, like `now build`.
+    </p>
+
+    <h2>
+    It lives in a gray area between a shell and a real programming language
+    </h2>
+
+    <p>
+    Now definitely is not something you could use as a shell, since you have to
+declare "system_commands" in order to call anything from the system it's
+running on.
+    </p>
+
+    <pre>
+[system_commands/ls]
+command {
+    - ls
+}
 
     </pre>
 
     <p>
+    Isn't that awful? Now even checks if the command actually is available
+before running your prog... <em>document</em>. It may be nice to
+<strong>not</strong> have any <em>command not found</em> being found during
+runtime, but if that's the price, I don't know, maybe it isn't worth paying.
+    </p>
+
+    <h2>
+    It's written in D -- and nobody uses D
+    </h2>
+
+    <p>
+    D is nice, but the language has no direction, no plans, right? You
+probably didn't even heard that before, since nobody talks about D.
+    </p>
+
+    <p>
+    Now has almost <strong>8k LOC</strong> written in D. What a shameful
+decision that was!
+    </p>
+
+    <h2>
+    It barely has standard library
+    </h2>
+
+    <p>
+    Yeah, really. It has a whole lot of various commands, but nothing even
+close to Java or C#.
+    </p>
+
+    <h2>
+    It has zero database connectivity baked in
+    </h2>
+
+    <p>
+    In order to use a database, one have to rely on a "library". And
+libraries are not like shared-object libraries as normal people would
+expect: in Now, a library is implemented using a form of IPC: it keeps
+an external program running and send or receive calls to <em>procedures</em>
+using the standard input and output to send messages serialized in JSON.
+    </p>
+
+    <p>
+    So, technically, it's kinda easy to write a library to any DBMS, but who
+would do that?
+    </p>
+
+    <h2>
+    It can't even work with YAML!
+    </h2>
+
+    <p>
+    Yeah, it was abandoned because the author consider that there's no hope
+for YAML, that the format is terrible and overly complex. Now you have to
+convert everything to JSON if you want to work with data that's originally
+in YAML.
+    </p>
+
+    <h2>
+    It implements weird concepts like "shells" and "commands"
+    </h2>
+
+    <p>
+    Imagine your program <strong>have</strong> to call a bash script. Of course
+you're going to have it in a file somewhere in your project folder! But, no,
+in Now you can write this same script virtually like any other section in the
+document and call it a <em>script</em>, to be executed by some <em>shell</em>.
+    </p>
+
+    <p>
+    Like this:
+    </p>
+
+    <pre>
+[shells/bash/scripts/date]
+parameters {
+    format {
+        type string
+        default "%Y-%m-%d"
+    }
+}
+
+date +$format
+
+[commands/run]
+
+date "%Y"
+    | collect
+    : first
+    | print "The current year is "
+    </pre>
+
+    <p>
+    You can even define many shells that will call other programs and then
+write the "scripts" inside the document. Like, imagine having a document
+where you can write Markdown and it's capable of rendering itself.
+    </p>
+
+    <p>
+    And that's a waste. A folder with a 'document.md' and a 'run.sh' will
+have the same effect.
+    </p>
+
+    <h2>
+    It's not Web-focused
+    </h2>
+
+    <p>
+    What's the use on <em>anything</em> that can't serve HTTP???
+    </p>
+
+    <p>
+    Now <strong>is</strong> fully capable of serving SCGI, though, but
+what's the point? SCGI probably stands for SlowCGI, right?, the exact
+opposite of FastCGI! Who cares if it's simple? What we all need
+is <strong>fast!</strong>
+    </p>
+
+    <p>
+    Because every single Website we create absolutely must support 100k clients
+per second. We all know that.
+    </p>
+
+    <p>
+    <hr/>
+    </p>
+
+    <p>
     Find more at
-        <a href="http://github.com/now-run/now" target="_blank">Github</a>
+        <a href="http://github.com/now-run/now" target="_blank">the project repository on Github</a>
 
     .
     </p>

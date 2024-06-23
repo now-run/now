@@ -49,4 +49,10 @@ p,li {
 }
 pre {
   font-family: FiraCode Light;
+  color: white;
+  background-color: black;
+  padding: 15px;
+  border-radius: 5px;
+  width: 80%;
+  margin-left: 2.5%;
 }
