@@ -163,24 +163,26 @@ class CommandCall
         {
             log(">>> CommandCall <", this.name, "> NowException <", ex.classe, ">");
             log("    eventHandlers: ", this.eventHandlers);
-            auto errorHandler = this.getEventHandler(ex.classe);
-            if (errorHandler is null)
+            auto eventHandler = this.getEventHandler(ex.classe);
+            if (eventHandler is null)
             {
-                errorHandler = this.getEventHandler(ex.code.to!string);
+                eventHandler = this.getEventHandler(ex.code.to!string);
             }
 
-            if (errorHandler is null)
+            if (eventHandler is null)
             {
                 throw ex;
             }
             else
             {
                 auto errorScope = escopo.addPathEntry(
-                    "error/" ~ ex.classe
+                    "event/" ~ ex.classe
                 );
+                // XXX: should we use only "event"?
                 errorScope["error"] = ex.toError();
+                errorScope["event"] = ex.toError();
                 return handleEvent(
-                    ex.classe, errorHandler, errorScope, output
+                    ex.classe, eventHandler, errorScope, output
                 );
             }
         }

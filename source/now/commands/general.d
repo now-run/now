@@ -486,6 +486,22 @@ forLoop:
             code
         );
     };
+    builtinCommands["switch"] = function(string path, Input input, Output output)
+    {
+        /*
+        o 123
+            | switch {type}
+            ! integer {print "is an integer"}
+            ! * {print "not an integer"}
+        */
+        auto body = input.pop!SubProgram;
+
+        auto items = input.popAll;
+        auto execOutput = new Output;
+        auto exitCode = body.run(input.escopo, items, execOutput);
+        auto eventName = execOutput.items[0].toString;
+        throw new Event(input.escopo, eventName);
+    };
 
     // ---------------------------------------------
     /**
@@ -994,6 +1010,33 @@ forLoop:
                     continue;
             }
         }
+        return ExitCode.Success;
+    };
+    builtinCommands["filter"] = function(string path, Input input, Output output)
+    {
+        /*
+        > range 10 | filter { o : mod 2 : eq 0 }
+        2
+        4
+        6
+        8
+        10
+        */
+        auto body = input.pop!SubProgram();
+        auto targets = input.popAll();
+        if (targets.length == 0)
+        {
+            auto msg = "no target to filter";
+            throw new SyntaxErrorException(
+                input.escopo,
+                msg
+            );
+        }
+
+        auto iterator = new Filter(
+            targets, body, input.escopo
+        );
+        output.push(iterator);
         return ExitCode.Success;
     };
 

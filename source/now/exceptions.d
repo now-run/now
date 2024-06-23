@@ -77,6 +77,15 @@ mixin(customNowException!"VariableNotFoundException");
 // mixin(customNowException!"");
 
 
+class Event : NowException
+{
+    this(Escopo escopo, string classe)
+    {
+        super(escopo, null);
+        this.classe = classe;
+    }
+}
+
 
 ExitCode errorHandler(Escopo escopo, Pipeline pipeline, ExitCode delegate() f)
 {

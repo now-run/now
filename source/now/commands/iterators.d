@@ -97,12 +97,13 @@ class Transformer : Item
         return "Transformer";
     }
 
-    override ExitCode next(Escopo escopo, Output output)
+    Output executeNextTarget(Escopo escopo, Output output)
     {
-        /*
-        `transform` accept more than one targets, that is,
-        more than one things it's going to consume from.
-        */
+        if (targetIndex >= targets.length)
+        {
+            return null;
+        }
+
         auto target = targets[targetIndex];
 
         auto nextOutput = new Output;
@@ -110,15 +111,13 @@ class Transformer : Item
 
         switch (exitCode)
         {
+            // XXX: we keep calling this method recursively...
             case ExitCode.Break:
                 targetIndex++;
-                if (targetIndex < targets.length)
-                {
-                    return next(escopo, output);
-                }
                 goto case;
             case ExitCode.Skip:
-                return exitCode;
+                return executeNextTarget(escopo, output);
+
             case ExitCode.Continue:
                 break;
             default:
@@ -128,6 +127,21 @@ class Transformer : Item
                     ~ ".next returned "
                     ~ to!string(exitCode)
                 );
+        }
+
+        return nextOutput;
+    }
+
+    override ExitCode next(Escopo escopo, Output output)
+    {
+        /*
+        `transform` accept more than one targets, that is,
+        more than one things it's going to consume from.
+        */
+        auto nextOutput = executeNextTarget(escopo, output);
+        if (nextOutput is null)
+        {
+            return ExitCode.Break;
         }
 
         if (varName)
@@ -150,5 +164,37 @@ class Transformer : Item
                 break;
         }
         return execExitCode;
+    }
+}
+
+class Filter : Transformer
+{
+    this(Items targets, SubProgram body, Escopo escopo)
+    {
+        super(targets, null, body, escopo);
+        this.typeName = "filter";
+    }
+
+    override ExitCode next(Escopo escopo, Output output)
+    {
+        auto nextOutput = executeNextTarget(escopo, output);
+        if (nextOutput is null)
+        {
+            return ExitCode.Break;
+        }
+        auto items = nextOutput.items;
+
+        auto filterOutput = new Output;
+        auto execExitCode = body.run(escopo, items, filterOutput);
+        log("-- Filter.body.exitCode: ", execExitCode, " <- ", filterOutput.items);
+
+        // TODO: check if there is actually something in `items`.
+        bool keep = filterOutput.items[0].toBool;
+        if (keep)
+        {
+            output.push(items);
+            return ExitCode.Continue;
+        }
+        return ExitCode.Skip;
     }
 }
