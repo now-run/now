@@ -190,6 +190,20 @@ in Now? Well, it seems that rule is already broken!"
 }
 - 'The "language" sacrifices being coherent in the name of being easier to the
 developer. Preposterous!'
+- "Now, if you think about it, this construction:"
+- {
+    code {
+        > o (a , b , c , d)
+    }
+}
+> Is actually this:
+- {
+    code {
+        > o [, a b c d]
+    }
+}
+- "So it means the comma is actually an alias to `list`?"
+> Yes, it is.
 - {
     h2 "It focus too much on pipelines"
 }
@@ -235,17 +249,51 @@ considered an anti-pattern in Now.'
         >         | as username
         >     path "/etc/passwd"
         >         : read.lines
-        >         | transform line {
-        >               o $line
-        >                   : contains \$username
-        >                   : then
-        >                       . {skip}
-        >                       . {return $line}
-        >         }
+        >         | filter {o : contains \$username : eq false}
         >         | {print}
         > }
     }
 }
+- {
+    h3 "Explicit is better than implicit, amiright?"
+}
+- "Did you noticed there's this weird `| {print}` in the end of the above
+program? That's an <strong>implicit foreach</strong>. And we all know that
+\"explicit is better than implicit\". Because it is."
+- 'But Now, instead of following this divine rule, tries to make the developer
+life easy by avoiding to write this all the time:'
+- {
+    code {
+        >     | foreach line {
+        >         print $line
+        >     }
+    }
+}
+- "And you know what? There's even a <strong>implicit transform</strong>!"
+- {
+    code {
+        > list  1 2 3
+        >    | {o : mul 10}  # this thing
+        >    | {print}
+        > # 10
+        > # 20
+        > # 30
+    }
+}
+- "But we won't bend to this sloppy way of thinking, of course we would write
+this much more correct, more explicit!, version:"
+- {
+    code {
+        > list 1 2 3
+        >     | transform x {
+        >         return (\$x * 10)
+        >     }
+        >     | foreach x {
+        >         print \$x
+        >     }
+    }
+}
+> Ah, much better! Look how many characters we are typing, now.
 - {
     h3 "Line-continuation is marked by a dot"
 }
@@ -278,60 +326,229 @@ is, in fact, a continuation of the previous one."
 > Is this supposed to look like some sort of ASCII art???
 > What a joke!
 - {
-    type header
-    format h2
-    content "It's not a multi-purpose programming language"
+    h3 "You can handle errors inside the pipeline"
+}
+- "We all love a good <strong>block</strong> of try/catch, right? But Now
+decided it's too normal for it to implement and, instead, have this thing
+called \"events\" that also serve to handle errors."
+> Like this:
+- {
+    code {
+        > http.get "http://example.com/teste"
+        >     ! 500 {print "Maybe the server is down?" ; return $error}
+        >     ! 404 {print "Shit, this page doesn't even exist!" ; return $error}
+        >     ! * {print "Shit, some other error occurred..." ; return $error}
+        >     | return
+    }
+}
+- "It's not so catchy at first glance, but imagine you're doing it directly
+in your shell, like:"
+- {
+    code {
+        > \$ now :cmd 'http.get "https://example.com/teste" ! * {exit 1} | print'
+    }
 }
 - {
-    type header
-    format h2
-    content "It's not even a programming language!"
+    h2 "It's not a multi-purpose programming language"
 }
+- "If it's not supposed to solve every possible problem, how can it be
+any useful?"
 - {
-    type header
-    format h2
-    content "It lives in a gray area between a shell and a real programming language"
+    h2 "It's not even a programming language!"
 }
+- "The author is emphatic in calling it <em>a tool</em>..."
+- {
+    h3 "You don't write programs, you write documents"
+}
+- "This may be the worst part."
+- 'Imagine that! Instead of writing a "script" or a "program",
+you are supposed to write a <strong>document!</strong> With a title,
+a description and... and... <strong>sections!</strong>'
+> Just like this:
+- {
+    code {
+        > [Example Document]
+        > 
+        > This document exemplifies some of the syntax
+        > of a Now document.
+        > 
+        > [procedures/hello]
+        > parameters {
+        >     who {
+        >         type string
+        >     }
+        > }
+        > 
+        > print "Hello, \$who!"
+        > 
+        > [commands/run]
+        > parameters {
+        >     who {
+        >         type string
+        >         default "world"
+        >     }
+        > }
+        > 
+        > hello \$who
+    }
+}
+- "Like... you can't simply shove code into a file and call it a day. No,
+you have to follow the proper form, just like some ascient COBOL code."
+- {
+    h3 "And what about these 'commands'?"
+}
+- "A Now document saved as `Nowfile` in the current directory will make
+running `now` without any arguments drop this in your terminal:"
+- {
+    code {
+        > \$ now
+        > Now Website
+        > 
+        >  passwd ---------> Test the code for 'grepping -v' the /etc/passwd file
+        >  build ----------> Build the Website.
+    }
+}
+- "Now you see why Now forces you to write a title for your document..."
+- "In order to actually do something, you call one of the available
+<em>commands</em>, like `now build`."
+- {
+    h2 "It lives in a gray area between a shell and a real programming language"
+}
+- "Now definitely is not something you could use as a shell, since you have to
+declare \"system_commands\" in order to call anything from the system it's
+running on."
+- {
+    code {
+        > [system_commands/ls]
+        > command {
+        >     - ls
+        > }
+        > 
+    }
+}
+- "Isn't that awful? Now even checks if the command actually is available
+before running your prog... <em>document</em>. It may be nice to
+<strong>not</strong> have any <em>command not found</em> being found during
+runtime, but if that's the price, I don't know, maybe it isn't worth paying."
 - {
     type header
     format h2
     content "It's written in D -- and nobody uses D"
 }
+- "D is nice, but the language has no direction, no plans, right? You
+probably didn't even heard that before, since nobody talks about D."
+- "Now has almost <strong>8k LOC</strong> written in D. What a shameful
+decision that was!"
 - {
     type header
     format h2
     content "It barely has standard library"
 }
+- "Yeah, really. It has a whole lot of various commands, but nothing even
+close to Java or C#."
 - {
     type header
     format h2
     content "It has zero database connectivity baked in"
 }
+- "In order to use a database, one have to rely on a \"library\". And
+libraries are not like shared-object libraries as normal people would
+expect: in Now, a library is implemented using a form of IPC: it keeps
+an external program running and send or receive calls to <em>procedures</em>
+using the standard input and output to send messages serialized in JSON."
+- "So, technically, it's kinda easy to write a library to any DBMS, but who
+would do that?"
 - {
     type header
     format h2
     content "It can't even work with YAML!"
 }
+- "Yeah, it was abandoned because the author consider that there's no hope
+for YAML, that the format is terrible and overly complex. Now you have to
+convert everything to JSON if you want to work with data that's originally
+in YAML."
 - {
     type header
     format h2
     content "It implements weird concepts like \"shells\" and \"commands\""
 }
+- "Imagine your program <strong>have</strong> to call a bash script. Of course
+you're going to have it in a file somewhere in your project folder! But, no,
+in Now you can write this same script virtually like any other section in the
+document and call it a <em>script</em>, to be executed by some <em>shell</em>."
+> Like this:
 - {
-    type header
-    format h2
-    content ""
+    code {
+        > [shells/bash/scripts/date]
+        > parameters {
+        >     format {
+        >         type string
+        >         default "%Y-%m-%d"
+        >     }
+        > }
+        > 
+        > date +\$format
+        > 
+        > [commands/run]
+        > 
+        > date "%Y"
+        >     | collect
+        >     : first
+        >     | print "The current year is "
+    }
+}
+- "You can even define many shells that will call other programs and then
+write the \"scripts\" inside the document. Like, imagine having a document
+where you can write Markdown and it's capable of rendering itself."
+- "And that's a waste. A folder with a 'document.md' and a 'run.sh' will
+have the same effect."
+- {
+    h2 "It's not Web-focused"
+}
+- "What's the use on <em>anything</em> that can't serve HTTP???"
+- "Now <strong>is</strong> fully capable of serving SCGI, though, but
+what's the point? SCGI probably stands for SlowCGI, right?, the exact
+opposite of FastCGI! Who cares if it's simple? What we all need
+is <strong>fast!</strong>"
+- "Because every single Website we create absolutely must support 100k clients
+per second. We all know that."
+- {
+    h2 "And all that is only the tip of the iceberg..."
 }
 - {
-    type header
-    format h2
-    content ""
+    type sequence
+    format p
+    content {
+        - "You can see some more examples of this monstrosity in"
+        - {
+            type link
+            format link
+            text "the examples"
+            href "https://github.com/now-run/now/tree/main/examples"
+        }
+        - "."
+    }
 }
 - {
-    type header
-    format h2
-    content ""
+    h2 "Stay away"
 }
+- {
+    type sequence
+    format p
+    content {
+        - "My advice: stay away from"
+        - {
+            type link
+            format link
+            text "the project repository on Github"
+            href "http://github.com/now-run/now"
+        }
+        - "."
+    }
+}
+
+[# Nop]
+
 > What follows is a sample Now document:
 - {
     type reference
@@ -341,38 +558,6 @@ is, in fact, a continuation of the previous one."
         - body
     }
 }
-- {
-    type sequence
-    format p
-    content {
-        - "Find more at"
-        - {
-            type link
-            format link
-            text "Github"
-            href "http://github.com/now-run/now"
-        }
-        - "."
-    }
-}
-
-[Sample]
-
-    [Sample Document]
-    reference "http://github.com/now-run/now"
-
-    This document serves as a sample for the
-    format/language.
-
-    [commands/run]
-
-    # This command simply runs the program title and description
-    print "# $($text . title)"
-    print ($text . description)
-
-    print "Every section starting with capital letters are"
-    print "included inside \$text."
-
 
 [templates/style]
 
@@ -394,11 +579,12 @@ is, in fact, a continuation of the previous one."
 }
 @media (min-width: 0em) {
   #body {
+    /* Desktop, usually */
     padding-top: 5px;
-    padding-left: 15px;
-    padding-right: 15px;
-    margin-left: 50px;
-    margin-right: 50px;
+    padding-left: 100px;
+    padding-right: 100px;
+    margin-left: 80px;
+    margin-right: 80px;
     font-size: 1.4em;
     background-color: #eee9bf;
     border: 4px solid black;
@@ -406,12 +592,13 @@ is, in fact, a continuation of the previous one."
 }
 @media (min-width: 100em) {
   #body {
+    /* Mobile, usually */
     padding-top: 10px;
     padding-left: 35px;
     padding-right: 35px;
     margin-left: 200px;
     margin-right: 250px;
-    font-size: 1.4em;
+    font-size: 1.8em;
     background-color: #eee9bf;
     border: 4px solid black;
   }
@@ -428,6 +615,12 @@ p,li {
 }
 pre {
   font-family: FiraCode Light;
+  color: white;
+  background-color: black;
+  padding: 15px;
+  border-radius: 5px;
+  width: 90%;
+  margin-left: 2.5%;
 }
 
 [templates/base]
@@ -518,87 +711,107 @@ parameters {
 }
 returns string
 
-type $content | as t
-print "t=$t"
-print "content=$content"
-
-when ($t == list) {
-    obj $content | transform item {
-        render_item $item : to.sequence | return
-    } | collect | return
-}
-when ($t == string) {
-    template p : emit content : render | list | return
-}
-when ($t == dict) {
-    o $content
-        : keys
-        | as keys
-        ! >> {print "keys="}
-        : contains "type"
-        : then {
-            set format ($content . format)
-            set type ($content . type)
-        } {
-            set type none
-            o $keys
-                : first
-                | as format
-                | print "format="
-
+o $content
+    | switch {type}
+    ! string {
+        template p
+            : emit content
+            : render
+            | list
+            | return
+    }
+    ! list {
+        o $content
+            | {
+                render_item
+                : to.sequence
+            }
+            | collect
+            | return
+    }
+    ! dict {
+        scope "Prepare content" {
             o $content
-                : set (content = ($content . $format))
+                : keys
+                | as keys
+                : contains "type"
+                : then {
+                    set format ($content . format)
+                    set type ($content . type)
+                } {
+                    set type none
+                    o $keys
+                        : first
+                        | as format
+
+                    o $content
+                        : set (content = ($content . $format))
+                }
         }
 
-    template $format | as tpl
+        template $format | as tpl
 
-    when ($type == sequence) {
-        print "sequence=$content"
-        obj $content : get content | foreach sub_item {
-            print "sub_item=$sub_item"
-            type $sub_item | as sub_item_type
-            if ($sub_item_type == string) {
-                obj $tpl : emit content (content = $sub_item)
-            } {
-                render_item $sub_item | foreach x {
-                    print "x=$x"
-                    obj $tpl : emit content (content = $x)
+        when ($type == sequence) {
+            scope "Sequence" {
+                obj $content
+                    : get content
+                    | foreach sub_item {
+                        print "sub_item=<$sub_item>"
+                        type $sub_item
+                            | as sub_item_type
+                            : eq string
+                            : then {
+                                obj $tpl
+                                    : emit content (content = $sub_item)
+                            } {
+                                print ">> type is $sub_item_type"
+                                render_item $sub_item
+                                    | foreach x {
+                                        obj $tpl
+                                            : emit content (content = $x)
+                                    }
+                            }
+                    }
+
+                obj $tpl
+                    : render
+                    | list
+                    | return
+            }
+        }
+        default {
+            run {
+                when ($type == reference) {
+                    obj $content
+                        : get reference
+                        : to.sequence
+                        | . $text
+                        | as content
+                }
+                when ($type == link) {
+                    set text ($content . text)
+                    set href ($content . href)
+                }
+                default {
+                    scope "Default handler" {
+                        o $content
+                            : get content
+                            | as content
+                            | type
+                            : eq list
+                            : then {
+                                o $content
+                                    : join "\n"
+                                    | as content
+                            }
+                    }
                 }
             }
-        }
-        obj $tpl : render | list | return
-    }
-    default {
-        run {
-            when ($type == reference) {
-                obj $content
-                    : get reference
-                    ! >> {print "?> "}
-                    : to.sequence
-                    | . $text
-                    | as content
-            }
-            when ($type == link) {
-                set text ($content . text)
-                set href ($content . href)
-            }
-            default {
-                o $content
-                    : get content
-                    | as content
-                    | type
-                    : eq list
-                    : then {
-                        o $content
-                            : join "\n"
-                            | as content
-                    }
+            scope "Render" {
+                obj $tpl : emit content : render | list | return
             }
         }
-        obj $tpl : emit content : render | list | return
     }
-}
-
 
 [procedures/render_page]
 parameters {
@@ -619,9 +832,7 @@ template $template [obj $data : pairs] | as tpl
 scope "page content" {
     obj $data : get content : pairs | list | foreach pair {
         set item_data ($pair . 1)
-        print "item_data=$item_data"
         render_item $item_data | foreach content {
-            print "item_data.content=$content"
             obj $tpl : emit content
         }
     }
@@ -660,6 +871,7 @@ obj $text : get "Pages" : pairs | list | foreach pair {
 }
 
 [commands/passwd]
+description "Test the code for 'grepping -v' the /etc/passwd file"
 
 scope "Remove the current user from /etc/passwd" {
     o $env
@@ -667,10 +879,6 @@ scope "Remove the current user from /etc/passwd" {
         | as username
     path "/etc/passwd"
         : read.lines
-        | transform line {
-            o $line
-              : contains $username
-              : then {skip} {return $line}
-        }
+        | filter {o : contains $username : eq false}
         | {print}
 }

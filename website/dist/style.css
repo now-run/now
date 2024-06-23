@@ -16,11 +16,12 @@
 }
 @media (min-width: 0em) {
   #body {
+    /* Desktop, usually */
     padding-top: 5px;
-    padding-left: 15px;
-    padding-right: 15px;
-    margin-left: 50px;
-    margin-right: 50px;
+    padding-left: 100px;
+    padding-right: 100px;
+    margin-left: 80px;
+    margin-right: 80px;
     font-size: 1.4em;
     background-color: #eee9bf;
     border: 4px solid black;
@@ -28,12 +29,13 @@
 }
 @media (min-width: 100em) {
   #body {
+    /* Mobile, usually */
     padding-top: 10px;
     padding-left: 35px;
     padding-right: 35px;
     margin-left: 200px;
     margin-right: 250px;
-    font-size: 1.4em;
+    font-size: 1.8em;
     background-color: #eee9bf;
     border: 4px solid black;
   }
@@ -49,4 +51,10 @@ p,li {
 }
 pre {
   font-family: FiraCode Light;
+  color: white;
+  background-color: black;
+  padding: 15px;
+  border-radius: 5px;
+  width: 90%;
+  margin-left: 2.5%;
 }
