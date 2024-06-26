@@ -751,8 +751,8 @@ o $content
 
         template $format | as tpl
 
-        when ($type == sequence) {
-            scope "Sequence" {
+        switch {o $type}
+            ! sequence {
                 obj $content
                     : get content
                     | foreach sub_item {
@@ -778,39 +778,33 @@ o $content
                     | list
                     | return
             }
-        }
-        default {
-            run {
-                when ($type == reference) {
-                    obj $content
-                        : get reference
-                        : to.sequence
-                        | . $text
-                        | as content
-                }
-                when ($type == link) {
-                    set text ($content . text)
-                    set href ($content . href)
-                }
-                default {
-                    scope "Default handler" {
-                        o $content
-                            : get content
-                            | as content
-                            | type
-                            : eq list
-                            : then {
-                                o $content
-                                    : join "\n"
-                                    | as content
-                            }
-                    }
-                }
+            ! reference {
+                obj $content
+                    : get reference
+                    : to.sequence
+                    | . $text
+                    | as content
             }
+            ! link {
+                set text ($content . text)
+                set href ($content . href)
+            }
+            ! * {
+                o $content
+                    : get content
+                    | as content
+                    | type
+                    : eq list
+                    : then {
+                        o $content
+                            : join "\n"
+                            | as content
+                    }
+            }
+
             scope "Render" {
                 obj $tpl : emit content : render | list | return
             }
-        }
     }
 
 [procedures/render_page]
