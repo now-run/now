@@ -5,14 +5,20 @@ from sys import stdin, stdout
 procedures = {}
 
 def rpc(name):
+    """Use this as a decorator for your functions."""
+
     global procedures
+
     def wrapper(function):
         procedures[name] = function
         return function
+
     return wrapper
 
 
 def response(**data):
+    # Yeah, don't worry, the response
+    # really goes through stdout.
     print(json.dumps(data))
     stdout.flush()
 
