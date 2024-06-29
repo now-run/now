@@ -21,8 +21,8 @@ class Escopo : Dict
         if (parent !is null)
         {
             // Child scopes always share variables:
-            this.order = parent.order;
             this.values = parent.values;
+            this.needsReordering = true;
 
             this.rootCommand = parent.rootCommand;
             this.document = parent.document;

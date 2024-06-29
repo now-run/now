@@ -619,8 +619,20 @@ forLoop:
         output.push(values);
         return ExitCode.Success;
     };
+    builtinCommands["quickset"] = function(string path, Input input, Output output)
+    {
+        auto key = input.pop!string(null);
+        auto value = input.pop!Item;
+        input.escopo[key] = value;
+        return ExitCode.Success;
+    };
     builtinCommands["as"] = builtinCommands["set"];
 
+    builtinCommands["discard"] = function(string path, Input input, Output output)
+    {
+        input.popAll;
+        return ExitCode.Success;
+    };
     builtinCommands["get"] = function(string path, Input input, Output output)
     {
         /*

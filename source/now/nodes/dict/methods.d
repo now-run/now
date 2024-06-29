@@ -113,8 +113,8 @@ static this()
         auto subprogram = input.pop!SubProgram;
 
         auto escopo = input.escopo.addPathEntry("dict");
-        escopo.order = dict.order;
         escopo.values = dict.values;
+        escopo.needsReordering = true;
 
         auto exitCode = subprogram.run(escopo, input.popAll, output);
         if (exitCode == ExitCode.Return)
@@ -122,8 +122,8 @@ static this()
             exitCode = ExitCode.Success;
         }
 
-        dict.order = escopo.order;
         dict.values = escopo.values;
+        dict.needsReordering = true;
 
         return exitCode;
     };

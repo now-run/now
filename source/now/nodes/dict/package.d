@@ -1,6 +1,7 @@
 module now.nodes.dict;
 
-
+import std.algorithm.mutation : reverse;
+import std.algorithm.searching : countUntil;
 import now;
 
 
@@ -10,7 +11,8 @@ MethodsMap dictMethods;
 class Dict : Item
 {
     Item[string] values;
-    string[] order;
+    string[] orderedKeys;
+    bool needsReordering = true;
     bool isNumeric = true;
 
     this()
@@ -32,10 +34,9 @@ class Dict : Item
     // Conversions
     override string toString()
     {
-        // TODO: call `asPairs` and print them instead:
         string s = "dict " ~ to!string(
-            order
-                .map!(key => "(" ~ key ~ " = " ~ values[key].toString() ~ ")")
+            this.asPairs
+                .map!(key => key.toString())
                 .join(" ")
         );
         return s;
@@ -57,6 +58,35 @@ class Dict : Item
         return new ItemsRange(cast(Items)asPairs);
     }
 
+    // ------------------
+    // Ordering
+    @property
+    string[] order()
+    {
+        if (needsReordering)
+        {
+            // XXX: maybe use a fixed-size array, here:
+            log("dict.orderedKeys: ", orderedKeys);
+            string[] newOrder;
+            foreach (x; orderedKeys.reverse)
+            {
+                if (newOrder.countUntil(x) > -1)
+                {
+                    continue;
+                }
+
+                auto ptr = (x in values);
+                if (ptr !is null)
+                {
+                    newOrder ~= x;
+                }
+            }
+            this.orderedKeys = newOrder.reverse.array;
+            log(" --> ", orderedKeys);
+            this.needsReordering = false;
+        }
+        return orderedKeys;
+    }
     // ------------------
     // Operators
     Item opIndex(string key)
@@ -99,10 +129,10 @@ class Dict : Item
         {
             isNumeric = false;
         }
-        values[k] = v;
 
-        order = order.filter!(v => v != k).array;
-        order ~= k;
+        values[k] = v;
+        this.orderedKeys ~= k;
+        this.needsReordering = true;
     }
     void opIndexAssign(Item v, string[] keys)
     {
@@ -327,7 +357,7 @@ class Dict : Item
     void remove(string key)
     {
         values.remove(key);
-        this.order = this.order.filter!(x => x != key).array;
+        this.needsReordering = true;
     }
 
     // Operator for `foreach (key, value; dict) {...}`
