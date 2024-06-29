@@ -386,6 +386,7 @@ int now_help()
     stdout.writeln("  :f <file> - run a specific file");
     stdout.writeln("  :repl - enter interactive mode");
     stdout.writeln("  :stdin - read a document from standard input");
+    stdout.writeln("  :watch - watch-and-execute a file containing a subprogram");
     stdout.writeln("  :help - display this help message");
     return 0;
 }

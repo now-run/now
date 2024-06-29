@@ -19,6 +19,10 @@ parameters {
 
 date +$format
 
+[shells/bash/scripts/bashdate/on.return]
+
+collect : first
+
 [procedures/methods]
 
 dict (k = v) | as dict
@@ -319,7 +323,10 @@ scope "call" {
 
 scope "system_commands" {
     bashdate "%Y"
-        | collect
-        : first
         | print "The current year is: "
 }
+
+[commands/bashdate]
+
+bashdate "%Y"
+    | print "The current year is: "
