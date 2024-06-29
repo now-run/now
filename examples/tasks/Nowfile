@@ -1,0 +1,24 @@
+[Tasks]
+
+Shows how to work with tasks.
+
+[tasks/count]
+parameters {
+    id {
+        type string
+    }
+}
+
+range 9 | foreach i {
+    print "$id> $i"
+    sleep 500
+}
+
+[commands/run]
+
+range 9 | foreach task_id {
+    count $task_id
+}
+print "run> sleeping"
+sleep 10000
+print "run> exit"

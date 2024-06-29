@@ -24,7 +24,7 @@ docker compose up : check
 
 docker compose down : check
 
-[procedures/connection_handler]
+[tasks/connection_handler]
 parameters {
     connection {
         type tcp_connection
@@ -85,11 +85,13 @@ Content-Length: $content_length
 $msg"
         break
     }
+    ! * {log "Error on connection_handler: $error"}
 }
 log "closing connection"
 o $connection : close
 
 [commands/scgi]
+description "Starts the SCGI server. Don't call it directly."
 parameters {
     port {
         type integer
@@ -112,10 +114,12 @@ tcp.serve $host $port
     }
 
 [commands/run]
+description "Starts the HTTP server"
 
 compose up : check
 
 [commands/get]
+description "Sends a GET request to the HTTP server."
 parameters {
     port {
         type integer

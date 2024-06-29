@@ -5,6 +5,7 @@ import core.runtime;
 import std.algorithm.searching : endsWith;
 import std.file : exists, isFile, read;
 import std.path : buildNormalizedPath, buildPath, dirName;
+import std.parallelism : TaskPool;
 import std.string : toStringz;
 import std.uni : toUpper;
 
@@ -17,6 +18,7 @@ import now.grammar;
 import now.procedure;
 import now.shell_script;
 import now.system_command;
+import now.task;
 import now.user_defined_type;
 import now.library;
 
@@ -28,9 +30,11 @@ class Document : Dict {
     Dict metadata;
     Dict data;
     Dict text;
+    TaskPool taskPool;
 
     Procedure[string] commands;
     BaseCommand[string] procedures;
+    Task[string] tasks;
     Library[string] libraries;
 
     string[] nowPath;
@@ -70,6 +74,7 @@ class Document : Dict {
         loadConstants();
         loadTemplates();
         loadShells();
+        loadTasks();
         loadProcedures();
         loadDocumentCommands();
         loadSystemCommands();
@@ -129,7 +134,7 @@ class Document : Dict {
     }
     void loadConfiguration(Dict environmentVariables)
     {
-        log("- Adjusting configuration");
+        log("- Loading configuration");
         /*
         About [configuration]:
         - It must always follow the format "configuration/:key";
@@ -203,7 +208,7 @@ class Document : Dict {
     }
     void loadConstants()
     {
-        log("- Adjusting constants");
+        log("- Loading constants");
 
         auto constants = data.getOrCreate!Dict("constants");
         foreach (sectionName, section; constants)
@@ -233,7 +238,7 @@ class Document : Dict {
     }
     void loadTemplates()
     {
-        log("- Adjusting templates");
+        log("- Loading templates");
 
         auto templates = data.getOrCreate!Dict("templates");
         foreach (templateName, infoItem; templates.values)
@@ -247,7 +252,7 @@ class Document : Dict {
     }
     void loadShells()
     {
-        log("- Adjusting shells");
+        log("- Loading shells");
 
         auto shells = data.getOrCreate!Dict("shells");
         foreach (shellName, infoItem; shells.values)
@@ -286,9 +291,29 @@ class Document : Dict {
             }
         }
     }
+    void loadTasks()
+    {
+        log("- Loading tasks");
+
+        // XXX: maybe allow user to configure it???
+        // Maybe not?
+        // Probably not.
+        this.taskPool = new TaskPool();
+        this.taskPool.isDaemon = true;
+
+        // The document dict is loaded, now
+        // act accordingly on each different section.
+        auto tasks = data.getOrCreate!Dict("tasks");
+        foreach (name, infoItem; tasks.values)
+        {
+            log("-- ", name);
+            auto info = cast(Dict)infoItem;
+            this.tasks[name] = new Task(name, info, this.taskPool);
+        }
+    }
     void loadProcedures()
     {
-        log("- Adjusting procedures");
+        log("- Loading procedures");
 
         // The document dict is loaded, now
         // act accordingly on each different section.
@@ -302,7 +327,7 @@ class Document : Dict {
     }
     void loadDocumentCommands()
     {
-        log("- Adjusting commands");
+        log("- Loading commands");
 
         auto commandsDict = data.getOrCreate!Dict("commands");
         foreach (name, infoItem; commandsDict.values)
@@ -444,6 +469,12 @@ class Document : Dict {
         {
             auto proc = *procPtr;
             return proc.run(path, input, output);
+        }
+
+        if (auto taskPtr = (path in this.tasks))
+        {
+            auto task = cast(Task)(*taskPtr);
+            return task.run(path, input, output);
         }
 
         if (auto cmdPtr = (path in builtinCommands))
