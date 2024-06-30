@@ -189,9 +189,12 @@ class Document : Dict {
                         );
                     }
                 }
+                // ($client . password) -> x123
                 scopeDict[name] = finalValue;
-                // We'll overwrite if repeated and that's expected:
+                // val "CLIENT_PASSWORD" -> x123
                 this[envName] = finalValue;
+                // $password -> x123
+                this[name] = finalValue;
             }
         }
     }
