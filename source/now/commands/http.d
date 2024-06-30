@@ -13,10 +13,24 @@ struct Response {
 }
 
 
-auto getHttp(Items items)
+auto getHttp(Items items, Item[string] kwargs=null)
 {
     Response response;
     response.http = HTTP();
+
+    bool verifySsl = true;
+
+    if (kwargs !is null)
+    {
+        auto verifyFlagPtr = ("verify_ssl" in kwargs);
+        if (verifyFlagPtr !is null)
+        {
+            verifySsl = (*verifyFlagPtr).toBool;
+        }
+    }
+
+    response.http.verifyPeer = verifySsl;
+    response.http.verifyHost = verifySsl;
 
     foreach (item; items)
     {
@@ -62,7 +76,8 @@ void loadHttpCommands(CommandsMap commands)
         <html>...
         */
         string address = input.pop!string();
-        auto http = getHttp(input.popAll);
+
+        auto http = getHttp(input.popAll, input.kwargs);
         char[] content;
         try
         {
@@ -87,7 +102,7 @@ void loadHttpCommands(CommandsMap commands)
         >     . [dict (username = "John.Doe") (password = "1324")]
         */
         string address = input.pop!string();
-        auto http = getHttp(input.popAll);
+        auto http = getHttp(input.popAll, input.kwargs);
         char[] content;
         try
         {
@@ -112,7 +127,7 @@ void loadHttpCommands(CommandsMap commands)
         >     . [dict (username = "John.Doe") (password = "1324")]
         */
         string address = input.pop!string();
-        auto http = getHttp(input.popAll);
+        auto http = getHttp(input.popAll, input.kwargs);
         char[] content;
         try
         {
@@ -139,7 +154,7 @@ void loadHttpCommands(CommandsMap commands)
         >     . [dict (username = "John.Doe") (password = "1324")]
         */
         string address = input.pop!string();
-        auto http = getHttp(input.popAll);
+        auto http = getHttp(input.popAll, input.kwargs);
         try
         {
             del(address, http.http);
