@@ -149,6 +149,7 @@ class Document : Dict {
                     ~ " is repeated."
                 );
             }
+            log("- configuration/", configSectionName);
             this[configSectionName] = scopeDict;
             // Example: configSectionName = "http"
 
@@ -156,6 +157,7 @@ class Document : Dict {
             // "infoItem" = type, default value, etc. (before casting to Dict)
             foreach (name, infoItem; cast(Dict)configSection)
             {
+                log("-- ", name);
                 string envName = (configSectionName ~ "_" ~ name).toUpper;
                 Item finalValue;
 
@@ -194,6 +196,7 @@ class Document : Dict {
                 // val "CLIENT_PASSWORD" -> x123
                 this[envName] = finalValue;
                 // $password -> x123
+                log("document.", name, "=", finalValue);
                 this[name] = finalValue;
             }
         }
