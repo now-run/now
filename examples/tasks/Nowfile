@@ -14,11 +14,29 @@ range 9 | foreach i {
     sleep 500
 }
 
+print "Task ${id}: done"
+
+return $id
+
 [commands/run]
 
+list | as tasks
+
 range 9 | foreach task_id {
-    count $task_id
+    o $tasks : push [count $task_id]
 }
 print "run> sleeping"
-sleep 10000
+sleep 5000
+
+o $tasks | foreach task {
+    print "Waiting for $task"
+    loop {
+        o $task
+            : wait
+            ! running {sleep 500 ; continue}
+            | print "$task> "
+        break
+    }
+}
+
 print "run> exit"

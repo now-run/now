@@ -76,6 +76,7 @@ enum ObjectType
 
     Document,
     SystemProcess,
+    TaskRun,
 }
 
 alias Items = Item[];

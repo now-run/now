@@ -5,6 +5,9 @@ import now;
 
 import now.commands.general;
 
+// Misc?
+import now.task.methods;
+
 // Various types:
 import now.nodes.boolean.methods;
 import now.nodes.dict.methods;

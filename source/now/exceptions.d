@@ -68,6 +68,7 @@ mixin(customNowException!"ProcedureNotFoundException");
 mixin(customNowException!"SyntaxErrorException");
 mixin(customNowException!"SystemProcessException");
 mixin(customNowException!"SystemProcessInputError");
+mixin(customNowException!"StillRunning");
 mixin(customNowException!"TcpSocketException");
 mixin(customNowException!"UndefinedException");
 mixin(customNowException!"UserException");

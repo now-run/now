@@ -85,7 +85,6 @@ Content-Length: $content_length
 $msg"
         break
     }
-    ! * {log "Error on connection_handler: $error"}
 }
 log "closing connection"
 o $connection : close
