@@ -12,10 +12,13 @@ static this()
 
         if (!t.done)
         {
-            throw new StillRunning(
+            auto ex = new StillRunning(
                 input.escopo,
-                "The task " ~ path ~ " is still running"
+                "The task " ~ path ~ " is still running",
+                t,
             );
+            ex.classe = "running";
+            throw ex;
         }
         else if (t.exception !is null)
         {
