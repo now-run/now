@@ -56,10 +56,14 @@ class CommandCall
 
     override string toString()
     {
-        string s = this.name;
+        string s;
+        if (isTarget)
+        {
+            s ~= "method ";
+        }
+        s ~= this.name;
         s ~= "  " ~ args.to!string;
         s ~= "  " ~ kwargs.to!string;
-        // TODO: isTarget?
         return s;
     }
 
@@ -123,12 +127,6 @@ class CommandCall
         auto bpOutput = new Output;
         foreach (bypass; bypasses)
         {
-            // TODO: a bypass should be able
-            // to break/continue/skip or even return!
-            // return = bypass actually wants to change the result
-            //          of the command.
-            // success = ignore the result
-            // (So, yes, then it's like an "optionally bypass")
             auto bpExitCode = bypass.run(escopo, output.items, bpOutput);
             final switch (bpExitCode)
             {
