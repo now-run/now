@@ -1,6 +1,6 @@
 module now.commands.http;
 
-
+import std.array : replace;
 import std.net.curl;
 
 import now;
@@ -69,6 +69,48 @@ auto getHttp(Items items, Item[string] kwargs=null)
 
 void loadHttpCommands(CommandsMap commands)
 {
+    commands["url"] = function (string path, Input input, Output output)
+    {
+        /*
+        > url "https://{domain}"
+              . (domain = "example.com")
+        >     . [dict (limit = 100) (offset = 0)]
+        https://example.com?limit=100&offset=0
+        */
+        string address = input.pop!string();
+        string[] query_params;
+
+        foreach (item; input.popAll)
+        {
+            switch (item.type)
+            {
+                case ObjectType.Pair:
+                    auto pair = cast(Pair)item;
+                    auto key = pair.items[0].toString;
+                    auto value = pair.items[1].toString;
+                    address = address.replace("{" ~ key ~ "}", value);
+                    break;
+
+                case ObjectType.Dict:
+                    auto dict = cast(Dict)item;
+                    foreach (key; dict.order)
+                    {
+                        auto value = dict[key].toString;
+                        // TODO: URL-encode all this
+                        query_params ~= key ~ "=" ~ value;
+                    }
+                    break;
+                default:
+            }
+        }
+        if (query_params.length)
+        {
+            address ~= "?" ~ query_params.join("&");
+        }
+
+        output.push(address);
+        return ExitCode.Success;
+    };
     commands["http.get"] = function (string path, Input input, Output output)
     {
         /*
