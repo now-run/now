@@ -5,6 +5,24 @@ import now;
 import now.commands;
 
 
+class Loop : Item
+{
+    this()
+    {
+        this.type = ObjectType.Range;
+        this.typeName = "loop";
+    }
+    override string toString()
+    {
+        return "loop";
+    }
+    override ExitCode next(Escopo escopo, Output output)
+    {
+        return ExitCode.Continue;
+    }
+}
+
+
 // Ranges
 class IntegerRange : Item
 {

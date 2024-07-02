@@ -1009,19 +1009,7 @@ forLoop:
     };
     builtinCommands["loop"] = function(string path, Input input, Output output)
     {
-        auto body = input.pop!SubProgram;
-    wLoop:
-        while (true)
-        {
-            auto exitCode = body.run(input.escopo, output);
-            switch (exitCode)
-            {
-                case ExitCode.Break:
-                    break wLoop;
-                default:
-                    continue;
-            }
-        }
+        output.push(new Loop());
         return ExitCode.Success;
     };
     builtinCommands["filter"] = function(string path, Input input, Output output)

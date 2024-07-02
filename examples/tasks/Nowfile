@@ -30,7 +30,7 @@ sleep 5000
 
 o $tasks | foreach task {
     print "Waiting for $task"
-    loop {
+    loop | {
         o $task
             : wait
             ! running {sleep 500 ; continue}
