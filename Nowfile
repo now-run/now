@@ -1,20 +1,4 @@
-[Now Document Example]
-
-Show how the document syntax works.
-
-[Something to go into $text]
-> This section should be accessible through `$text`;
-- {
-    a alfa
-    b beta
-    c gama
-    d delta
-    e epsilo
-}
-> Last item from the list.
-
-And here goes the section body.
-
+[Nowfile for the Now project]
 
 [constants/dub]
 name "now"
@@ -35,88 +19,16 @@ license "MIT"
 }
 
 
-[packages]
-# - libnow_hello.so
-
-
 [on.error]
 
 print "The program terminated with some error."
 return $error
 
 
-[configuration/hello]
-salute_word {
-    type string
-    default "Hello"
-}
-
-
-[constants/math]
-pi 3.1415
-
-
-[constants/test]
-ignore {
-    - "http"
-    - "make"
-    - "named-scopes"
-    - "packages"
-    - "plantuml"
-    - "signals"
-}
-
-
 [logging/formats/default]
 description "This section defines how the `log` command will behave"
 
 dict (timestamp = [unixtime]) (message = $message) | json.encode | return
-
-
-[system_commands/sysleep]
-parameters {
-    t {
-        type float
-    }
-}
-command {
-    - sleep
-    - $t
-}
-
-
-[system_commands/now]
-parameters {
-    path {
-        type string
-    }
-}
-workdir $path
-command {
-    - "now"
-    - "run"
-}
-
-
-[shells/bash]
-# This configuration is optional.
-# The following values are the default ones:
-command {
-    - "bash"
-    - "-c"
-    - $script_body
-    - $script_name
-}
-
-
-[shells/bash/scripts/find_device]
-parameters {
-    name {
-        type string
-    }
-}
-
-/bin/ls -lh /dev | grep "$name"
 
 
 [system_commands/dub]
@@ -144,161 +56,6 @@ command {
 }
 
 
-[system_commands/bin_ls]
-description "Just to be able to use ls on :repl."
-parameters {
-    dir {
-        type string
-        default "."
-    }
-}
-command {
-    - ls
-    - $dir
-}
-
-
-[system_commands/date]
-description "To be able to test commands with different outputs"
-parameters {}
-command {
-    - date
-    - '+%Y-%m-%d %H:%M:%S.%N'
-}
-
-
-[procedures/hello]
-parameters {
-    name {
-        type string
-        description "The name of whoever is going to be saluted"
-    }
-    times {
-        type int
-        description "How many times the procedure should salute"
-        default 1
-    }
-    salute_word {
-        type string
-        default ($hello . salute_word)
-    }
-}
-
-print "# hello"
-print "arguments: name=$name times=$times"
-print "configuration: hello . salute_word: " ($hello . salute_word)
-print " times=$times"
-range 1 $times | foreach _ {
-    print ">>> $salute_word, $name!"
-}
-
-
-[procedures/error_handling]
-
-error "Test error" 123 "generic-error"
-print "POST ERROR: we should never reach this command."
-
-[procedures/error_handling/on.error]
-
-print "The following error occurred and was handled:"
-print "    $error"
-
-[commands]
-
-[+ e]
-description "Shows how errors can be handled."
-
-error_handling
-
-
-[+ exit]
-description "Exits the program with an error code."
-parameters {
-    code {
-        type int
-        default 123
-    }
-}
-
-$code : to.int | as n
-if (($n > 127) || ($n < 0)) {
-    error "The exit code should be between zero and 127"
-}
-
-print "Exiting the program with code ${n}..."
-exit $n
-
-
-[+ find_device]
-description "Scans /dev for devices matching a name."
-parameters {
-    name {
-        type string
-    }
-}
-
-find_device $name | { print }
-
-[++ on.call]
-
-print "Starting find_device..."
-
-
-
-[++ on.return]
-
-print "find_device finished."
-
-
-[commands/hello]
-description "Say hello to someone."
-parameters {
-    # Some stuff seems repetitive, but this is just
-    # because we are declaring another procedure,
-    # which in real life would be unnecessary.
-    name {
-        type string
-        description "The name of whoever is going to be saluted"
-        default "World"
-    }
-    salute_word {
-        type string
-        description "The word used to salute"
-        default "Hello"
-    }
-}
-
-print "commands/hello: name=$name salute_word=$salute_word"
-
-print "calling hello only with a name..."
-hello $name
-print
-
-print "calling hello with positional and named arguments..."
-hello $name -- (salute_word = $salute_word)
-print
-
-print "calling hello with times = 3 and a different salute word..."
-hello $name -- (times = 3) (salute_word = "hi")
-
-
-[commands/ls/on.error]
-
-print "list-dir returned an error: $error"
-return $error
-
-
-[commands/ls]
-parameters {
-    path {
-        type string
-        default "."
-    }
-}
-
-path $path : glob "*" | { print }
-
-
 [commands/make]
 description "Compiles Now"
 parameters {
@@ -322,13 +79,6 @@ timer {
 } {
     print "Made successfully in $miliseconds miliseconds."
 }
-
-
-[commands/pi]
-description "Tells the value of pi using program contants."
-parameters {}
-
-print "math/pi is " ($math . pi)
 
 
 [commands/run]
@@ -357,24 +107,3 @@ try {
 description "Generate dub.json file"
 
 path "dub.json" : write [json.encode $dub]
-# dub | { print }
-
-[commands/error_handling]
-description "Showcase the error handling system"
-
-print "# Local"
-error should_be_local
-    ! should_be_local { print "local error handler was called" }
-
-print "# Local with asterisk"
-error with_asterisk
-    ! * { print "catch-all errors is working!" }
-
-print "# Global"
-error should_be_global
-    ! other_thing { print "this message should never be printed!" }
-
-[commands/error_handling/on.error]
-
-print "on.error event handler for the command was called"
-print $error
