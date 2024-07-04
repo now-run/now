@@ -337,6 +337,41 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
+    stringMethods["snake_case"] = function (Item object, string path, Input input, Output output)
+    {
+        import std.regex : ctRegex, replace;
+
+        auto s = (cast(String)object).toString;
+
+        static auto regexes = [
+            // SetURLParams -> Set_URL_Params
+            ctRegex!(`(.)([A-Z][a-z]+)`, "g"),
+            // AlfaBetaGama -> Alfa_Beta_Gama
+            ctRegex!(`([a-z0-9])([A-Z])`, "g"),
+        ];
+        foreach (re; regexes)
+        {
+            s = s.replace(re, `$1_$2`);
+        }
+
+        output.push(s.toLower);
+        return ExitCode.Success;
+    };
+    stringMethods["camel_case"] = function (Item object, string path, Input input, Output output)
+    {
+        auto s = (cast(String)object).toString;
+        s = s.split("_")
+                .map!(x => x.capitalize)
+                .join("");
+        output.push(s);
+        return ExitCode.Success;
+    };
+    stringMethods["capitalize"] = function (Item object, string path, Input input, Output output)
+    {
+        auto s = (cast(String)object).toString;
+        output.push(s.capitalize);
+        return ExitCode.Success;
+    };
     stringMethods["range"] = function (Item object, string path, Input input, Output output)
     {
         /*
