@@ -69,15 +69,8 @@ parameters {
     }
 }
 
-timer {
-    try {
-        make $target | foreach line {
-            print "> $line"
-        }
-        log "Made successfully."
-    }
-} {
-    print "Made successfully in $miliseconds miliseconds."
+make $target | foreach line {
+    print "> $line"
 }
 
 

@@ -12,6 +12,10 @@ source_files {
         directory "source/now"
         pattern "*.d"
     }
+    - {
+        directory "cli/now"
+        pattern "*.d"
+    }
 }
 debug false
 command compile
@@ -25,36 +29,16 @@ source_files {
         directory "source/now"
         pattern "*.d"
     }
+    - {
+        directory "cli/now"
+        pattern "*.d"
+    }
 }
 debug true
 command compile
 
 
-[system_commands/hash]
-parameters {
-    files {
-        type list
-    }
-}
-command {
-    - "md5sum"
-    - $files
-}
-
-[system_commands/hash/on.return]
-
-transform entry {
-    # filename  hash
-    obj $entry : split " " | transform part {
-        if (($part : length) == 0) {
-            skip
-        }
-        return $part
-    } | collect | return
-}
-
-
-[system_commands/gdc_bin]
+[system_commands/ldc_bin]
 parameters {
     files {
         type {
@@ -76,22 +60,23 @@ parameters {
         default {}
     }
 }
-key_value_separator ""
+key_value_separator "="
 option_prefix "-"
 command {
-    - "gdc"
-    - $extra
-    - "-static-libphobos"
-    - "-static-libgcc"
-    - "-O$optimization"
-    - {
-        o $output_filepath
-    }
+    - "ldc2"
     - $files
+    - $extra
+    - "-I=source"
+    - "-I=cli/source"
+    - "--checkaction=halt"
+    - "-od=build"
+    - "-O$optimization"
+    - "-of"
+    - $output_filepath
 }
 
 
-[system_commands/gdc_obj]
+[system_commands/ldc_obj]
 parameters {
     file {
         type path
@@ -113,19 +98,16 @@ parameters {
 key_value_separator ""
 option_prefix "-"
 command {
-    - gdc
+    - ldc2
     - -c
-    - $extra
-    - -static-libphobos
-    - -static-libgcc
-    - "-Isource"
-    - "-Icli/source"
-    - "-O$optimization"
-    - "-o"
-    - $output_filepath
     - $file
+    - $extra
+    - "-I=source"
+    - "-I=cli/source"
+    - "-O$optimization"
+    - "-of"
+    - $output_filepath
 }
-
 
 [procedures/compile]
 parameters {
@@ -143,52 +125,48 @@ parameters {
 
 list | as extra
 if $debug {
-    push $extra "-fdebug"
+    o $extra : push "--d-debug"
 }
 
 json.encode $extra | md5 | as options_hash
 
+list | as processes
 scope "generate object files" {
-    list | as object_files
-    set has_new_files false
-    try {
-        hash $files | foreach pair {
-            obj $pair : get 0 | as hash
-            obj $pair : get 1 | as input_file
-            path "build/${hash}-${options_hash}.o" | as obj_file
-            if (($obj_file : exists) == false) {
-                log "compiling $input_file into $obj_file"
+    list
+        | as object_files
 
-                timer {
-                    print gdc_obj " " $input_file " " $obj_file " -- " "(extra = $extra)"
-                    gdc_obj $input_file $obj_file -- (extra = $extra) : check
-                } {
-                    log "$input_file was compiled in $microseconds microseconds."
-                }
-                set has_new_files true
+    o $files | foreach file {
+        path $file
+            : read
+            | md5
+            | as hash
+
+        path "build/${hash}-${options_hash}.o"
+            | as obj_file
+            ! >> {discard ; o $object_files : push $obj_file}
+            ! >> {o : exists : then {continue}}
+
+        log "Compiling $file into $obj_file ."
+        ldc_obj $file $obj_file -- (extra = $extra)
+            | as p
+
+        o $processes
+            ! >> {o : push $p}
+            : length : gte 5 : then {
+                log "Waiting the compiler..."
+                o $processes
+                    ! >> {o | {o : check}}
+                    : truncate
             }
-            obj $object_files : push $obj_file
-        }
-    }
-
-}
-
-if false {
-scope "clean old files" {
-    if $has_new_files {
-        path "build" : glob "*.o" | foreach filename {
-            obj $object_files : contains $filename : eq false : then {
-                log "Deleting $filename ..."
-                obj $filename : delete
-            }
-        }
     }
 }
-}
+
+o $processes | {o : check}
 
 scope "generate binary" {
-    print gdc_bin " " $object_files " " $output_filepath " -- " (extra = $extra)
-    gdc_bin $object_files $output_filepath -- (extra = $extra) | { print }
+    log "Compiling all $($object_files : length) object files..."
+    # log "ldc_bin $object_files $output_filepath -- (extra = $extra)"
+    ldc_bin $object_files $output_filepath -- (extra = $extra) | { print }
 }
 
 
@@ -223,28 +201,22 @@ scope "compile" {
     }
 
     obj $target : get output_filepath | path | as output_filepath
-    print "output_filepath=$output_filepath"
-    try {
-        timer {
-            call $command
-                . $source_files
-                . $output_filepath
-                . -- (debug = ($target . debug))
-                | foreach line {
-                    # log "$command: $line"
-                }
-        } {
-            log "$output_filepath was compiled in $miliseconds miliseconds."
-        }
+    timer {
+        call $command
+            . $source_files
+            . $output_filepath
+            . -- (debug = ($target . debug))
+            | foreach line {
+                log "$command: $line"
+            }
     } {
+        log "$output_filepath was compiled in $miliseconds miliseconds."
+    }
+    ! * {
         log ">>>>> ERROR: $error"
         error $error
     }
-    log "compilation finished."
 }
-
-log "make $target_name finished."
-
 
 [commands/build/on.call]
 description "Verify if the user is running from inside the examples directory."
@@ -279,5 +251,4 @@ make $target
 
 [commands/clean]
 
-print "test mode"
-path "dist/*" : glob | foreach file { print delete $file }
+path "dist/*.o" : glob | {o : delete}
