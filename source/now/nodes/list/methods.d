@@ -73,6 +73,12 @@ static this()
         output.push(l.items[$ - 1]);
         return ExitCode.Success;
     };
+    listMethods["truncate"] = function (Item object, string path, Input input, Output output)
+    {
+        List l = cast(List)object;
+        l.items = [];
+        return ExitCode.Success;
+    };
     listMethods["slice"] = function (Item object, string path, Input input, Output output)
     {
         /*
