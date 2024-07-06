@@ -444,7 +444,13 @@ class NowParser : Parser
             auto commandCall = consumeCommandCall();
             commandCalls ~= commandCall;
 
-            if (currentChar.among!(PIPE,SEMICOLON))
+            if (currentChar == SEMICOLON)
+            {
+                consumeChar();
+                consumeSpace();
+                break;
+            }
+            else if (currentChar == PIPE)
             {
                 consumeChar();
                 consumeSpace();
