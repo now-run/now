@@ -752,19 +752,61 @@ forLoop:
     // CONDITIONALS
     builtinCommands["if"] = function(string path, Input input, Output output)
     {
+        /*
+        > if true {print "TRUE!"}
+        TRUE!
+        */
         auto condition = input.pop!bool;
         auto thenBody = input.pop!SubProgram;
+        auto inputs = input.popAll;
 
         if (condition)
         {
-            return thenBody.run(input.escopo, output);
+            return thenBody.run(input.escopo, inputs, output);
         }
-        else
+
+        return ExitCode.Success;
+    };
+    builtinCommands["run.if"] = function(string path, Input input, Output output)
+    {
+        /*
+        > run.if true {print "TRUE!"}
+        TRUE!
+
+
+        Anything from 3rd position on is passed
+        as inputs for the body:
+        > if true {print "what> "} "WHAT?"
+        what> WHAT?
+
+        So this construct can work:
+
+        list 1 2 3
+            | run.if $debug {o | as lista ; log $lista ; return $lista}
+            | return
+
+        If the body don't Return, then the same input will
+        be used as output:
+
+        list 1 2 3
+            | run.if $debug {o | as lista ; log $lista}
+            | return
+        */
+        auto condition = input.pop!bool;
+        auto thenBody = input.pop!SubProgram;
+        auto inputs = input.popAll;
+
+        if (condition)
         {
-            auto elseBody = input.pop!SubProgram(null);
-            if (elseBody !is null)
+            auto exitCode = thenBody.run(input.escopo, inputs, output);
+            switch (exitCode)
             {
-                return elseBody.run(input.escopo, output);
+                case ExitCode.Return:
+                    return ExitCode.Success;
+
+                default:
+                    output.items = inputs;
+                    return exitCode;
             }
         }
 
