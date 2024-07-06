@@ -68,7 +68,7 @@ class Dict : Item
             // XXX: maybe use a fixed-size array, here:
             log("dict.orderedKeys: ", orderedKeys);
             string[] newOrder;
-            foreach (x; orderedKeys.reverse)
+            foreach (x; orderedKeys.reverse.array)
             {
                 if (newOrder.countUntil(x) > -1)
                 {
