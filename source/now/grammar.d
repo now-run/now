@@ -630,7 +630,6 @@ class NowParser : Parser
 
         NamedSubProgram[] handlers;
 
-        auto bpIndex = 0;
         while (currentChar == EVENT_HANDLER)
         {
             auto mark = consumeChar();
@@ -640,14 +639,6 @@ class NowParser : Parser
             consumeWhitespace();
             auto handler = consumeSubList();
             consumeWhitespaces();
-
-            if (eventName == ">>")
-            {
-                // ".B 0"
-                eventName = ".B " ~ (bpIndex.to!string);
-                bpIndex++;
-            }
-
             log("!!! ", eventName, " -> ", handler);
             handlers ~= NamedSubProgram(eventName, handler);
         }

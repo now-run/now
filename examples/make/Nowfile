@@ -1,7 +1,8 @@
 [Now as an alternative to Make]
-focal_point "constants/targets/release"
 
-A very convoluted way of doing the same a Makefile would do much more easily.
+An example of implementing a Makefile-like document, but
+using the source files md5 hashes instead of modification
+timestamps.
 
 
 [constants/targets/release]
@@ -19,7 +20,6 @@ source_files {
 }
 debug false
 command compile
-
 
 [constants/targets/debug]
 description "now binary, debug"
@@ -123,12 +123,12 @@ parameters {
     }
 }
 
-list | as extra
-if $debug {
-    o $extra : push "--d-debug"
-}
-
-json.encode $extra | md5 | as options_hash
+list
+    | as extra
+    | run.if $debug {o : push "--d-debug"}
+    | json.encode $extra
+    | md5
+    | as options_hash
 
 list | as processes
 scope "generate object files" {
@@ -143,19 +143,15 @@ scope "generate object files" {
 
         path "build/${hash}-${options_hash}.o"
             | as obj_file
-            ! >> {discard ; o $object_files : push $obj_file}
-            ! >> {o : exists : then {continue}}
-
-        log "Compiling $file into $obj_file ."
-        ldc_obj $file $obj_file -- (extra = $extra)
-            | as p
-
-        o $processes
-            ! >> {o : push $p}
+            | >> {on $object_files push}
+            | >> {o : exists : then {continue}}
+            | __ {log "Compiling $file into ${obj_file}."}
+            | ldc_obj $file -- (extra = $extra)
+            | on $processes push
             : length : gte 5 : then {
                 log "Waiting the compiler..."
                 o $processes
-                    ! >> {o | {o : check}}
+                    | >> {foreach p {o $p : check}}
                     : truncate
             }
     }

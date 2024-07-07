@@ -40,7 +40,7 @@ o $connection | foreach data {
     scope "SCGI" {
         o $data
             : netstrings
-            | run {
+            | >> {
                 o : as
                     . headers_strings
                     . body
@@ -54,21 +54,21 @@ o $connection | foreach data {
             : to.pairs
             | dict
             | as headers
-            ! >> {
+            | >> {
                 log "Headers: $headers"
                 log "Header string length: " ($headers_string : length)
             }
-            ! >> {
+            | >> {
                 o : get "REQUEST_URI"
                     | as path
                     | log "Path: "
             }
-            ! >> {
+            | >> {
                 o : get "QUERY_STRING"
                     | as query_params
                     | log "Query parameters: "
             }
-            ! >> {
+            | >> {
                 o : get "REQUEST_METHOD"
                     | as request_method
                     | log "Request method: "
@@ -141,17 +141,20 @@ log "request: <<$request>>"
 
 tcp.connect $host $port
     ! * {print "Whoops! And error! $error" ; return $error}
-    ! >> {
+    | >> {
         print "connection object: "
     }
-    ! >> {
+    | >> {
         o : send $request
+        print "Request sent"
     }
-    ! >> {
-        o | {print ; break}
+    | >> {
+        o | {
+            print "response: "
+            break
+        }
     }
-    ! >> {
-        as _
+    | __ {
         print "Closing socket..."
     }
     : close

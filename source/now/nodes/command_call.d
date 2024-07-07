@@ -25,7 +25,6 @@ class CommandCall
 
     // For handling error locally:
     SubProgram[string] eventHandlers;
-    SubProgram[] bypasses;
 
     this(string name, Items args, Items kwargs)
     {
@@ -42,15 +41,7 @@ class CommandCall
         {
             auto k = pair.name;
             auto v = pair.subprogram;
-
-            if (k[0] == '.' && k.startsWith(".B "))
-            {
-                this.bypasses ~= v;
-            }
-            else
-            {
-                this.eventHandlers[k] = v;
-            }
+            this.eventHandlers[k] = v;
         }
     }
 
@@ -121,30 +112,6 @@ class CommandCall
     }
 
     ExitCode run(Escopo escopo, Items inputs, Output output, Item target=null)
-    {
-        auto exitCode = _run(escopo, inputs, output, target);
-
-        auto bpOutput = new Output;
-        foreach (bypass; bypasses)
-        {
-            auto bpExitCode = bypass.run(escopo, output.items, bpOutput);
-            final switch (bpExitCode)
-            {
-                case ExitCode.Success:
-                    break;
-                case ExitCode.Return:
-                    output.items = bpOutput.items;
-                    break;
-                case ExitCode.Continue:
-                case ExitCode.Break:
-                case ExitCode.Skip:
-                    exitCode = bpExitCode;
-            }
-        }
-
-        return exitCode;
-    }
-    ExitCode _run(Escopo escopo, Items inputs, Output output, Item target=null)
     {
         log("- CommandCall.run: ", this);
         if (isTarget)

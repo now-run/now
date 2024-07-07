@@ -341,3 +341,14 @@ list a b c d
         log "debug> <<$x>>"
     }
     | print "list: "
+
+
+[commands/test]
+
+scope "Newlines and semicolons should behave the same" {
+    o 123
+    as x ! * {print "ok 1"}
+
+    o 123 ; as x ! * {print "ok 2" ; return}
+    print "x is $x, but shouldn't..."
+}

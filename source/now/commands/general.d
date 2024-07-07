@@ -1049,6 +1049,61 @@ forLoop:
 
         return ExitCode.Success;
     };
+    builtinCommands["run.foreach"] = function(string path, Input input, Output output)
+    {
+        /*
+        > range 2 | run.foreach { print "+ " } | print
+        + 0
+        + 1
+        + 2
+        Range
+        */
+        auto argName = input.pop!string();
+        auto argBody = input.pop!SubProgram();
+
+        foreach (target; input.popAll)
+        {
+            Item range = target.range();
+
+            forLoop:
+            while (true)
+            {
+                auto nextOutput = new Output;
+                auto exitCode = range.next(input.escopo, nextOutput);
+                final switch (exitCode)
+                {
+                    case ExitCode.Break:
+                        break forLoop;
+                    case ExitCode.Skip:
+                        continue;
+                    case ExitCode.Continue:
+                        break;  // <-- break the switch, not the while.
+                    case ExitCode.Return:
+                    case ExitCode.Success:
+                        return exitCode;
+                }
+
+                input.escopo[argName] = nextOutput.items;
+                exitCode = argBody.run(input.escopo, output);
+
+                if (exitCode == ExitCode.Break)
+                {
+                    break;
+                }
+                else if (exitCode == ExitCode.Return)
+                {
+                    /*
+                    Return propagates up into the
+                    processes stack and we
+                    don't want that.
+                    */
+                    return ExitCode.Success;
+                }
+            }
+        }
+
+        return ExitCode.Success;
+    };
     builtinCommands["loop"] = function(string path, Input input, Output output)
     {
         output.push(new Loop());
@@ -1129,7 +1184,20 @@ forLoop:
         );
         return input.escopo.document.runProcedure(name, newInput, output);
     };
+    builtinCommands["on"] = function(string path, Input input, Output output)
+    {
+        /*
+        > list a b c | as lista
+        > on $lista get 2 | print
+        c
 
+        > o 2 | on $lista get | print
+        c
+        */
+        auto target = input.pop!Item;
+        auto methodName = input.pop!string;
+        return target.runMethod(methodName, input, output);
+    };
     // Hashes
     builtinCommands["md5"] = function(string path, Input input, Output output)
     {
@@ -1275,6 +1343,47 @@ forLoop:
         }
         return exitCode;
     };
+    builtinCommands["bypass"] = function (string path, Input input, Output output)
+    {
+        auto body = input.pop!SubProgram;
+        auto items = input.popAll;
+
+        auto escopo = input.escopo.addPathEntry("bypass");
+        auto bpOutput = new Output;
+        auto exitCode = body.run(escopo, items, bpOutput);
+        if (exitCode == ExitCode.Return)
+        {
+            output.items = bpOutput.items;
+            exitCode = ExitCode.Success;
+        }
+        else
+        {
+            output.items = items;
+        }
+        return exitCode;
+    };
+    builtinCommands[">>"] = builtinCommands["bypass"];
+
+    builtinCommands["aposto"] = function (string path, Input input, Output output)
+    {
+        auto body = input.pop!SubProgram;
+        auto items = input.popAll;
+
+        auto escopo = input.escopo.addPathEntry("aposto");
+        auto aOutput = new Output;
+        auto exitCode = body.run(escopo, aOutput);
+        if (exitCode == ExitCode.Return)
+        {
+            output.items = aOutput.items;
+            exitCode = ExitCode.Success;
+        }
+        else
+        {
+            output.items = items;
+        }
+        return exitCode;
+    };
+    builtinCommands["__"] = builtinCommands["aposto"];
 
     // Others
     loadBase64Commands(builtinCommands);
