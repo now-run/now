@@ -1198,6 +1198,19 @@ forLoop:
         auto methodName = input.pop!string;
         return target.runMethod(methodName, input, output);
     };
+    builtinCommands["method"] = function(string path, Input input, Output output)
+    {
+        /*
+        > list a b c | method push d | print
+        (a , b , c , d)
+        */
+        auto methodName = input.args[0].toString;
+        auto target = input.inputs[0];
+        input.items = input.args[1..$];
+        return target.runMethod(methodName, input, output);
+    };
+    builtinCommands["::"] = builtinCommands["method"];
+
     // Hashes
     builtinCommands["md5"] = function(string path, Input input, Output output)
     {
@@ -1345,6 +1358,13 @@ forLoop:
     };
     builtinCommands["bypass"] = function (string path, Input input, Output output)
     {
+        /*
+        > o 123 | bypass {o 456} | print
+        123
+
+        > o 123 | bypass {return 456} | print
+        456
+        */
         auto body = input.pop!SubProgram;
         auto items = input.popAll;
 
@@ -1366,6 +1386,13 @@ forLoop:
 
     builtinCommands["aposto"] = function (string path, Input input, Output output)
     {
+        /*
+        > o 123 | aposto {print "inner: "} | print "outer: "
+        inner:
+        outer: 123
+
+        The aposto won't receive any inputs.
+        */
         auto body = input.pop!SubProgram;
         auto items = input.popAll;
 

@@ -41,7 +41,7 @@ o $connection | foreach data {
         o $data
             : netstrings
             | >> {
-                o : as
+                :: as
                     . headers_strings
                     . body
                 log "Headers strings: $headers_strings"
@@ -59,17 +59,17 @@ o $connection | foreach data {
                 log "Header string length: " ($headers_string : length)
             }
             | >> {
-                o : get "REQUEST_URI"
+                :: get "REQUEST_URI"
                     | as path
                     | log "Path: "
             }
             | >> {
-                o : get "QUERY_STRING"
+                :: get "QUERY_STRING"
                     | as query_params
                     | log "Query parameters: "
             }
             | >> {
-                o : get "REQUEST_METHOD"
+                :: get "REQUEST_METHOD"
                     | as request_method
                     | log "Request method: "
             }
@@ -145,12 +145,12 @@ tcp.connect $host $port
         print "connection object: "
     }
     | >> {
-        o : send $request
+        :: send $request
         print "Request sent"
     }
     | >> {
-        o | {
-            print "response: "
+        foreach response {
+            print "response: $response"
             break
         }
     }
