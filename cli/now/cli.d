@@ -486,35 +486,39 @@ int cmd(Document document, string[] documentArgs)
     {
         auto parser = new NowParser(line);
         Pipeline pipeline;
-        try
-        {
-            pipeline = parser.consumePipeline();
-        }
-        catch (Exception ex)
-        {
-            return -1;
-        }
 
-        ExitCode exitCode;
-        // Reset output items array:
-        output.items.length = 0;
-        try
+        while (!parser.eof)
         {
-            exitCode = errorPrinter({
-                return pipeline.run(escopo, output);
-            });
-        }
-        catch (NowException ex)
-        {
-            auto error = ex.toError;
-            stderr.writeln(error.toString());
-            stderr.writeln("----------");
-            return error.code;
-        }
+            try
+            {
+                pipeline = parser.consumePipeline();
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
 
-        if (exitCode != ExitCode.Success)
-        {
-            stderr.writeln(exitCode.to!string);
+            ExitCode exitCode;
+            // Reset output items array:
+            output.items.length = 0;
+            try
+            {
+                exitCode = errorPrinter({
+                    return pipeline.run(escopo, output);
+                });
+            }
+            catch (NowException ex)
+            {
+                auto error = ex.toError;
+                stderr.writeln(error.toString());
+                stderr.writeln("----------");
+                return error.code;
+            }
+
+            if (exitCode != ExitCode.Success)
+            {
+                stderr.writeln(exitCode.to!string);
+            }
         }
     }
 
