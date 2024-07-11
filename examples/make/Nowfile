@@ -125,7 +125,7 @@ parameters {
 
 list
     | as extra
-    | run.if $debug {o : push "--d-debug"}
+    | run.if $debug {:: push "--d-debug"}
     | json.encode $extra
     | md5
     | as options_hash
@@ -137,27 +137,27 @@ scope "generate object files" {
 
     o $files | foreach file {
         path $file
-            : read
+            | :: read
             | md5
             | as hash
 
         path "build/${hash}-${options_hash}.o"
             | as obj_file
             | >> {on $object_files push}
-            | >> {o : exists : then {continue}}
+            | >> {:: exists | :: then {continue}}
             | __ {log "Compiling $file into ${obj_file}."}
             | ldc_obj $file -- (extra = $extra)
             | on $processes push
-            : length : gte 5 : then {
+            | :: length | :: gte 5 | :: then {
                 log "Waiting the compiler..."
                 o $processes
-                    | >> {foreach p {o $p : check}}
-                    : truncate
+                    | >> {o | {:: check}}
+                    | :: truncate
             }
     }
 }
 
-o $processes | {o : check}
+o $processes | {:: check}
 
 scope "generate binary" {
     log "Compiling all $($object_files : length) object files..."
@@ -174,29 +174,29 @@ parameters {
 }
 
 log "Making $target_name ..."
-obj $targets : get $target_name | as target
+o $targets | :: get $target_name | as target
 
 scope "resolve dependencies" {
-    try { obj $target : get depends_on } { list } | foreach dependency {
-        make $dependency
-    }
+    o $target
+        | :: get depends_on
+        ! * {list}
+        | {make}
 }
 
 scope "compile" {
-    obj $target : get command | as command
+    o $target | :: get command | as command
     list | as source_files
 
-    obj $target : get source_files | foreach pair {
+    o $target | :: get source_files | foreach pair {
         path ($pair . directory) | as directory
         set pattern ($pair . pattern)
 
-        obj $directory : glob.depth $pattern | foreach file {
-            # print "file=$file"
-            obj $source_files : push $file
+        o $directory | :: glob.depth $pattern | {
+            on $source_files push
         }
     }
 
-    obj $target : get output_filepath | path | as output_filepath
+    o $target | :: get output_filepath | path | as output_filepath
     timer {
         call $command
             . $source_files
@@ -217,9 +217,9 @@ scope "compile" {
 [commands/build/on.call]
 description "Verify if the user is running from inside the examples directory."
 
-obj $env : get "PWD" : split "/" | as pwd
-obj $pwd : length | as length
-obj $pwd : get ($length - 1) | as cwd
+o $env | :: get "PWD" | :: split "/" | as pwd
+o $pwd | :: length | as length
+o $pwd | :: get ($length - 1) | as cwd
 if (($cwd == "examples") || ($cwd == "make")) {
     print "Do not run this program from inside the examples directory!"
     print "Go to the repository root and run it this way:"
@@ -247,4 +247,4 @@ make $target
 
 [commands/clean]
 
-path "dist/*.o" : glob | {o : delete}
+path "build/*.o" | :: glob | {:: delete}

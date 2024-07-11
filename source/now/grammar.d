@@ -11,7 +11,6 @@ import now.parser;
 
 
 const PIPE = '|';
-const METHOD_SELECTOR = ':';
 const EVENT_HANDLER = '!';
 const PROPERTY_TOKEN = '~';
 
@@ -455,13 +454,6 @@ class NowParser : Parser
                 consumeChar();
                 consumeSpace();
             }
-            else if (currentChar == METHOD_SELECTOR)
-            {
-                consumeChar();
-                consumeSpace();
-                // Mark the command as a target:
-                commandCall.isTarget = true;
-            }
             else
             {
                 break;
@@ -563,7 +555,7 @@ class NowParser : Parser
                 }
                 else if (currentChar.among!(
                     '}', ']', ')', '>',
-                    PIPE, METHOD_SELECTOR
+                    PIPE
                 ))
                 {
                     break;

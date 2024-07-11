@@ -18,7 +18,6 @@ class CommandCall
     string name;
     Items args;
     Items kwargs;
-    bool isTarget;
     size_t documentLineNumber;
     size_t documentColNumber;
     Pipeline pipeline;
@@ -31,7 +30,6 @@ class CommandCall
         this.name = name;
         this.args = args;
         this.kwargs = kwargs;
-        this.isTarget = false;
     }
     this(string name, Items args, Items kwargs, NamedSubProgram[] eventHandlers)
     {
@@ -48,10 +46,6 @@ class CommandCall
     override string toString()
     {
         string s;
-        if (isTarget)
-        {
-            s ~= "method ";
-        }
         s ~= this.name;
         s ~= "  " ~ args.to!string;
         s ~= "  " ~ kwargs.to!string;
@@ -111,13 +105,9 @@ class CommandCall
         return kwargs;
     }
 
-    ExitCode run(Escopo escopo, Items inputs, Output output, Item target=null)
+    ExitCode run(Escopo escopo, Items inputs, Output output)
     {
         log("- CommandCall.run: ", this);
-        if (isTarget)
-        {
-            log("-- isTarget!");
-        }
         auto arguments = evaluateArguments(escopo);
         log("--- ", inputs, " | ", name, "  ", arguments);
         auto keywordArguments = evaluateKeywordArguments(escopo);
@@ -132,14 +122,7 @@ class CommandCall
         try
         {
             return escopo.errorHandler(this.pipeline, {
-                if (target !is null)
-                {
-                    return target.runMethod(name, input, output);
-                }
-                else
-                {
-                    return escopo.document.runProcedure(name, input, output);
-                }
+                return escopo.document.runProcedure(name, input, output);
             });
         }
         catch (NowException ex)

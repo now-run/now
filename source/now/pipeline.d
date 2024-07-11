@@ -39,7 +39,6 @@ class Pipeline
     }
     ExitCode run(Escopo escopo, Items inputs, Output output)
     {
-        Item target;
         ExitCode exitCode;
 
         if (inputs is null)
@@ -60,7 +59,7 @@ forLoop:
             cmdOutput.items.length = 0;
 
             exitCode = escopo.errorHandler(this, {
-                return commandCall.run(escopo, inputs, cmdOutput, target);
+                return commandCall.run(escopo, inputs, cmdOutput);
             });
             log("- Pipeline <- ", exitCode, " <- ", cmdOutput);
 
@@ -91,22 +90,6 @@ forLoop:
                 this pipeline, if present.
                 */
                 case ExitCode.Success:
-                    if (commandCall.isTarget)
-                    {
-                        // obj x : print
-                        //     ^
-                        //     |
-                        //     +----- target for "print", that is the
-                        //             next command in the pipeline.
-                        target = cmdOutput.pop;
-                        // XXX: but what about this?
-                        // obj a b c : print
-                        // ?????????????????????????
-                    }
-                    else
-                    {
-                        target = null;
-                    }
                     break;  // break THE SWITCH and proceed in the loop
             }
         }

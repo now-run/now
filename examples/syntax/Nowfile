@@ -21,12 +21,14 @@ date +$format
 
 [shells/bash/scripts/bashdate/on.return]
 
-collect : first
+collect | :: first
 
 [procedures/methods]
 
 dict (k = v) | as dict
-obj $dict : get k | print "(dict . k) is "
+obj $dict
+    | :: get k
+    | print "(dict . k) is "
 
 
 [system_commands/wd]
@@ -81,8 +83,8 @@ scope "python: [2 * n for n in range(0,9) if ((n % 2) == 0)]" {
             default { o ($x * 2) }
         }
         | collect
-        : eq (0 , 4 , 8 , 12 , 16)
-        : assert
+        | :: eq (0 , 4 , 8 , 12 , 16)
+        | :: assert
 }
 
 scope "python: [u.name for name in users_list]" {
@@ -93,10 +95,10 @@ scope "python: [u.name for name in users_list]" {
         | as lista
 
     o $lista
-        | {o : get n}
+        | {:: get n}
         | collect
-        : eq (1 , 2 , 3)
-        : assert
+        | :: eq (1 , 2 , 3)
+        | :: assert
 }
 log "ok!"
 
@@ -136,18 +138,18 @@ date | { print ">>> " }
 [commands/cat]
 description "Show how to call an interactive program"
 
-cat : check
+cat | :: check
 print "quitting..."
 
 
 [commands/booleans]
 description "Test boolean logic and operators."
 
-obj true : then {
+obj true | :: then {
     dict (k = 1)
 } {
     dict (k = 2)
-} : get k : eq 1 | assert "k should be 1"
+} | :: get k | :: eq 1 | assert "k should be 1"
 
 
 set x true
@@ -158,7 +160,7 @@ run {
     when ($x == false) {
         dict (k = 2) | return
     }
-} : get k : eq 1 | assert "k should be 1"
+} | :: get k | :: eq 1 | assert "k should be 1"
 
 [commands/error]
 
@@ -187,8 +189,8 @@ scope "Unhandled error" {
 [commands/run]
 description "General syntax tests"
 
-scope "Dict : get" {
-    dict (a = 10) (b = 20) : get a : eq 10 | assert
+scope "Dict | :: get" {
+    dict (a = 10) (b = 20) | :: get a | :: eq 10 | assert
 }
 
 scope "type identification" {
@@ -284,10 +286,10 @@ scope "vars" {
     set x 1
     set y 2
     vars | as v
-    obj $v : contains x | assert
-    obj $v : contains "x" | assert
-    obj $v : contains y | assert
-    obj $v : contains "y" | assert
+    obj $v | :: contains x | :: assert
+    obj $v | :: contains "x" | :: assert
+    obj $v | :: contains y | :: assert
+    obj $v | :: contains "y" | :: assert
 }
 
 scope "when" {
@@ -311,7 +313,7 @@ scope "default" {
 
 scope "collect" {
     range 1 10 | collect | as l
-    assert "$l length should be 10" (($l : length) == 10)
+    assert "$l length should be 10" (($l | :: length) == 10)
     assert (($l . 0) == 1)
     assert (($l . 9) == 10)
 }

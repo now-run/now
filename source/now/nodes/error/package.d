@@ -54,7 +54,7 @@ class Erro : Item
 
         if (message)
         {
-            s ~= " :" ~ message;
+            s ~= ": <" ~ message ~ ">";
         }
         if (subject !is null)
         {

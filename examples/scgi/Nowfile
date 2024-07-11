@@ -157,6 +157,6 @@ tcp.connect $host $port
     | __ {
         print "Closing socket..."
     }
-    : close
+    | :: close
 
 print "Quit."
