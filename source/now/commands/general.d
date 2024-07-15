@@ -1270,6 +1270,67 @@ Expected: 11 12 13  ???
     builtinCommands["&&"] = builtinCommands["."];
     builtinCommands["||"] = builtinCommands["."];
 
+    // Other useful stuff
+    builtinCommands["incr"] = function (string path, Input input, Output output)
+    {
+        foreach (item; input.popAll)
+        {
+            string name = item.toString();
+            auto obj = input.escopo[name];
+            switch (obj.type)
+            {
+                case ObjectType.Integer:
+                    auto i = cast(Integer)obj;
+                    auto x = new Integer(i.value + 1);
+                    input.escopo[name] = x;
+                    output.push(x);
+                    break;
+                case ObjectType.Float:
+                    auto f = cast(Float)obj;
+                    auto x = new Float(f.value + 1);
+                    input.escopo[name] = x;
+                    output.push(x);
+                    break;
+                default:
+                    throw new InvalidArgumentsException(
+                        input.escopo,
+                        "Value of " ~ name ~ " is a " ~ obj.type.to!string
+                        ~ " and cannot be incremented."
+                    );
+            }
+        }
+        return ExitCode.Success;
+    };
+    builtinCommands["decr"] = function (string path, Input input, Output output)
+    {
+        foreach (item; input.popAll)
+        {
+            string name = item.toString();
+            auto obj = input.escopo[name];
+            switch (obj.type)
+            {
+                case ObjectType.Integer:
+                    auto i = cast(Integer)obj;
+                    auto x = new Integer(i.value - 1);
+                    input.escopo[name] = x;
+                    output.push(x);
+                    break;
+                case ObjectType.Float:
+                    auto f = cast(Float)obj;
+                    auto x = new Float(f.value - 1);
+                    input.escopo[name] = x;
+                    output.push(x);
+                    break;
+                default:
+                    throw new InvalidArgumentsException(
+                        input.escopo,
+                        "Value of " ~ name ~ " is a " ~ obj.type.to!string
+                        ~ " and cannot be incremented."
+                    );
+            }
+        }
+        return ExitCode.Success;
+    };
 
     // SubProgram related:
     builtinCommands["run"] = function (string path, Input input, Output output)

@@ -203,8 +203,8 @@ scope "compile" {
             . $source_files
             . $output_filepath
             . -- (debug = ($target . debug))
-            | foreach line {
-                log "$command: $line"
+            | {
+                log "$command: "
             }
         }
         | :: msecs | as msecs

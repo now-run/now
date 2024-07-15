@@ -21,4 +21,17 @@ class Timer : Item
         this.sw = StopWatch(AutoStart.yes);
 
     }
+    override string toString()
+    {
+        return "Timer";
+    }
+    override Item range()
+    {
+        return this;
+    }
+    override ExitCode next(Escopo escopo, Output output)
+    {
+        output.push(this);
+        return ExitCode.Continue;
+    }
 }
