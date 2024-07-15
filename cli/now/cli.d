@@ -660,14 +660,23 @@ int watch(Document document, string[] documentArgs)
     }
     string filepath = documentArgs[0];
 
+    while (!filepath.exists)
+    {
+        Thread.sleep(2500.msecs);
+    }
     auto lastModified = filepath.timeLastModified;
 
     while (filepath.exists) {
         auto parser = new NowParser(filepath.read.to!string);
         auto subprogram = parser.consumeSubProgram();
-        auto exitCode = subprogram.run(escopo, output);
-        printOutput(escopo, output);
 
+        auto exitCode = errorPrinter({
+            return subprogram.run(escopo, output);
+        });
+        printOutput(escopo, output);
+        stdout.flush;
+
+        // Hold the loop while the file is not changed:
         while (true)
         {
             Thread.sleep(2500.msecs);

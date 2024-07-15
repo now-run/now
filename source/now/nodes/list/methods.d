@@ -122,6 +122,21 @@ static this()
 
         return ExitCode.Success;
     };
+    listMethods["pop.front"] = function (Item object, string path, Input input, Output output)
+    {
+        List list = cast(List)object;
+        if (list.items.length == 0)
+        {
+            auto msg = "Cannot pop: the list is empty";
+            throw new EmptyException(input.escopo, msg, -1, list);
+        }
+
+        auto firstItem = list.items.front;
+        output.push(firstItem);
+        list.items.popFront;
+
+        return ExitCode.Success;
+    };
     listMethods["to.pairs"] = function (Item object, string path, Input input, Output output)
     {
         /*

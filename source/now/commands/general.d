@@ -1,10 +1,9 @@
 module now.commands.general;
 
-
+import core.thread : Thread;
 import std.algorithm.mutation : stripRight;
 import std.array;
 import std.datetime;
-import std.datetime.stopwatch : AutoStart, StopWatch;
 import std.digest.md;
 import std.file : read;
 import std.random : uniform;
@@ -28,6 +27,8 @@ import now.commands.simpletemplate;
 import now.commands.terminal;
 import now.commands.tcp;
 import now.commands.url;
+
+import now.commands.utils;
 
 
 static this()
@@ -105,7 +106,6 @@ static this()
         {
             output.push(item.toString());
         }
-
         return ExitCode.Success;
     };
     builtinCommands["to.bool"] = function(string path, Input input, Output output)
@@ -146,7 +146,7 @@ static this()
     v
     ---
     */
-    builtinCommands["obj"] = function(string path, Input input, Output output)
+    builtinCommands["o"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
@@ -154,69 +154,31 @@ static this()
         }
         return ExitCode.Success;
     };
-    builtinCommands["o"] = builtinCommands["obj"];
 
     builtinCommands["collect"] = function(string path, Input input, Output output)
     {
-        auto generatedOutput = new Output;
+        Items items;
 
-forLoop:
-        foreach (generator; input.popAll)
-        {
-            auto range = generator.range();
-
-            while (true)
-            {
-                // Reminder: `nextOutput` will be
-                // truncated on each call to `next`.
-                auto nextOutput = new Output;
-                auto nextExitCode = range.next(input.escopo, nextOutput);
-                generatedOutput.items ~= nextOutput.items;
-
-                if (nextExitCode == ExitCode.Break)
-                {
-                    break forLoop;
-                }
-                else if (nextExitCode == ExitCode.Skip)
-                {
-                    continue;
-                }
+        iterateOverGenerators(
+            input.escopo,
+            input.popAll,
+            (Items generatedItems) {
+                items ~= generatedItems;
             }
-        }
-        output.push(new List(generatedOutput.items));
+        );
+
+        output.push(new List(items));
         return ExitCode.Success;
     };
     builtinCommands["sequence"] = function(string path, Input input, Output output)
     {
-forLoop:
-        foreach (generator; input.popAll)
-        {
-            if (generator.type == ObjectType.List)
-            {
-                auto list = cast(List)generator;
-                output.push(list.items);
+        iterateOverGenerators(
+            input.escopo,
+            input.popAll,
+            (Items generatedItems) {
+                output.push(generatedItems);
             }
-            else
-            {
-                while (true)
-                {
-                    // Reminder: `nextOutput` will be
-                    // truncated on each call to `next`.
-                    auto nextOutput = new Output;
-                    auto nextExitCode = generator.next(input.escopo, nextOutput);
-                    output.push(nextOutput.items);
-
-                    if (nextExitCode == ExitCode.Break)
-                    {
-                        break forLoop;
-                    }
-                    else if (nextExitCode == ExitCode.Skip)
-                    {
-                        continue;
-                    }
-                }
-            }
-        }
+        );
         return ExitCode.Success;
     };
 
@@ -281,7 +243,7 @@ forLoop:
         auto body = input.pop!SubProgram;
 
         auto newScope = input.escopo.addPathEntry(name);
-        auto exitCode = body.run(newScope, output);
+        auto exitCode = body.run(newScope, input.popAll, output);
         return exitCode;
     };
 
@@ -295,13 +257,17 @@ forLoop:
         {
             stdout.write(item);
         }
-        if (path != "print.sameline")
-        {
-            stdout.writeln();
-        }
-
         return ExitCode.Success;
     };
+    builtinCommands["print.sameline"] = function (string path, Input input, Output output)
+    {
+        foreach (item; input.popAll)
+        {
+            stdout.writeln(item);
+        }
+        return ExitCode.Success;
+    };
+
 
     /*
     ### Logging
@@ -322,8 +288,14 @@ forLoop:
     */
     builtinCommands["log"] = function(string path, Input input, Output output)
     {
-        auto formatName = input.kwargs.require("format", new String("default")).toString;
-        auto format = input.escopo.document.get!Dict(["logging", "formats", formatName], null);
+        string formatName = "default";
+        if (auto fmtPtr = ("format" in input.kwargs))
+        {
+            formatName = (*fmtPtr).toString;
+        }
+        auto format = input.escopo.document.get!Dict(
+            ["logging", "formats", formatName], null
+        );
 
         if (format is null)
         {
@@ -357,7 +329,6 @@ forLoop:
 
         return ExitCode.Success;
     };
-    builtinCommands["print.sameline"] = builtinCommands["print"];
 
     /**
     Read the entire stdin.
@@ -392,19 +363,7 @@ forLoop:
     builtinCommands["sleep"] = function(string path, Input input, Output output)
     {
         auto ms = input.pop!long;
-
-        // TODO: why is that?
-        // Probably a reminiscence from the times
-        // we used to support FIBERS...
-        auto sw = StopWatch(AutoStart.yes);
-        while(true)
-        {
-            auto passed = sw.peek.total!"msecs";
-            if (passed >= ms)
-            {
-                break;
-            }
-        }
+        Thread.sleep(ms.msecs);
         return ExitCode.Success;
     };
     builtinCommands["unixtime"] = function(string path, Input input, Output output)
@@ -419,37 +378,13 @@ forLoop:
     builtinCommands["timer"] = function(string path, Input input, Output output)
     {
         /*
-        scope "test the timer" {
-            timer {
-                sleep 5000
-            } {
-                print "This scope ran for $seconds seconds"
-            }
-        }
-        # stderr> This scope ran for 5 seconds
-        ---
+        > timer | as t
+        > list 1 2 3 4 5 | {:: * 10} | collect | log "collected="
+        > o $t : nsecs | print "nsecs: "
+        50000
         */
-        auto subprogram = input.pop!SubProgram;
-        auto callback = input.pop!SubProgram;
-
-        auto sw = StopWatch(AutoStart.yes);
-        auto exitCode = subprogram.run(input.escopo, output);
-        sw.stop();
-
-        auto seconds = sw.peek().total!"seconds";
-        auto msecs = sw.peek().total!"msecs";
-        auto usecs = sw.peek().total!"usecs";
-        auto nsecs = sw.peek().total!"nsecs";
-
-        auto newScope = input.escopo.addPathEntry("timer-callback");
-        newScope["seconds"] = new Float(seconds);
-        newScope["miliseconds"] = new Float(msecs);
-        newScope["microseconds"] = new Float(usecs);
-        newScope["nanoseconds"] = new Float(nsecs);
-
-        // Run the callback, ignoring exit code:
-        callback.run(newScope, output);
-        return exitCode;
+        output.push(new Timer());
+        return ExitCode.Success;
     };
 
     /**
@@ -1355,8 +1290,10 @@ Expected: 11 12 13  ???
         one
         */
         auto body = input.pop!SubProgram;
+        auto items = input.popAll;
+
         auto escopo = input.escopo.addPathEntry("run");
-        auto exitCode = body.run(escopo, input.popAll, output);
+        auto exitCode = body.run(escopo, items, output);
         if (exitCode == ExitCode.Return)
         {
             exitCode = ExitCode.Success;

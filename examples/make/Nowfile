@@ -197,7 +197,8 @@ scope "compile" {
     }
 
     o $target | :: get output_filepath | path | as output_filepath
-    timer {
+    timer
+        | __ {
         call $command
             . $source_files
             . $output_filepath
@@ -205,9 +206,9 @@ scope "compile" {
             | foreach line {
                 log "$command: $line"
             }
-    } {
-        log "$output_filepath was compiled in $miliseconds miliseconds."
-    }
+        }
+        | :: msecs | as msecs
+    log "$output_filepath was compiled in $msecs miliseconds."
     ! * {
         log ">>>>> ERROR: $error"
         error $error

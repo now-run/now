@@ -30,6 +30,7 @@ public import now.nodes.path;
 public import now.nodes.simpletemplate;
 
 public import now.nodes.tcp;
+public import now.nodes.timer;
 
 public import now.nodes.error;
 
@@ -77,6 +78,8 @@ enum ObjectType
     Document,
     SystemProcess,
     TaskRun,
+
+    Timer,
 }
 
 alias Items = Item[];
