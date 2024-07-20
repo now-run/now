@@ -123,9 +123,9 @@ class SystemCommand : BaseCommand
     override ExitCode doRun(string name, Input input, Output output)
     {
         Item inputStream;
-        string[] arguments;
 
-        // We need this because we support event handling:
+        // We need this because we support event handling
+        // (in the definition, like on.return or on.error)
         input.escopo.rootCommand = this;
 
         // Inputs:
@@ -204,7 +204,7 @@ class SystemCommand : BaseCommand
         log(" -- inputStream: ", inputStream);
 
         output.items ~= new SystemProcess(
-            cmdline, arguments, inputStream, env, workdirStr, takeOver
+            cmdline, inputStream, env, workdirStr, takeOver
         );
         return ExitCode.Success;
     }
@@ -277,7 +277,6 @@ class SystemProcess : Item
     ProcessPipes pipes;
     std.process.Pid pid;
     Item inputStream;
-    string[] arguments;
     string[] cmdline;
     bool takeOver;
     string[string] env;
@@ -286,7 +285,6 @@ class SystemProcess : Item
 
     this(
         string[] cmdline,
-        string[] arguments,
         Item inputStream=null,
         string[string] env=null,
         string workdir=null,
@@ -294,18 +292,15 @@ class SystemProcess : Item
     )
     {
         log(": SystemProcess: ", cmdline);
-        log(":     arguments: ", arguments);
 
         this.type = ObjectType.SystemProcess;
         this.typeName = "system_process";
         this.methods = systemProcessMethods;
 
         this.env = env;
-        this.arguments = arguments;
         this.inputStream = inputStream;
 
         this.cmdline = cmdline;
-        this.cmdline ~= arguments;
 
         if (takeOver)
         {

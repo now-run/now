@@ -1417,6 +1417,51 @@ Expected: 11 12 13  ???
     };
     builtinCommands["__"] = builtinCommands["aposto"];
 
+    // System commands
+    builtinCommands["sh"] = function (string path, Input input, Output output)
+    {
+        import now.system_command : SystemProcess;
+        /*
+        > sh ls / | {print "ls> "}
+        ls> bin
+        ls> etc
+        ls> opt
+        ...
+        */
+
+        Item inputStream;
+        string[string] env;
+
+        string[] cmdline = input.items.map!(x => x.toString).array;
+
+        // Inputs:
+        if (input.inputs.length == 1)
+        {
+            inputStream = input.inputs.front;
+        }
+        else if (input.inputs.length > 1)
+        {
+            throw new InvalidInputException(
+                input.escopo,
+                path ~ ": cannot handle multiple inputs",
+            );
+        }
+
+        foreach(key, value; input.kwargs)
+        {
+            env[key] = value.toString;
+        }
+
+        output.push(new SystemProcess(
+            cmdline,
+            inputStream,
+            env,
+            null,  // workdir (string)
+            false  // takeover (bool)
+        ));
+        return ExitCode.Success;
+    };
+
     // Others
     loadBase64Commands(builtinCommands);
     loadCsvCommands(builtinCommands);
