@@ -196,24 +196,23 @@ scope "compile" {
         }
     }
 
-    o $target | :: get output_filepath | path | as output_filepath
     timer
         | __ {
-        call $command
-            . $source_files
-            . $output_filepath
-            . -- (debug = ($target . debug))
-            | {
-                log "$command: "
-            }
+        o $target
+            | :: get output_filepath
+            | path
+            | as output_filepath
+            | call $command $source_files -- (debug = ($target . debug))
+            | {log "$command: "}
         }
-        | :: msecs | as msecs
-    log "$output_filepath was compiled in $msecs miliseconds."
-    ! * {
+        | >> {
+            o | :: msecs | as msecs
+            log "$output_filepath was compiled in $msecs miliseconds."
+        }
+} ! * {
         log ">>>>> ERROR: $error"
         error $error
     }
-}
 
 [commands/build/on.call]
 description "Verify if the user is running from inside the examples directory."
