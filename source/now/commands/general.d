@@ -1418,7 +1418,7 @@ Expected: 11 12 13  ???
     builtinCommands["__"] = builtinCommands["aposto"];
 
     // System commands
-    builtinCommands["sh"] = function (string path, Input input, Output output)
+    builtinCommands["syscmd"] = function (string path, Input input, Output output)
     {
         import now.system_command : SystemProcess;
         /*
