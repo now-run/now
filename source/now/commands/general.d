@@ -1422,7 +1422,7 @@ Expected: 11 12 13  ???
     {
         import now.system_command : SystemProcess;
         /*
-        > sh ls / | {print "ls> "}
+        > syscmd ls / | {print "ls> "}
         ls> bin
         ls> etc
         ls> opt

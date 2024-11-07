@@ -4,14 +4,27 @@ Show how to work with CSV files
 
 [commands/run]
 
-path "test.csv" : read | csv.decode | as lista
-obj $lista : length : eq 6 | assert "lista length should be 6"
-obj $lista : get 0 | as first
-obj $first : length : eq 5 | assert "first length should be 5"
+path "test.csv"
+    | :: read
+    | csv.decode
+    | as lista
+    | >> {
+        o
+        | :: length
+        | :: eq 6
+        | assert "lista length should be 6"
+    }
+    | >> {
+        o
+        | :: get 0
+        | as first
+        | :: length
+        | :: eq 5
+        | assert "first length should be 5"
+    }
 
-# TODO: do not print stuff on `run`.
-# (Or change `now test` on main Nowfile to call
-#  other command...)
-print $lista
-print "------------"
-csv.encode $lista | print
+log $lista
+log "------------"
+csv.encode $lista
+    | :: replace '","' '"\t"'
+    | log

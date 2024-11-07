@@ -755,7 +755,7 @@ o $content
 
         switch {o $type}
             ! sequence {
-                obj $content
+                o $content
                     : get content
                     | foreach sub_item {
                         print "sub_item=<$sub_item>"
@@ -763,25 +763,25 @@ o $content
                             | as sub_item_type
                             : eq string
                             : then {
-                                obj $tpl
+                                o $tpl
                                     : emit content (content = $sub_item)
                             } {
                                 print ">> type is $sub_item_type"
                                 render_item $sub_item
                                     | foreach x {
-                                        obj $tpl
+                                        o $tpl
                                             : emit content (content = $x)
                                     }
                             }
                     }
 
-                obj $tpl
+                o $tpl
                     : render
                     | list
                     | return
             }
             ! reference {
-                obj $content
+                o $content
                     : get reference
                     : to.sequence
                     | . $text
@@ -805,7 +805,7 @@ o $content
             }
 
             scope "Render" {
-                obj $tpl : emit content : render | list | return
+                o $tpl : emit content : render | list | return
             }
     }
 
@@ -823,22 +823,22 @@ parameters {
     }
 }
 
-template $template [obj $data : pairs] | as tpl
+template $template [o $data : pairs] | as tpl
 
 scope "page content" {
-    obj $data : get content : pairs | list | foreach pair {
+    o $data : get content : pairs | list | foreach pair {
         set item_data ($pair . 1)
         render_item $item_data | foreach content {
-            obj $tpl : emit content
+            o $tpl : emit content
         }
     }
 }
 
 scope "page body" {
-    # obj $tpl : emit content
-    # obj $tpl : emit subheader [obj $data : pairs]
-    path "$dist_dir/$filename" : write [obj $tpl : render]
-    obj $tpl : render | print
+    # o $tpl : emit content
+    # o $tpl : emit subheader [o $data : pairs]
+    path "$dist_dir/$filename" : write [o $tpl : render]
+    o $tpl : render | print
 }
 
 [commands/build]
@@ -850,17 +850,17 @@ if (($dist_dir : exists) == false) {
 }
 
 path "resources" : glob "*" | foreach entry {
-    obj $entry : basename | as filename
+    o $entry : basename | as filename
     # TODO: make the copy automatically recursive.
     # copy $entry [path "$dist_dir/$filename"]
 }
 
 scope "style" {
     template style | as tpl
-    path "$dist_dir/style.css" : write [obj $tpl : render]
+    path "$dist_dir/style.css" : write [o $tpl : render]
 }
 
-obj $text : get "Pages" : pairs | list | foreach pair {
+o $text : get "Pages" : pairs | list | foreach pair {
     set filename ($pair . 0)
     set data ($pair . 1)
     render_page $filename $data

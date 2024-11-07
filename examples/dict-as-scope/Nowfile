@@ -10,13 +10,13 @@ scope "Create the Dict" {
 }
 
 scope "Access a value as a variable" {
-    obj $d : run {
+    o $d : run {
         assert ($k == v)
     }
 }
 
 scope "Set values as variables" {
-    obj $d : run {
+    o $d : run {
         set k2 v2
     }
     assert (($d . k2) == v2)

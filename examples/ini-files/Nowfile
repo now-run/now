@@ -5,6 +5,6 @@ Show how to decode INI files.
 [commands/run]
 
 path "test.ini" : read | ini.decode | as d
-obj $d : get "ini file" | as subd
-obj $subd : get with | as with
+o $d : get "ini file" | as subd
+o $subd : get with | as with
 assert ($with == "comments inline")

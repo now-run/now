@@ -18,11 +18,11 @@ parameters {
     }
 }
 
-docker compose up : check
+docker compose up | :: check
 
 [procedures/compose/on.return]
 
-docker compose down : check
+docker compose down | :: check
 
 [tasks/connection_handler]
 parameters {
@@ -39,7 +39,7 @@ o $connection | foreach data {
 
     scope "SCGI" {
         o $data
-            : netstrings
+            | :: netstrings
             | >> {
                 :: as
                     . headers_strings
@@ -48,10 +48,10 @@ o $connection | foreach data {
                 log "Body: $body"
                 return $headers_strings
             }
-            : first
+            | :: first
             | as headers_string
-            : c.strings
-            : to.pairs
+            | :: c.strings
+            | :: to.pairs
             | dict
             | as headers
             | >> {
@@ -75,10 +75,10 @@ o $connection | foreach data {
             }
 
         set msg "Hello, world!"
-            : length
+            | :: length
             | as content_length
 
-        o $connection : send "Status: 200 OK
+        o $connection | :: send "Status: 200 OK
 Content-Type: text/plain
 Content-Length: $content_length
 
@@ -87,7 +87,7 @@ $msg"
     }
 }
 log "closing connection"
-o $connection : close
+o $connection | :: close
 
 [commands/scgi]
 description "Starts the SCGI server. Don't call it directly."
@@ -108,14 +108,14 @@ tcp.serve $host $port
             ! * {
                 log "Error! Closing connection."
                 log $error
-                o $connection : close
+                o $connection | :: close
             }
     }
 
 [commands/run]
 description "Starts the HTTP server"
 
-compose up : check
+compose up | :: check
 
 [commands/get]
 description "Sends a GET request to the HTTP server."

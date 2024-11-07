@@ -10,33 +10,32 @@ parameters {
 }
 
 range 9 | foreach i {
-    print "$id> $i"
+    log "$id> $i"
     sleep 500
 }
 
-print "Task ${id}: done"
+log "Task ${id}: done"
 
 return $id
 
 [commands/run]
 
-list | as tasks
-
 range 9 | foreach task_id {
-    o $tasks : push [count $task_id]
-}
-print "run> sleeping"
+    count $task_id
+} | collect | as tasks
+
+log "run> sleeping"
 sleep 5000
 
 o $tasks | foreach task {
-    print "Waiting for $task"
+    log "Waiting for $task"
     loop | {
         o $task
-            : wait
-            ! running {sleep 500 ; continue}
-            | print "$task> "
+        : wait
+        ! running {sleep 500 ; continue}
+        | log "$task> "
         break
     }
 }
 
-print "run> exit"
+log "run> exit"

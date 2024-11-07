@@ -26,7 +26,7 @@ collect | :: first
 [procedures/methods]
 
 dict (k = v) | as dict
-obj $dict
+o $dict
     | :: get k
     | print "(dict . k) is "
 
@@ -145,7 +145,7 @@ print "quitting..."
 [commands/booleans]
 description "Test boolean logic and operators."
 
-obj true | :: then {
+o true | :: then {
     dict (k = 1)
 } {
     dict (k = 2)
@@ -286,10 +286,10 @@ scope "vars" {
     set x 1
     set y 2
     vars | as v
-    obj $v | :: contains x | :: assert
-    obj $v | :: contains "x" | :: assert
-    obj $v | :: contains y | :: assert
-    obj $v | :: contains "y" | :: assert
+    o $v | :: contains x | :: assert
+    o $v | :: contains "x" | :: assert
+    o $v | :: contains y | :: assert
+    o $v | :: contains "y" | :: assert
 }
 
 scope "when" {
@@ -313,7 +313,7 @@ scope "default" {
 
 scope "collect" {
     range 1 10 | collect | as l
-    assert "$l length should be 10" (($l | :: length) == 10)
+    assert "$l length should be 10" [o $l | :: length | :: eq 10]
     assert (($l . 0) == 1)
     assert (($l . 9) == 10)
 }

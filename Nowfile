@@ -99,4 +99,5 @@ try {
 [commands/dub]
 description "Generate dub.json file"
 
-path "dub.json" : write [json.encode $dub]
+path "dub.json"
+| :: write [json.encode $dub]
