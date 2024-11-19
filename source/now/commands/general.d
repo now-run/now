@@ -17,6 +17,7 @@ import now.commands;
 import now.grammar;
 
 import now.commands.base64;
+import now.commands.c;
 import now.commands.csv;
 import now.commands.http;
 import now.commands.iterators;
@@ -255,7 +256,7 @@ static this()
     {
         foreach (item; input.popAll)
         {
-            stdout.write(item);
+            stdout.writeln(item);
         }
         return ExitCode.Success;
     };
@@ -745,6 +746,35 @@ static this()
             }
         }
 
+        return ExitCode.Success;
+    };
+
+    builtinCommands["any"] = function(string path, Input input, Output output)
+    {
+        foreach (item; input.popAll)
+        {
+            if (item.toBool == true)
+            {
+                output.push(true);
+                return ExitCode.Success;
+            }
+        }
+        // else
+        output.push(false);
+        return ExitCode.Success;
+    };
+    builtinCommands["all"] = function(string path, Input input, Output output)
+    {
+        foreach (item; input.popAll)
+        {
+            if (item.toBool == false)
+            {
+                output.push(false);
+                return ExitCode.Success;
+            }
+        }
+        // else
+        output.push(true);
         return ExitCode.Success;
     };
 

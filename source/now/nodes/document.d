@@ -2,7 +2,7 @@ module now.nodes.document;
 
 import core.runtime;
 
-import std.algorithm.searching : endsWith;
+import std.algorithm.searching : endsWith, startsWith;
 import std.file : exists, isFile, read;
 import std.path : buildNormalizedPath, buildPath, dirName;
 import std.parallelism : TaskPool;
@@ -269,7 +269,7 @@ class Document : Dict {
                 cmdDict["-"] = new String(shellName);
                 cmdDict["-"] = new String("-c");
                 cmdDict["-"] = new Reference("script_body");
-                if (shellName[0..3] != "ksh")
+                if (!shellName.startsWith("ksh"))
                 {
                     cmdDict["-"] = new Reference("script_name");
                 }
