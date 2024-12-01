@@ -31,8 +31,6 @@ int main(string[] args)
 
     log("+ args:", args.to!string);
 
-    NowParser parser;
-
     string documentPath = defaultFilepath;
     string[] documentArgs;
     string[] nowArgs;
@@ -66,7 +64,7 @@ int main(string[] args)
                     break;
 
                 case "bash-complete":
-                    return bashAutoComplete(parser);
+                    return bashAutoComplete();
 
                 case "help":
                     return now_help();
@@ -247,6 +245,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
             return command.run(commandName, input, output, true);
         });
     }
+    // TODO: all this should be implemented by Document class, right?
     catch (NowException ex)
     {
         log("+++ EXCEPTION: ", ex);
@@ -396,7 +395,7 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
 {
     if (document is null)
     {
-        document = new Document("repl", "Read Eval Print Loop", new Dict(), new Dict());
+        document = new Document("repl", "Read Eval Print Loop");
     }
 
     document.initialize(envVars);
@@ -408,6 +407,7 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
 
     auto istty = cast(bool)isatty(stdout.fileno);
     string line;
+    string lastLine;
     string prompt = "> ";
 
     while (true)
@@ -416,6 +416,7 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
         {
             stderr.write(prompt);
         }
+        lastLine = line;
         line = readln();
         if (line is null)
         {
@@ -439,6 +440,11 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
         {
             break;
         }
+        // TODO: make it a proper command
+        else if (line == "!\n")
+        {
+            line = lastLine;
+        }
 
         auto parser = new NowParser(line);
         Pipeline pipeline;
@@ -454,9 +460,19 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
         }
         auto output = new Output;
         // TODO: handle exceptions.
-        auto exitCode = errorPrinter({
-            return pipeline.run(escopo, output);
-        });
+        ExitCode exitCode;
+        try
+        {
+            exitCode = errorPrinter({
+                return pipeline.run(escopo, output);
+            });
+        }
+        catch (NowException ex)
+        {
+            auto error = ex.toError;
+            stderr.writeln(error.toString());
+            return error.code;
+        }
 
         // Print whatever is still in the stack:
         printOutput(escopo, output);
@@ -511,7 +527,6 @@ int cmd(Document document, string[] documentArgs)
             {
                 auto error = ex.toError;
                 stderr.writeln(error.toString());
-                stderr.writeln("----------");
                 return error.code;
             }
 
@@ -531,7 +546,7 @@ int lineProcessor(Document document, string[] documentArgs)
 {
     if (document is null)
     {
-        document = new Document("cmd", "Run commands passed as arguments");
+        document = new Document("lp", "Now as a Line Processor");
         document.initialize(envVars);
     }
 
@@ -572,7 +587,6 @@ int lineProcessor(Document document, string[] documentArgs)
         {
             auto error = ex.toError;
             stderr.writeln(error.toString());
-            stderr.writeln("----------");
             return error.code;
         }
 
@@ -603,7 +617,6 @@ int lineProcessor(Document document, string[] documentArgs)
     {
         auto error = ex.toError;
         stderr.writeln(error.toString());
-        stderr.writeln("----------");
         return error.code;
     }
 
@@ -650,42 +663,87 @@ int watch(Document document, string[] documentArgs)
         document.initialize(envVars);
     }
 
-    auto escopo = new Escopo(document, "watch");
-    escopo["env"] = envVars;
-    auto output = new Output;
-
     if (documentArgs.length == 0)
     {
         throw new Exception("You must define one file to be watched.");
     }
     string filepath = documentArgs[0];
 
+    // Sometimes we call Now with proper arguments
+    // but create the file later, so here we wait
+    // until the file exists:
     while (!filepath.exists)
     {
         Thread.sleep(2500.msecs);
     }
+
+    auto watchedFiles = [filepath];
+    if (document.sourcePath !is null)
+    {
+        watchedFiles ~= document.sourcePath;
+    }
+
     auto lastModified = filepath.timeLastModified;
+    foreach (path; watchedFiles)
+    {
+        auto t = path.timeLastModified;
+        if (t > lastModified)
+        {
+            lastModified = t;
+        }
+    }
+
+    auto escopo = new Escopo(document, "watch");
+    escopo["env"] = envVars;
+    auto output = new Output;
 
     while (filepath.exists) {
         auto parser = new NowParser(filepath.read.to!string);
         auto subprogram = parser.consumeSubProgram();
 
-        auto exitCode = errorPrinter({
-            return subprogram.run(escopo, output);
-        });
-        printOutput(escopo, output);
+        bool hasError = false;
+        try
+        {
+            auto exitCode = errorPrinter({
+                return subprogram.run(escopo, output);
+            });
+        }
+        catch (Exception ex)
+        {
+            hasError = true;
+        }
+
+        if (!hasError)
+        {
+            printOutput(escopo, output);
+        }
         stdout.flush;
 
         // Hold the loop while the file is not changed:
+nextIter:
         while (true)
         {
             Thread.sleep(2500.msecs);
-            auto t = filepath.timeLastModified;
-            if (t != lastModified)
+            foreach (path; watchedFiles)
             {
-                lastModified = t;
-                stderr.writeln("=== ", filepath, " ", t);
-                break;
+                auto t = path.timeLastModified;
+                if (t > lastModified)
+                {
+                    lastModified = t;
+                    stderr.writeln("=== ", path, " ", t);
+                    // XXX: kinda weird handling, here.
+                    // We actually have only 2 possible files...
+                    if (path == document.sourcePath)
+                    {
+                        document = loadDocument(
+                            document.sourcePath,
+                            documentArgs
+                        );
+                        escopo = new Escopo(document, "watch");
+                        escopo["env"] = envVars;
+                    }
+                    break nextIter;
+                }
             }
         }
     }
@@ -693,28 +751,18 @@ int watch(Document document, string[] documentArgs)
 }
 
 
-int bashAutoComplete(NowParser parser)
+int bashAutoComplete()
 {
     Document document;
 
-    if (parser !is null)
+    if (!defaultFilepath.exists)
     {
-        document = parser.run();
+        return 0;
     }
-    else
-    {
-        string filepath = defaultFilepath;
 
-        if (filepath.exists)
-        {
-            parser = new NowParser(filepath.read.to!string);
-            document = parser.run();
-        }
-        else
-        {
-            return 0;
-        }
-    }
+    auto parser = new NowParser(defaultFilepath.read.to!string);
+    document = parser.run();
+    document.initialize(envVars);
 
     auto words = envVars["COMP_LINE"].toString().split(" ");
     string lastWord = null;
@@ -729,8 +777,6 @@ int bashAutoComplete(NowParser parser)
         ignore++;
     }
     auto n = words.length - ignore;
-
-    document.initialize(envVars);
 
     if (n == 1)
     {
