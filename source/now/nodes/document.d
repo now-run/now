@@ -71,6 +71,11 @@ class Document : Dict {
 
         importPackages();
         loadConfiguration(environmentVariables);
+
+        this.initialize();
+    }
+    void initialize()
+    {
         loadConstants();
         loadTemplates();
         loadShells();
@@ -295,15 +300,17 @@ class Document : Dict {
     {
         log("- Loading tasks");
 
-        // XXX: maybe allow user to configure it???
-        // Maybe not?
-        // Probably not.
-        this.taskPool = new TaskPool();
-        this.taskPool.isDaemon = true;
-
         // The document dict is loaded, now
         // act accordingly on each different section.
         auto tasks = data.getOrCreate!Dict("tasks");
+        if (tasks.length > 0)
+        {
+            // XXX: maybe allow user to configure it???
+            // Maybe not?
+            // Probably not.
+            this.taskPool = new TaskPool();
+            this.taskPool.isDaemon = true;
+        }
         foreach (name, infoItem; tasks.values)
         {
             log("-- ", name);
