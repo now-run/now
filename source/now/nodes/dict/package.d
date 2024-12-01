@@ -158,6 +158,11 @@ class Dict : Item
         this[k] = new Sequence(items);
     }
 
+    ulong length()
+    {
+        return values.length;
+    }
+
     // --------------------------------------
     // "getters":
     Item get(string key, Item defaultValue)
