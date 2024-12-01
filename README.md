@@ -252,9 +252,9 @@ parameters {
 
 list_s3_objects "default-bucket" $prefix 
     | collect
-    : join "\n"
+    | :: join "\n"
     | json.decode
-    : get "Contents"
+    | :: get "Contents"
     | foreach item {
         print ($item . "Key")
     }
@@ -273,7 +273,7 @@ object. Here we are using:
 - `foreach` iterates over the List;
 - `print` will print to the standard output.
 - `()` indicates we're using **infix notation**;
-- `.` is the same as the method `get`, so `($a . b)` equals `obj $a : get b`.
+- `.` is the same as the method `get`, so `($a . b)` equals `obj $a | :: get b`.
 
 ## Procedures
 
@@ -293,9 +293,9 @@ parameters {
 
 list_s3_objects "default-bucket" $prefix
     | collect
-    : join "\n"
+    | :: join "\n"
     | json.decode
-    : get "Contents"
+    | :: get "Contents"
     | foreach item {
         print ($item . "Key")
     }
@@ -383,8 +383,8 @@ o $self | set (status = running)
 [commands/run]
 
 server teste | as test_server
-o $test_server : run
-o $test_server : get status | eq running : assert "Status should be `running`"
+o $test_server | :: run
+o $test_server | :: get status | :: eq running | :: assert "Status should be `running`"
 ```
 
 ## Properties
@@ -506,7 +506,7 @@ environment variables.
 To access it in your scripts, use the `$api` Dict, like this:
 
 ```tcl
-obj $api : get protocol | print
+o $api | :: get protocol | print
 # https
 ```
 
