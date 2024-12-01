@@ -18,6 +18,7 @@ class SystemCommand : BaseCommand
     string optionPrefix;
     string keyValueSeparator;
     bool takeOver;
+    Item workdir;
 
     this(string name, Dict info, Document document)
     {
@@ -35,6 +36,8 @@ class SystemCommand : BaseCommand
         which "ls -h"
         command "ls"
         */
+        this.workdir = info.get!Item("workdir", null);
+
         auto cmdItem = info.getOr(
             "command",
             delegate Item (d) {
@@ -131,7 +134,7 @@ class SystemCommand : BaseCommand
         // Inputs:
         if (input.inputs.length == 1)
         {
-            inputStream = input.inputs.front;
+            inputStream = input.inputs.front.range;
         }
         else if (input.inputs.length > 1)
         {
@@ -203,9 +206,9 @@ class SystemCommand : BaseCommand
 
         log(" -- inputStream: ", inputStream);
 
-        output.items ~= new SystemProcess(
+        output.push(new SystemProcess(
             cmdline, inputStream, env, workdirStr, takeOver
-        );
+        ));
         return ExitCode.Success;
     }
 
@@ -336,12 +339,10 @@ class SystemProcess : Item
         auto s = this.cmdline.join(" ");
         if (s.length > 256)
         {
-            return s[0..256] ~ " ...";
+            s = s[0..256] ~ " ...";
         }
-        else
-        {
-            return s;
-        }
+
+        return "<SystemProcess: " ~ s ~ ">";
     }
     override Item range()
     {
