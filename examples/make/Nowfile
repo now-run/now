@@ -217,16 +217,19 @@ scope "compile" {
 [commands/build/on.call]
 description "Verify if the user is running from inside the examples directory."
 
-o $env | :: get "PWD" | :: split "/" | as pwd
-o $pwd | :: length | as length
-o $pwd | :: get ($length - 1) | as cwd
-if (($cwd == "examples") || ($cwd == "make")) {
-    print "Do not run this program from inside the examples directory!"
-    print "Go to the repository root and run it this way:"
-    print "    cat examples/make/program.now | now :stdin build"
-    print "--------------------------------------------------------"
-    exit 1
-}
+o $env
+    | :: get "PWD"
+    | :: split "/"
+    | :: last
+    | :: eq "examples" "make"
+    | any
+    | :: then {
+        print "Do not run this program from inside the examples directory!"
+        print "Go to the repository root and run it this way:"
+        print "    cat examples/make/program.now | now :stdin build"
+        print "--------------------------------------------------------"
+        exit 1
+    }
 
 [commands/build]
 description "Build now binary"

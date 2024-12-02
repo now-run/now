@@ -5,44 +5,50 @@ Show how to make HTTP requests
 [procedures/post_with_error]
 
 
-print "--------- POST with error --------"
-try {
-    http.post "https://httpbin.org/status/404"
+log "--------- POST with error --------"
+dict (alfa = 1) (beta = 2)
+    | http.post "https://httpbin.org/status/404"
         . (authorization = "bearer 1111")
-        . [dict (alfa = 1) (beta = 2)]
-        | print
-} {
-    print "Error (expected): " $error
-}
-
+    ! 404 {
+        log "Error (expected): " $error
+        return
+    }
+    | log "Return (UNEXPECTED): "
 
 [procedures/get]
 
-print "-------- GET ---------"
-http.get "http://example.com" | print
+log "-------- GET ---------"
+http.get "http://example.com"
+    | print
 
 
 [procedures/post]
 
-print "--------- POST --------"
-http.post "https://httpbin.org/anything"
-    . (authorization = "bearer 1111")
-    . [dict (alfa = 1) (beta = 2)]
+log "--------- POST --------"
+dict (alfa = 1) (beta = 2)
+    | http.post "https://httpbin.org/anything"
+        . (authorization = "bearer 1111")
     | print
 
 
 [procedures/put]
 
-print "--------- PUT --------"
-http.put "https://httpbin.org/anything"
-    . (authorization = "bearer 2222")
-    . [dict (gama = 3) (delta = 4)]
+log "--------- PUT --------"
+dict (gama = 3) (delta = 4)
+    | http.put "https://httpbin.org/anything"
+        . (authorization = "bearer 2222")
     | print
 
 
 [commands/run]
+description "Try some HTTP methods (get/post/put)"
 
 get
 post
 put
+post_with_error
+
+[commands/e]
+description "Generates a 404 error"
+
 post_with_error
