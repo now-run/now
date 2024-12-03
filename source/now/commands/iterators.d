@@ -206,13 +206,22 @@ class Filter : Transformer
         auto execExitCode = body.run(escopo, items, filterOutput);
         log("-- Filter.body.exitCode: ", execExitCode, " <- ", filterOutput.items);
 
-        // TODO: check if there is actually something in `items`.
-        bool keep = filterOutput.items[0].toBool;
-        if (keep)
+        // TODO: handle execExitCode!
+
+        /*
+        Filter will actually implement an `any` command:
+        if any of the values returned are true, then it's
+        a continue.
+        */
+        foreach (filterItem; filterOutput.items)
         {
-            output.push(items);
-            return ExitCode.Continue;
+            if (filterItem.toBool == true)
+            {
+                output.push(items);
+                return ExitCode.Continue;
+            }
         }
+
         return ExitCode.Skip;
     }
 }
