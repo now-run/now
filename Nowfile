@@ -55,6 +55,13 @@ command {
     - $target
 }
 
+[system_commands/make_clean]
+command {
+    - "now"
+    - ":f"
+    - "examples/make/Nowfile"
+    - "clean"
+}
 
 [commands/make]
 description "Compiles Now"
@@ -70,6 +77,13 @@ parameters {
 }
 
 make $target | foreach line {
+    print "> $line"
+}
+
+[commands/clean]
+description "Clean up the build/ directory."
+
+make_clean | foreach line {
     print "> $line"
 }
 

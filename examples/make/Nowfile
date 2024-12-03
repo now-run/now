@@ -71,6 +71,7 @@ command {
     - "--checkaction=halt"
     - "-od=build"
     - "-O$optimization"
+    - "--link-defaultlib-shared"
     - "-of"
     - $output_filepath
 }
@@ -249,5 +250,6 @@ make $target
 
 
 [commands/clean]
+description "Clean up the build/ directory."
 
-path "build/*.o" | :: glob | {:: delete}
+path "build" | :: glob "*.o" | {:: delete}
