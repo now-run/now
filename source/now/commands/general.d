@@ -17,7 +17,6 @@ import now.commands;
 import now.grammar;
 
 import now.commands.base64;
-import now.commands.c;
 import now.commands.csv;
 import now.commands.http;
 import now.commands.iterators;
@@ -197,6 +196,14 @@ static this()
     {
         return ExitCode.Skip;
     };
+    builtinCommands["success"] = function(string path, Input input, Output output)
+    {
+        foreach (item; input.popAll)
+        {
+            output.push(item);
+        }
+        return ExitCode.Success;
+    };
     builtinCommands["return"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
@@ -256,19 +263,19 @@ static this()
     {
         foreach (item; input.popAll)
         {
-            stdout.writeln(item);
+            stdout.write(item);
         }
+        stdout.writeln();
         return ExitCode.Success;
     };
     builtinCommands["print.sameline"] = function (string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
-            stdout.writeln(item);
+            stdout.write(item);
         }
         return ExitCode.Success;
     };
-
 
     /*
     ### Logging
@@ -426,17 +433,13 @@ static this()
     {
         /*
         o 123
-            | switch {type}
+            | type
+            | switch
             ! integer {print "is an integer"}
             ! * {print "not an integer"}
         */
-        auto body = input.pop!SubProgram;
-
-        auto items = input.popAll;
-        auto execOutput = new Output;
-        auto exitCode = body.run(input.escopo, items, execOutput);
-        auto eventName = execOutput.items[0].toString;
-        throw new Event(input.escopo, eventName);
+        auto item = input.pop!Item;
+        throw new Event(input.escopo, item.toString);
     };
 
     // ---------------------------------------------
@@ -551,18 +554,19 @@ static this()
         }
 
         // Pass along the values, so we can use this:
-        // > list 1 2 3 | as lista : length | print
+        // > list 1 2 3 | as lista | :: length | print
         output.push(values);
         return ExitCode.Success;
     };
+    builtinCommands["as"] = builtinCommands["set"];
+
     builtinCommands["quickset"] = function(string path, Input input, Output output)
     {
-        auto key = input.pop!string(null);
+        auto key = input.pop!string;
         auto value = input.pop!Item;
         input.escopo[key] = value;
         return ExitCode.Success;
     };
-    builtinCommands["as"] = builtinCommands["set"];
 
     builtinCommands["discard"] = function(string path, Input input, Output output)
     {
@@ -577,6 +581,7 @@ static this()
         10
         */
         auto name = input.pop!string();
+        // XXX: why "evaluate"?
         output.push(input.escopo[name].evaluate(input.escopo));
         return ExitCode.Success;
     };
