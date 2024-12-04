@@ -4,10 +4,9 @@ Show how to work with CSV files
 
 [commands/run]
 
-path "test.csv"
-    | :: read
-    | csv.decode
+path "test.csv" | :: read | csv.decode
     | as lista
+    | >> {log}
     | >> {
         o
         | :: length
@@ -22,9 +21,7 @@ path "test.csv"
         | :: eq 5
         | assert "first length should be 5"
     }
-
-log $lista
-log "------------"
-csv.encode $lista
-    | :: replace '","' '"\t"'
-    | log
+    | __ {log "------------"}
+    | csv.encode
+        | :: replace '","' '"\t"'
+        | log

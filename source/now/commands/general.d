@@ -1395,19 +1395,19 @@ But what if only one of them returns Skip or Break???
         }
         return exitCode;
     };
-    builtinCommands["bypass"] = function (string path, Input input, Output output)
+    builtinCommands["aside"] = function (string path, Input input, Output output)
     {
         /*
-        > o 123 | bypass {o 456} | print
+        > o 123 | aside {o 456} | print
         123
 
-        > o 123 | bypass {return 456} | print
+        > o 123 | aside {return 456} | print
         456
         */
         auto body = input.pop!SubProgram;
         auto items = input.popAll;
 
-        auto escopo = input.escopo.addPathEntry("bypass");
+        auto escopo = input.escopo.addPathEntry("aside");
         auto bpOutput = new Output;
         auto exitCode = body.run(escopo, items, bpOutput);
         if (exitCode == ExitCode.Return)
@@ -1421,7 +1421,7 @@ But what if only one of them returns Skip or Break???
         }
         return exitCode;
     };
-    builtinCommands[">>"] = builtinCommands["bypass"];
+    builtinCommands[">>"] = builtinCommands["aside"];
 
     builtinCommands["aposto"] = function (string path, Input input, Output output)
     {
