@@ -51,5 +51,5 @@ scope "Count how many entries we already have" {
 }
 
 scope "Random Python command" {
-    db print "This was printed by Python" -- (file = stderr)
+    db log "This was printed by Python" -- (procedure_name = log)
 }

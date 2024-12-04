@@ -4,6 +4,14 @@ from sys import stderr, stdin, stdout
 
 procedures = {}
 
+
+def log(*args, **kwargs):
+    if kwargs:
+        print(*args, kwargs, file=stderr)
+    else:
+        print(*args, file=stderr)
+
+
 def rpc(name):
     """Use this as a decorator for your functions."""
 
@@ -23,39 +31,30 @@ def response(**data):
     stdout.flush()
 
 
+def run_procedure(name, args, kwargs):
+    try:
+        procedure = procedures[name]
+    except KeyError:
+        return eval(f"{name}(*args, **kwargs)")
+    else:
+        return procedure(*args, **kwargs)
+
+
 def run():
     for line in stdin:
         data = json.loads(line)
-
         metadata = data["rpc"]
-        operation = metadata["op"]
 
+        operation = metadata["op"]
         if operation == "call":
             name = data["procedure"]
             args = data["args"]
             kwargs = data["kwargs"]
 
             try:
-                procedure = procedures[name]
-            except KeyError:
-                cmd = f"{name}(*args, **kwargs)"
-                print(cmd, file=stderr)
-                result = eval(cmd)
-                """
-                response(
-                    rpc={"op": "error"},
-                    classe="invalid_procedure",
-                    message=name
-                )
-                continue
-                """
-            else:
-                result=procedure(*args, **kwargs)
-
-            try:
                 response(
                     rpc={"op": "return"},
-                    result=result
+                    result=run_procedure(name, args, kwargs)
                 )
             except Exception as ex:
                 cls = ex.__class__.__name__
@@ -65,3 +64,9 @@ def run():
                     message=str(ex)
                 )
             continue
+        else:
+            response(
+                rpc={"op": "error"},
+                classe="InvalidOperation",
+                message=f"Can't handle the RPC operation: {operation}"
+            )
