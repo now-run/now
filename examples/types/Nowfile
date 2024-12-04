@@ -19,7 +19,7 @@ dict (status = stopped)
 [types/server/methods/run]
 
 log " method run..."
-o $self : set (status = running)
+o $self | :: set (status = running)
 log " status changed!"
 
 [types/server/methods/set]
@@ -29,17 +29,19 @@ parameters {
     }
 }
 
-log "server.set $pair"
-o $self : dict.set $pair
+log "server.set: <$pair>; args: <$args>"
+o $self | :: dict.set $pair
 
 [commands/run]
 description "Run the examples of user-defined types."
 
 server "teste-server" | as server
 log "Server status is: $($server . status)"
-o $server : run
+o $server | :: run
 log "Server status now is: $($server . status)"
 log "Server type is $($server type)"
 log "Server typeName is $($server type.name)"
-o $server : set (teste = true)
-o $server : get teste | log
+o $server | :: set (teste = true)
+o $server | :: get teste | log
+
+log success

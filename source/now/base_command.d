@@ -38,7 +38,7 @@ class BaseCommand
 
     override string toString()
     {
-        auto s = name ~ "  ";
+        auto s = name;
         string[] keys;
         foreach (key, value; parameters)
         {
@@ -105,7 +105,7 @@ class BaseCommand
 
         // Now iterate positional parameters to
         // find correspondent arguments
-        log("-- named arguments set: ", namedParametersAlreadySet);
+        log("-- named arguments already set: ", namedParametersAlreadySet);
         log("- Positional arguments");
         /*
         Positional parameters always overwrite whatever came first.

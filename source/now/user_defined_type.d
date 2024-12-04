@@ -9,11 +9,21 @@ Procedure[string][string] userDefinedMethods;
 
 auto methodRunner = function (Item object, string path, Input input, Output output)
 {
-    log(">>> methodRunner for ", object, "/", object.type);
+    log(
+        ">>> methodRunner for ",
+        object, "/", object.type, "/", object.typeName,
+        "; path=", path
+    );
     auto method = userDefinedMethods[object.typeName][path];
     log(">>>> method: ", method);
     input.escopo["self"] = object;
     // XXX: should we create a new Escopo???
+
+    // When running methods in D, it's supposed to
+    // receive "path" as the first argument. But
+    // when declaring them in Now, it's not the case.
+    input.args = input.args[1..$];
+
     return method.run(path, input, output, true);
 };
 

@@ -1,23 +1,22 @@
-import std.stdio;
+import now;
 
-import now.nodes;
-import rt.dmain2 : rt_init;
+ import core.runtime;
 
-
-extern (C) void init(Program program)
+extern (C) void loadPackage(Document document, ref CommandsMap commands)
 {
-    /*
-    We "should" call `rt_term` when the package is unloaded,
-    but no package-unload process is envisioned at the
-    moment, so... we MAY BE okay with
-    only `rt_init`...
-    */
-    rt_init();
+    stderr.writeln("hello> Init...");
+    auto success = Runtime.initialize();
+    assert(success);
 
-    program.globalCommands["hellow"] = function (string path, Context context)
+    stderr.writeln("hello> Loading...");
+    commands["hellow"] = function(string path, Input input, Output output)
     {
-        string name = context.pop!string();
-        stdout.writeln("Hellow, ", name, "!");
-        return context;
+        foreach (item; input.popAll)
+        {
+            auto s = item.toString;
+            writeln("Hellow, ", s, "!");
+        }
+        return ExitCode.Success;
     };
+    stderr.writeln("hello> Done.");
 }

@@ -31,12 +31,9 @@ scope "Print the content of the table" {
 
 scope "Add a new entry" {
     unixtime
-        : to.isotime
-        | as now
-        | print "now="
-
-    list
-        . $now
+        | :: to.isotime
+        | >> {print "now="}
+        | list
         | as values
 
     db mutation {{
@@ -51,4 +48,8 @@ scope "Count how many entries we already have" {
         SELECT count(*) as n
         FROM example
     }} | print "count> "
+}
+
+scope "Random Python command" {
+    db print "This was printed by Python" -- (file = stderr)
 }

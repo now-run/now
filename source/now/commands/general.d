@@ -1177,8 +1177,7 @@ static this()
         > o 1 2 3 | method + 10 | print
 Currently: 11
 Expected: 11 12 13  ???
-
-        But what if only one of them returns Skip or Break???
+But what if only one of them returns Skip or Break???
 
         */
         auto methodName = input.args[0].toString;

@@ -4,7 +4,15 @@ Show how to decode INI files.
 
 [commands/run]
 
-path "test.ini" : read | ini.decode | as d
-o $d : get "ini file" | as subd
-o $subd : get with | as with
-assert ($with == "comments inline")
+path "test.ini"
+    | :: read
+    | >> {log "ini file:\n"}
+    | ini.decode
+    | >> {log "decoded data:\n"}
+    | :: get
+        . "ini file"
+        . with
+    | :: eq "comments inline"
+    | assert
+
+log "success"

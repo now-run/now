@@ -10,14 +10,19 @@ scope "Create the Dict" {
 }
 
 scope "Access a value as a variable" {
-    o $d : run {
-        assert ($k == v)
+    o $d | :: run {
+        o $k | :: eq v | assert
     }
 }
 
 scope "Set values as variables" {
-    o $d : run {
-        set k2 v2
-    }
-    assert (($d . k2) == v2)
+    o $d
+        | >> {:: run {
+                set k2 v2
+        }}
+        | :: get k2
+        | :: eq v2
+        | assert
 }
+
+log success

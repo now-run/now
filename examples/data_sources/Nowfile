@@ -2,11 +2,14 @@
 
 [data_sources/x]
 
-path "data.json" : read | json.decode | return
+path "data.json" | :: read | json.decode | return
 
 
 [commands/run]
 
-assert (($x . "1") == "alfa")
-assert (($x . "2") == "beta")
-assert (($x . "3") == "gama")
+o $x
+    | >> {:: get "1" | :: eq "alfa" | assert}
+    | >> {:: get "2" | :: eq "beta" | assert}
+    | >> {:: get "3" | :: eq "gama" | assert}
+
+log success

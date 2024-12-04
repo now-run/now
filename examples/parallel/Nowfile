@@ -1,0 +1,24 @@
+[Example of running system commands in parallel]
+
+[system_commands/sleep]
+parameters {
+    time {
+        type integer
+        default 10
+    }
+}
+command {
+    - sleep
+    - $time
+}
+
+[commands/run]
+
+range 10 | transform i {
+    sleep ($i * 1.5) | return
+} | sequence | list | as processes
+
+o $processes | foreach p {
+    log "Checking `$p`..."
+    o $p | :: check
+}

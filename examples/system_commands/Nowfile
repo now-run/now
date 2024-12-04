@@ -62,7 +62,7 @@ parameters {
 
 print "It is not supposed to print the output of ls..."
 print "But the program should end successfully"
-ls $path : check
+ls $path | :: check
 
 
 [commands/run]
@@ -80,7 +80,12 @@ dict
 
 env -- $vars
     | transform x {
-        when ([o $x : match "test_" | list : length] > 0) { return $x }
+        o $x
+            | :: match "test_"
+            | list
+            | :: length
+            | :: gt 0
+            | :: then { return $x }
         default { skip }
     }
     | { print }

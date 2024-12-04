@@ -1,5 +1,5 @@
 import json
-from sys import stdin, stdout
+from sys import stderr, stdin, stdout
 
 
 procedures = {}
@@ -32,22 +32,30 @@ def run():
 
         if operation == "call":
             name = data["procedure"]
-            if name not in procedures:
+            args = data["args"]
+            kwargs = data["kwargs"]
+
+            try:
+                procedure = procedures[name]
+            except KeyError:
+                cmd = f"{name}(*args, **kwargs)"
+                print(cmd, file=stderr)
+                result = eval(cmd)
+                """
                 response(
                     rpc={"op": "error"},
                     classe="invalid_procedure",
                     message=name
                 )
                 continue
-
-            procedure = procedures[name]
-            args = data["args"]
-            kwargs = data["kwargs"]
+                """
+            else:
+                result=procedure(*args, **kwargs)
 
             try:
                 response(
                     rpc={"op": "return"},
-                    result=procedure(*args, **kwargs)
+                    result=result
                 )
             except Exception as ex:
                 cls = ex.__class__.__name__

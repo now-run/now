@@ -4,7 +4,6 @@ Show examples of JSON encoding and decoding
 
 [commands/run]
 
-
 scope "encode a dict" {
     dict (a = [dict (b = [dict (c = 1)])]) | json.encode | as obj
 }
@@ -21,3 +20,5 @@ scope "decode an list" {
     assert (($list : length) == 5)
     assert (($list . 4) == 5)
 }
+
+log success

@@ -11,7 +11,8 @@ db = None
 
 def main(filename):
     global db
-    connection = sqlite3.connect(filename, autocommit=True)
+    # connection = sqlite3.connect(filename, autocommit=True)
+    connection = sqlite3.connect(filename)
     db = connection.cursor()
     library.run()
 

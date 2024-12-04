@@ -38,6 +38,22 @@ debug true
 command compile
 
 
+[constants/targets/hello]
+description "hello shared library"
+output_filepath "libnow_hello.so"
+source_files {
+    - {
+        directory "source/now"
+        pattern "*.d"
+    }
+    - {
+        directory "examples/packages"
+        pattern "*.d"
+    }
+}
+debug false
+command compile
+
 [system_commands/ldc_bin]
 parameters {
     files {
@@ -71,7 +87,6 @@ command {
     - "--checkaction=halt"
     - "-od=build"
     - "-O$optimization"
-    - "--link-defaultlib-shared"
     - "-of"
     - $output_filepath
 }
