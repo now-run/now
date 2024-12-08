@@ -96,7 +96,8 @@ class Dict : Item
         {
             throw new NotFoundException(
                 null,
-                "key " ~ key ~ " not found"
+                "key " ~ key ~ " not found",
+                new String(key)
             );
         }
         return value;
@@ -348,7 +349,11 @@ class Dict : Item
                 }
                 else
                 {
-                    return null;
+                    throw new NotFoundException(
+                        null,
+                        "key " ~ key ~ " not found",
+                        new String(key)
+                    );
                 }
             }
             else
