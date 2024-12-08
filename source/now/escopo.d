@@ -72,7 +72,8 @@ class Escopo : Dict
         {
             throw new VariableNotFoundException(
                 this,
-                "key " ~ k ~ " not found"
+                "variable " ~ k ~ " not found",
+                new String(k),
             );
         }
 
