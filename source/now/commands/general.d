@@ -296,14 +296,18 @@ static this()
     */
     builtinCommands["log"] = function(string path, Input input, Output output)
     {
+        auto exitCode = ExitCode.Success;
+
         string formatName = "default";
         if (auto fmtPtr = ("format" in input.kwargs))
         {
             formatName = (*fmtPtr).toString;
         }
-        auto format = input.escopo.document.get!Dict(
-            ["logging", "formats", formatName], null
-        );
+
+        auto escopo = input.escopo;
+        auto document = escopo.document;
+
+        auto format = document.logFormats.get(formatName, null);
 
         if (format is null)
         {
@@ -315,27 +319,31 @@ static this()
         }
         else
         {
-            auto body = format["body"];
-            // TODO: parse the format at Program.initialize!
-            auto parser = new NowParser(body.toString);
-            auto subprogram = parser.consumeSubProgram;
-
+            auto logOutput = new Output();
             foreach (index, item; input.popAll)
             {
                 auto newScope = input.escopo.addPathEntry(
                     "log/" ~ formatName ~ "/" ~ index.to!string
                 );
                 newScope["message"] = item;
-                // A logger is not a handler, so we ignore the exitCode:
-                // TODO: review this. Maybe we should take the exitCode
-                // in consideration after all...
-                subprogram.run(newScope, output);
+                exitCode = format.run(newScope, logOutput);
+                if (exitCode == ExitCode.Return)
+                {
+                    exitCode = ExitCode.Success;
+                }
+
+                foreach (x; logOutput.items)
+                {
+                    stderr.write(x);
+                }
+                stderr.writeln();
+                logOutput.items.length = 0;
             }
         }
 
         stderr.flush();
 
-        return ExitCode.Success;
+        return exitCode;
     };
 
     /**

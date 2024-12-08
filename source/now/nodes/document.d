@@ -36,6 +36,7 @@ class Document : Dict {
     BaseCommand[string] procedures;
     Task[string] tasks;
     Library[string] libraries;
+    SubProgram[string] logFormats;
 
     string[] nowPath;
 
@@ -81,9 +82,10 @@ class Document : Dict {
         loadDocumentCommands();
         loadSystemCommands();
         loadText();
-        loadDataSources();
         loadLibraries();
         loadUserDefinedTypes();
+        loadLoggingConfig();
+        loadDataSources();
     }
 
     void setNowPath(Dict environmentVariables)
@@ -382,9 +384,32 @@ class Document : Dict {
 
         this["text"] = this.text;
     }
+    void loadLoggingConfig()
+    {
+        log("- Loading logging config");
+        auto config = data.get!Dict("logging", null);
+        if (config is null)
+        {
+            return;
+        }
+
+        auto formats = config.get!Dict("formats", null);
+        if (formats !is null)
+        {
+            foreach (name, infoItem; formats)
+            {
+                log("-- format: ", name);
+                auto format = cast(Dict)infoItem;
+                auto body = format["body"];
+                auto parser = new NowParser(body.toString);
+                auto subprogram = parser.consumeSubProgram;
+                logFormats[name] = subprogram;
+            }
+        }
+    }
     void loadDataSources()
     {
-        log("- Loading data_sources...");
+        log("- Loading data_sources");
         auto dataSources = data.get!Dict("data_sources", null);
         if (dataSources is null)
         {
