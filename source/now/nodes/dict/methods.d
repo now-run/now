@@ -45,21 +45,21 @@ static this()
         foreach (argument; input.popAll)
         {
             string key;
-            if (argument.type != ObjectType.List)
+            Items keys;
+            if (argument.type == ObjectType.List)
             {
-                argument = new List([argument]);
+                keys = (cast(List)argument).items;
+            }
+            else
+            {
+                keys = [argument];
             }
 
-            List l = cast(List)argument;
+            key = keys.back.toString();
+            keys.popBack();
 
-            key = l.items.back.toString();
-            l.items.popBack();
-
-            auto innerDict = dict.navigateTo(l.items, false);
-            if (innerDict !is null)
-            {
-                innerDict.remove(key);
-            }
+            auto innerDict = dict.navigateTo(keys, false);
+            innerDict.remove(key);
         }
 
         return ExitCode.Success;
@@ -74,20 +74,31 @@ static this()
         */
         auto dict = cast(Dict)object;
         Items items = input.popAll;
+        log("dict get kwargs:", input.kwargs);
 
         auto lastKey = items.back.toString;
         items.popBack;
 
-        auto innerDict = dict.navigateTo(items, false);
-        if (innerDict is null)
+        Dict innerDict;
+        try {
+            innerDict = dict.navigateTo(items, false);
+            output.push(innerDict[lastKey]);
+        }
+        catch (NotFoundException ex)
         {
-            auto msg = "Key `" ~ to!string(items.map!(x => x.toString()).join(".")) ~ "." ~ lastKey ~ "` not found";
-            throw new NotFoundException(
-                input.escopo, msg, -1, dict
-            );
+            auto defaultValue = input.kwargs.get("default", null);
+            log("dict get defaultValue:", defaultValue);
+            if (defaultValue is null)
+            {
+                ex.escopo = input.escopo;
+                throw ex;
+            }
+            else {
+                output.push(defaultValue);
+                return ExitCode.Success;
+            }
         }
 
-        output.push(innerDict[lastKey]);
         return ExitCode.Success;
     };
     dictMethods["."] = dictMethods["get"];
