@@ -559,12 +559,19 @@ static this()
         return ExitCode.Success;
     };
     builtinCommands["as"] = builtinCommands["set"];
-
     builtinCommands["quickset"] = function(string path, Input input, Output output)
     {
         auto key = input.pop!string;
         auto value = input.pop!Item;
         input.escopo[key] = value;
+        return ExitCode.Success;
+    };
+    builtinCommands["unset"] = function (string path, Input input, Output output)
+    {
+        foreach (item; input.popAll)
+        {
+            input.escopo.remove(item.toString);
+        }
         return ExitCode.Success;
     };
 
@@ -1183,6 +1190,7 @@ But what if only one of them returns Skip or Break???
         auto methodName = input.args[0].toString;
         auto target = input.inputs[0];
         input.items = input.args[1..$];
+        log("method input.kwargs: ", input.kwargs);
         return target.runMethod(methodName, input, output);
     };
     builtinCommands["::"] = builtinCommands["method"];
@@ -1466,12 +1474,12 @@ But what if only one of them returns Skip or Break???
         Item inputStream;
         string[string] env;
 
-        string[] cmdline = input.items.map!(x => x.toString).array;
+        string[] cmdline = input.args.map!(x => x.toString).array;
 
         // Inputs:
         if (input.inputs.length == 1)
         {
-            inputStream = input.inputs.front;
+            inputStream = input.inputs.front.range;
         }
         else if (input.inputs.length > 1)
         {

@@ -7,21 +7,17 @@ import now;
 // Methods:
 static this()
 {
-    nameMethods["unset"] = function (Item object, string path, Input input, Output output)
-    {
-        foreach (item; input.popAll)
-        {
-            input.escopo.remove(item.toString);
-        }
-        return ExitCode.Success;
-    };
     nameMethods["eq"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        > eq a b | print
-        false
-        > eq a a | print
+        > o a | :: eq a
         true
+
+        > o a | :: eq b
+        false
+
+        > o a | :: eq x y a z
+        false false true false
         */
         string target = (cast(Name)object).toString;
         foreach (item; input.popAll)

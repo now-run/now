@@ -67,15 +67,12 @@ class Document : Dict {
     void initialize(Dict environmentVariables)
     {
         log("- Initializing document");
+        this["env"] = environmentVariables;
         setNowPath(environmentVariables);
 
         importPackages();
         loadConfiguration(environmentVariables);
 
-        this.initialize();
-    }
-    void initialize()
-    {
         loadConstants();
         loadTemplates();
         loadShells();
@@ -387,6 +384,7 @@ class Document : Dict {
     }
     void loadDataSources()
     {
+        log("- Loading data_sources...");
         auto dataSources = data.get!Dict("data_sources", null);
         if (dataSources is null)
         {
