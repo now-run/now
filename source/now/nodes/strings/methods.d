@@ -52,6 +52,19 @@ static this()
     };
     stringMethods["."] = stringMethods["get"];
 
+    stringMethods["to.lower"] = function (Item object, string path, Input input, Output output)
+    {
+        string target = (cast(String)object).toString;
+        output.push(target.toLower);
+        return ExitCode.Success;
+    };
+    stringMethods["to.upper"] = function (Item object, string path, Input input, Output output)
+    {
+        string target = (cast(String)object).toString;
+        output.push(target.toUpper);
+        return ExitCode.Success;
+    };
+
     stringMethods["netstrings"] = function (Item object, string path, Input input, Output output)
     {
         /*
