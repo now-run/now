@@ -353,7 +353,12 @@ class SystemProcess : Item
     {
         if (_isRunning)
         {
-            _isRunning = !this.pid.tryWait().terminated;
+            auto w = this.pid.tryWait();
+            _isRunning = !w.terminated;
+            if (!_isRunning)
+            {
+                returnCode = w.status;
+            }
         }
         return _isRunning;
     }
@@ -370,6 +375,7 @@ class SystemProcess : Item
             {
                 auto inputStreamOutput = new Output;
                 auto inputStreamExitCode = this.inputStream.next(escopo, inputStreamOutput);
+                log("inputStreamExitCode:", inputStreamExitCode);
                 if (inputStreamExitCode == ExitCode.Break)
                 {
                     this.inputStream = null;
