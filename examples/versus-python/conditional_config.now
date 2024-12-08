@@ -1,0 +1,45 @@
+[Conditional Configuration Example]
+
+Shows how to implement different configurations
+for different `env` environment variables.
+
+[procedures/should_debug]
+parameters {
+    default {
+        type boolean
+    }
+}
+
+o $env
+    | :: get "DEBUG"
+        ! "NotFoundException" {return $default}
+    | :: to.lower
+    | :: eq "1" "true"
+    | any
+    | return
+
+[data_sources/configs]
+
+dict
+    . (dev = {
+        log "dev config called"
+        dict (debug = [should_debug true])
+            | return
+    })
+    . (prod = {
+        log "prod config called"
+        dict (debug = [should_debug false])
+            | return
+    })
+    | return
+
+[commands/run]
+
+o $configs
+    | :: get [o $env | :: get env -- (default = "dev")]
+    ! "NotFoundException" {
+        error "Unknown environment name: $($error . subject)"
+    }
+    | run
+    | as envconf
+    | log "envconf="
