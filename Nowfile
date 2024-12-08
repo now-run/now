@@ -21,14 +21,18 @@ license "MIT"
 
 [on.error]
 
-print "The program terminated with some error."
+log "The program terminated with some error."
 return $error
 
 
 [logging/formats/default]
 description "This section defines how the `log` command will behave"
 
-dict (timestamp = [unixtime]) (message = $message) | json.encode | return
+dict
+    . (timestamp = [unixtime])
+    . (message = $message)
+    | json.encode
+    | return
 
 
 [system_commands/dub]
@@ -115,3 +119,8 @@ description "Generate dub.json file"
 
 path "dub.json"
 | :: write [json.encode $dub]
+
+[commands/e]
+description "Generates an error so we can see the Document error handler in action."
+
+error "Intentional error"

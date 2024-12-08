@@ -37,6 +37,7 @@ class Document : Dict {
     Task[string] tasks;
     Library[string] libraries;
     SubProgram[string] logFormats;
+    SubProgram errorHandler;
 
     string[] nowPath;
 
@@ -85,6 +86,7 @@ class Document : Dict {
         loadLibraries();
         loadUserDefinedTypes();
         loadLoggingConfig();
+        loadErrorHandler();
         loadDataSources();
     }
 
@@ -383,6 +385,20 @@ class Document : Dict {
         }
 
         this["text"] = this.text;
+    }
+    void loadErrorHandler()
+    {
+        log("- Loading error handler");
+        auto handler = data.get!Dict("on.error", null);
+        if (handler is null)
+        {
+            return;
+        }
+
+        auto body = handler["body"];
+        auto parser = new NowParser(body.toString);
+        auto subprogram = parser.consumeSubProgram;
+        errorHandler = subprogram;
     }
     void loadLoggingConfig()
     {

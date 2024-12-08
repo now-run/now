@@ -250,16 +250,8 @@ int runDocument(Document document, string commandName, string[] commandArgs)
     {
         log("+++ EXCEPTION: ", ex);
         // Global error handler:
-        auto handlerString = document.get!String(
-            ["document", "on.error", "body"], null
-        );
-        if (handlerString !is null)
+        if (document.errorHandler !is null)
         {
-            log("+++ handlerString:", handlerString);
-            // TODO: stop parsing SubPrograms ad-hoc!!!
-            auto localParser = new NowParser(handlerString.toString());
-            SubProgram handler = localParser.consumeSubProgram();
-
             auto newScope = escopo.addPathEntry("on.error");
             auto error = ex.toError();
             // TODO: do not set "error" on parent scope too.
@@ -270,7 +262,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
 
             try
             {
-                errorExitCode = handler.run(newScope, errorOutput);
+                errorExitCode = document.errorHandler.run(newScope, errorOutput);
             }
             catch (NowException ex2)
             {
@@ -311,13 +303,14 @@ int runDocument(Document document, string commandName, string[] commandArgs)
             );
             return ex.code;
         }
+        catch (NowException ex)
+        {
+            return ex.code;
+        }
         catch (Exception ex)
         {
-            // pass
+            return 1;
         }
-        // TODO: this "statement is not reachable"???
-        // stderr.writeln(ex);
-        return ex.code;
     }
 
     // TODO: what to do with `output`?
