@@ -152,4 +152,10 @@ class ItemsRange : Item
         output.push(items[index++]);
         return ExitCode.Continue;
     }
+    override string toString()
+    {
+        return "<ItemsRange: " ~ to!string(this.items
+            .map!(x => to!string(x))
+            .join(" , ")) ~ ">";
+    }
 }
