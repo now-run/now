@@ -185,22 +185,22 @@ static this()
     };
     pathMethods["mkdir"] = function (Item object, string name, Input input, Output output)
     {
-        foreach (item; input.popAll)
+        /*
+        > path "/tmp/a/b/c" | :: mkdir
+        */
+        auto path = cast(Path)object;
+        try
         {
-            auto path = cast(Path)item;
-            try
-            {
-                path.path.mkdirRecurse();
-            }
-            catch (FileException)
-            {
-                throw new PathException(
-                    input.escopo,
-                    "Could not create directory",
-                    -1,
-                    object
-                );
-            }
+            path.path.mkdirRecurse();
+        }
+        catch (FileException)
+        {
+            throw new PathException(
+                input.escopo,
+                "Could not create directory",
+                -1,
+                object
+            );
         }
         return ExitCode.Success;
     };

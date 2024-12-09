@@ -3,6 +3,7 @@ module now.nodes.list.methods;
 
 import std.algorithm : map, sort;
 import std.algorithm.searching : canFind;
+import std.conv : toChars;
 import std.range : chunks;
 
 import now;
@@ -281,7 +282,7 @@ static this()
     listMethods["join"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        > (a , b , c) : join "/"
+        > o (a , b , c) | :: join "/"
         a/b/c
         */
         List list = cast(List)object;
@@ -289,6 +290,22 @@ static this()
         output.push(
             new String(list.items.map!(x => to!string(x)).join(joiner))
         );
+        return ExitCode.Success;
+    };
+    listMethods["to.ascii"] = function (Item object, string path, Input input, Output output)
+    {
+        /*
+        > o (97 , 98 , 99) | :: to.ascii
+        "abc"
+        */
+        List list = cast(List)object;
+        string joiner = input.pop!string("");
+        output.push(new String(
+            list
+                .items
+                .map!(x => ((cast(char)(x.toLong)).to!string))
+                .join(joiner)
+        ));
         return ExitCode.Success;
     };
 

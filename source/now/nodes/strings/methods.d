@@ -457,7 +457,7 @@ static this()
     stringMethods["to.bytes"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        > "ab" : to.bytes
+        > "ab" | :: to.bytes
         (97 , 98)
         */
         auto target = cast(String)object;
@@ -467,6 +467,17 @@ static this()
                 .array
         );
         output.push(new List(items));
+        return ExitCode.Success;
+    };
+    stringMethods["reverse"] = function (Item object, string path, Input input, Output output)
+    {
+        /*
+        > "abc" | :: reverse
+        "cba"
+        */
+        auto target = cast(String)object;
+        auto reversed = target.toString.retro.array.to!string;
+        output.push(reversed);
         return ExitCode.Success;
     };
 }
