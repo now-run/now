@@ -468,7 +468,7 @@ int repl(Document document, string[] documentArgs, string[] nowArgs)
         {
             auto error = ex.toError;
             stderr.writeln(error.toString());
-            return error.code;
+            // return error.code;
         }
 
         // Print whatever is still in the stack:
