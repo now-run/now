@@ -12,6 +12,7 @@ MethodsMap timerMethods;
 class Timer : Item
 {
     StopWatch sw;
+    string description;
 
     this()
     {
@@ -21,9 +22,21 @@ class Timer : Item
         this.sw = StopWatch(AutoStart.yes);
 
     }
+    this(string description)
+    {
+        this();
+        this.description = description;
+    }
     override string toString()
     {
-        return "Timer";
+        if (description !is null)
+        {
+            return "<Timer: " ~ description ~ ">";
+        }
+        else
+        {
+            return "Timer";
+        }
     }
     override Item range()
     {

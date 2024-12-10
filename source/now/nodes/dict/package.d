@@ -66,7 +66,6 @@ class Dict : Item
         if (needsReordering)
         {
             // XXX: maybe use a fixed-size array, here:
-            log("dict.orderedKeys: ", orderedKeys);
             string[] newOrder;
             foreach (x; orderedKeys.reverse.array)
             {
@@ -82,7 +81,6 @@ class Dict : Item
                 }
             }
             this.orderedKeys = newOrder.reverse.array;
-            log(" --> ", orderedKeys);
             this.needsReordering = false;
         }
         return orderedKeys;

@@ -10,27 +10,27 @@ MethodsMap errorMethods;
 class Erro : Item
 {
     int code = -1;
-    string message;
+    string classe;
     Item subject;
     Escopo escopo;
     NowException exception;
 
     this(
-        string typeName, string message,
+        string typeName, string classe,
         Escopo escopo=null, Item subject=null,
         int code=-1
     )
     {
-        this(typeName, message, escopo, subject, null, code);
+        this(typeName, classe, escopo, subject, null, code);
     }
     this(
-        string typeName, string message,
+        string typeName, string classe,
         Escopo escopo=null, Item subject=null,
         NowException ex=null, int code=-1
     )
     {
         this.typeName = typeName;
-        this.message = message;
+        this.classe = classe;
         this.escopo = escopo;
         this.subject = subject;
         this.code = code;
@@ -52,9 +52,9 @@ class Erro : Item
         }
         s ~= ": " ~ typeName;
 
-        if (message)
+        if (classe)
         {
-            s ~= ": <" ~ message ~ ">";
+            s ~= ": <" ~ classe ~ ">";
         }
         if (subject !is null)
         {

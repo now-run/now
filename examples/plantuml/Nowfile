@@ -3,22 +3,6 @@ focal_point "shells/plantuml/scripts/sequence_diagram"
 
 Show how to encapsulate a diagram definition inside a Now program.
 
-[shells/bash/scripts/create_plantuml_file]
-description "Given a PlantUML content, creates a file with both startuml and enduml markers"
-parameters {
-    filepath {
-        type string
-    }
-    content {
-        type string
-    }
-}
-
-echo "@startuml" > $filepath
-echo "$content" >> $filepath
-echo "@enduml" >> $filepath
-
-
 [system_commands/visualize]
 description "Open a file using a proper program from the system"
 parameters {
@@ -35,33 +19,49 @@ command {
 [shells/plantuml]
 command {
     - plantuml
-    - "${script_name}.uml"
+    - "$filepath"
 }
-
 
 [shells/plantuml/on.call]
 description "PlantUML only works with files, so we create one here."
 
+path "${script_name}.uml" | as filepath
+
 scope "time it!" {
-    timer {
-        create_plantuml_file "${script_name}.uml" $script_body
-    } {
-        print "generating the file took $microseconds microseconds, or $miliseconds miliseconds."
-    }
+    timer "generate an UML file"
+        | __ {
+            o $filepath
+                | >> {:: write "@startuml\n"}
+                | >> {:: append $script_body}
+                | >> {:: append "@enduml\n"}
+        }
+        | as timer
+
+    log "it took $($timer : usecs)us to $($timer : description)."
 }
 
+timer "generate the diagram"
 
 [shells/plantuml/on.return]
 description "After generating a diagram, open it for visualization."
 
-wait $process | as return_code
-when ($return_code == 0) {
-    set filepath "${script_name}.png"
-    visualize $filepath
-}
-default {
-    print "PlantUML returned $return_code"
-}
+list
+    | >> {:: first | as timer}
+    | >> {:: last | as process}
+
+o $process | :: wait
+    | :: eq 0
+    | >> {:: then {
+        set filepath "${script_name}.png"
+        visualize $filepath | as visualization_process
+    }}
+    | >> {:: else {
+        log "PlantUML returned $return_code"
+        return
+    }}
+
+log "PlantUML took $($timer : msecs)ms to $($timer : description)."
+o $visualization_process | :: check
 
 
 [shells/plantuml/scripts/sequence_diagram]
@@ -78,7 +78,7 @@ parameters {
 }
 expand_variables true
 
-$name1 -> $name1 : request
+$name1 -> $name2 : request
 $name1 <-- $name2 : reply
 
 

@@ -11,11 +11,11 @@ static this()
         /*
         > print [get $error code]
         404
-        > print [get $error message]
+        > print [get $error classe]
         not found
         */
         // TODO: turn it into real methods, like
-        // > $error : message
+        // > $error | :: classe
         auto target = cast(Erro)object;
         auto arg = input.popAll.map!(x => x.toString).join(" ");
 
@@ -24,8 +24,8 @@ static this()
             case "code":
                 output.push(target.code);
                 return ExitCode.Success;
-            case "message":
-                output.push(target.message);
+            case "classe":
+                output.push(target.classe);
                 return ExitCode.Success;
             case "subject":
                 if (target.subject is null)

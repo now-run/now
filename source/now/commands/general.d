@@ -219,7 +219,7 @@ static this()
                 {
                     throw new NowException(
                         erro.escopo,
-                        erro.message,
+                        erro.classe,
                         erro.subject,
                         erro.code
                     );
@@ -351,11 +351,6 @@ static this()
     */
     builtinCommands["read"] = function(string path, Input input, Output output)
     {
-        /*
-        TODO:
-        read | {print "stdin>"}
-        read 4 | {print "fd4>"}
-        */
         string content = stdin.byLine.join("\n").to!string;
         output.push(content);
         return ExitCode.Success;
@@ -399,7 +394,13 @@ static this()
         > o $t : nsecs | print "nsecs: "
         50000
         */
-        output.push(new Timer());
+        string description;
+        if (input.items.length > 0)
+        {
+            description = input.pop!string;
+        }
+        output.push(new Timer(description));
+
         return ExitCode.Success;
     };
 
@@ -420,20 +421,19 @@ static this()
 
     "Full" call:
     ---
-    > error message code class
+    > error classe code class
     > error "Not Found" 404 http
     > error "segmentation fault" 11 os
     ---
     */
     builtinCommands["error"] = function(string path, Input input, Output output)
     {
-        string message = input.pop!string("An error ocurred");
+        string classe = input.pop!string("An error ocurred");
         int code = cast(int)(input.pop!long(-1));
-        // TODO: classe
 
         throw new UserException(
             input.escopo,
-            message,
+            classe,
             code
         );
     };

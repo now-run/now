@@ -102,12 +102,12 @@ static this()
     booleanMethods["assert"] = function(Item object, string path, Input input, Output output)
     {
         bool isConditionTrue = (cast(Boolean)object).toBool;
-        string message = "assertion error";
+        string classe = "assertion_error";
         foreach (item; input.popAll)
         {
             if (item.type == ObjectType.String)
             {
-                message = item.toString;
+                classe = item.toString;
             }
             else
             {
@@ -124,7 +124,7 @@ static this()
         {
             throw new AssertionError(
                 input.escopo,
-                message,
+                classe,
                 -1,
                 object
             );

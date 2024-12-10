@@ -264,10 +264,12 @@ class Document : Dict {
         foreach (shellName, infoItem; shells.values)
         {
             auto shellInfo = cast(Dict)infoItem;
+            log("-- shell ", shellName, " <- ", shellInfo);
 
-            auto command = shellInfo.get!Dict("command", null);
+            auto command = shellInfo.get!List("command", null);
             if (command is null)
             {
+                log("--- command is null!");
                 auto cmdDict = new Dict();
                 shellInfo["command"] = cmdDict;
                 // default options for every shell:
@@ -280,6 +282,7 @@ class Document : Dict {
                     cmdDict["-"] = new Reference("script_name");
                 }
             }
+            log("--- command: ", shellInfo["command"]);
 
             // Scripts for this shell:
             auto scripts = shellInfo.getOrCreate!Dict("scripts");

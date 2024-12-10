@@ -5,6 +5,20 @@ import now;
 
 static this()
 {
+    timerMethods["description"] = function(Item object, string path, Input input, Output output) {
+        auto timer = cast(Timer)object;
+
+        if (timer.description is null)
+        {
+            output.push("");
+        }
+        else
+        {
+            output.push(timer.description);
+        }
+        return ExitCode.Success;
+    };
+
     timerMethods["seconds"] = function(Item object, string path, Input input, Output output) {
         auto timer = cast(Timer)object;
         output.push(timer.sw.peek().total!"seconds");
