@@ -1411,7 +1411,7 @@ But what if only one of them returns Skip or Break???
         }
         return exitCode;
     };
-    builtinCommands["aside"] = function (string path, Input input, Output output)
+    builtinCommands["aposto"] = function (string path, Input input, Output output)
     {
         /*
         > o 123 | aside {o 456} | print
@@ -1423,7 +1423,7 @@ But what if only one of them returns Skip or Break???
         auto body = input.pop!SubProgram;
         auto items = input.popAll;
 
-        auto escopo = input.escopo.addPathEntry("aside");
+        auto escopo = input.escopo.addPathEntry("aposto");
         auto bpOutput = new Output;
         auto exitCode = body.run(escopo, items, bpOutput);
         if (exitCode == ExitCode.Return)
@@ -1437,9 +1437,9 @@ But what if only one of them returns Skip or Break???
         }
         return exitCode;
     };
-    builtinCommands[">>"] = builtinCommands["aside"];
+    builtinCommands[">>"] = builtinCommands["aposto"];
 
-    builtinCommands["aposto"] = function (string path, Input input, Output output)
+    builtinCommands["aside"] = function (string path, Input input, Output output)
     {
         /*
         > o 123 | aposto {print "inner: "} | print "outer: "
@@ -1451,7 +1451,7 @@ But what if only one of them returns Skip or Break???
         auto body = input.pop!SubProgram;
         auto items = input.popAll;
 
-        auto escopo = input.escopo.addPathEntry("aposto");
+        auto escopo = input.escopo.addPathEntry("aside");
         auto aOutput = new Output;
         auto exitCode = body.run(escopo, aOutput);
         if (exitCode == ExitCode.Return)
@@ -1465,7 +1465,7 @@ But what if only one of them returns Skip or Break???
         }
         return exitCode;
     };
-    builtinCommands["__"] = builtinCommands["aposto"];
+    builtinCommands["__"] = builtinCommands["aside"];
 
     // System commands
     builtinCommands["syscmd"] = function (string path, Input input, Output output)
