@@ -67,6 +67,10 @@ command {
     - "clean"
 }
 
+[procedures/quit]
+
+exit 0
+
 [commands/make]
 description "Compiles Now"
 parameters {
@@ -94,9 +98,17 @@ make_clean | foreach line {
 
 [commands/run]
 description "Show some help text."
+parameters {
+    message {
+        type string
+        default "Try running `now` without any arguments to see
+a list of available subcommands for this project."
+    }
+}
 
-print.yellow "Try running `now` without any arguments to see"
-print.yellow "a list of available subcommands for this project."
+print.yellow $message
+print.gray "cl_args: $cl_args"
+print.gray "args: $args"
 
 
 [commands/test]
@@ -124,3 +136,9 @@ path "dub.json"
 description "Generates an error so we can see the Document error handler in action."
 
 error "Intentional error"
+
+[commands/exit]
+description "Test the `exit` command running inside a procedure."
+
+quit
+error "this message should not be displayed."

@@ -179,7 +179,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
     auto rootScope = new Escopo(document, "document");
     log("+ rootScope: ", rootScope);
     rootScope["env"] = envVars;
-    rootScope["args"] = new List(
+    rootScope["cl_args"] = new List(
         cast(Items)(
             commandArgs
             .map!(x => new String(x))
@@ -208,7 +208,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
     */
     foreach (arg; commandArgs[1..$])
     {
-        if (arg.length > 2 && arg[0..2] == "--")
+        if (arg.startsWith("--"))
         {
             // alfa-beta=1=2=3 -> alfa_beta = "1=2=3"
             auto pair = arg[2..$].split("=");
