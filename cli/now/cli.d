@@ -176,7 +176,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
 
     // ------------------------------
     // Prepare the root scope:
-    auto rootScope = new Escopo(document, "document");
+    auto rootScope = new Escopo(document, commandName);
     log("+ rootScope: ", rootScope);
     rootScope["env"] = envVars;
     rootScope["cl_args"] = new List(
@@ -226,10 +226,8 @@ int runDocument(Document document, string commandName, string[] commandArgs)
 
     // ------------------------------
     // Run the command:
-    auto escopo = rootScope.addPathEntry("now");
-    log("  + escopo: ", escopo);
     auto input = Input(
-        escopo,
+        rootScope,
         [],
         args,
         kwargs
@@ -252,7 +250,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
         // Global error handler:
         if (document.errorHandler !is null)
         {
-            auto newScope = escopo.addPathEntry("on.error");
+            auto newScope = rootScope.addPathEntry("on.error");
             auto error = ex.toError();
             // TODO: do not set "error" on parent scope too.
             newScope["error"] = error;
