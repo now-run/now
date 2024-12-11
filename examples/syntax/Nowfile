@@ -149,7 +149,7 @@ o true | :: then {
     dict (k = 1)
 } {
     dict (k = 2)
-} | :: get k | :: eq 1 | assert "k should be 1"
+} | :: get k | :: eq 1 | :: assert "k should be 1"
 
 
 set x true
@@ -160,7 +160,7 @@ run {
     when ($x == false) {
         dict (k = 2) | return
     }
-} | :: get k | :: eq 1 | assert "k should be 1"
+} | :: get k | :: eq 1 | :: assert "k should be 1"
 
 [commands/error]
 
@@ -190,22 +190,22 @@ scope "Unhandled error" {
 description "General syntax tests"
 
 scope "Dict | :: get" {
-    dict (a = 10) (b = 20) | :: get a | :: eq 10 | assert
+    dict (a = 10) (b = 20) | :: get a | :: eq 10 | :: assert
 }
 
 scope "type identification" {
-    assert ((123 type) == "integer")
-    assert (("123" type) == "string")
-    assert ((1.23 type) == "float")
-    assert (([dict] type) == "dict")
+    o ((123 type) == "integer") | :: assert
+    o (("123" type) == "string") | :: assert
+    o ((1.23 type) == "float") | :: assert
+    o (([dict] type) == "dict") | :: assert
 }
 
 scope "type coercion" {
-    assert ((123 to.string) == "123")
-    assert ((1.23 to.string) == "1.23")
-    assert (("123" to.integer) == 123)
-    assert ((1 to.bool) == true)
-    assert ((0 to.bool) == false)
+    o ((123 to.string) == "123") | :: assert
+    o ((1.23 to.string) == "1.23") | :: assert
+    o (("123" to.integer) == 123) | :: assert
+    o ((1 to.bool) == true) | :: assert
+    o ((0 to.bool) == false) | :: assert
 
     scope "floating point type conversion" {
         # Now has a GAMBIARRA to work with floats
@@ -214,15 +214,15 @@ scope "type coercion" {
         # can work okay-ish without worrying too much
         # about implementation details of floating point
         # numbers.
-        assert (("1.23" to.float) == 1.23)
+        o (("1.23" to.float) == 1.23) | :: assert
         # It's kinda convenient when you want to compare
         # small fractions, like 1.25, but terrible when
         # working with great precision:
         #
         # This SEEMS fine:
-        assert (("2.2345678901234567893" to.float) == 2.2345678901234567893)
+        o (("2.2345678901234567893" to.float) == 2.2345678901234567893) | :: assert
         # But is actually not that fine:
-        assert (("1.2345" to.float) == 1.23459999999)
+        o (("1.2345" to.float) == 1.23459999999) | :: assert
         # Now tries to be CONVENIENT. Besides, using direct "equals"
         # comparisons between floats is a bad idea in any language,
         # se I assume whoever is using this is NOT that interested
@@ -235,14 +235,14 @@ scope "loops" {
         range 1 10 | foreach x {
             if ($x == 5) { break }
         }
-        assert ($x == 5)
+        o ($x == 5) | :: assert
     }
     scope "continuing a loop" {
         range 1 10 | foreach x {
             continue
             set x 100
         }
-        assert ($x == 10)
+        o ($x == 10) | :: assert
     }
     scope "skipping in a loop" {
         set sum 0
@@ -254,7 +254,7 @@ scope "loops" {
         } | foreach x {
             set sum ($sum + $x)
         }
-        assert "$sum should be 1" ($sum == 1)
+        o ($sum == 1) | :: assert "$sum should be 1"
     }
     scope "returning from inside a loop" {
         set x [
@@ -262,7 +262,7 @@ scope "loops" {
                 return $x
             }
         ]
-        assert ($x == 1)
+        o ($x == 1) | :: assert
     }
 }
 
@@ -270,8 +270,8 @@ scope "sleep and timer" {
     timer {
         sleep 0.1
     } {
-        assert ($nanoseconds > 0)
-        assert ($seconds < 1)
+        o ($nanoseconds > 0) | :: assert
+        o ($seconds < 1) | :: assert
     }
 }
 
@@ -279,7 +279,7 @@ scope "val" {
     set name "NOT A VALID ATOM AT ALL!"
     set $name 123
     val $name | as x
-    assert ($x == 123)
+    o ($x == 123) | :: assert
 }
 
 scope "vars" {
@@ -299,7 +299,7 @@ scope "when" {
         when ($x == 1) { return one }
         default { return other }
     ]
-    assert "'$y' should be 'one'" ($y == one)
+    o ($y == one) | :: assert "'$y' should be 'one'"
 }
 scope "default" {
     set x 100
@@ -308,19 +308,19 @@ scope "default" {
         when ($x == 1) { return one }
         default { return other }
     ]
-    assert ($y == other)
+    o ($y == other) | :: assert
 }
 
 scope "collect" {
     range 1 10 | collect | as l
-    assert "$l length should be 10" [o $l | :: length | :: eq 10]
-    assert (($l . 0) == 1)
-    assert (($l . 9) == 10)
+    o $l | :: length | :: eq 10 | :: assert "$l length should be 10"
+    o (($l . 0) == 1) | :: assert
+    o (($l . 9) == 10) | :: assert
 }
 
 scope "call" {
     call set x 10
-    assert ($x == 10)
+    o ($x == 10) | :: assert
 }
 
 scope "system_commands" {

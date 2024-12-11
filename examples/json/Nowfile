@@ -9,16 +9,16 @@ scope "encode a dict" {
 }
 scope "decode an object" {
     json.decode $obj | as dict
-    assert (($dict . a . b . c) == 1)
+    o (($dict . a . b . c) == 1) | :: assert
 }
 scope "encode a list" {
     list 1 2 3 4 5 | json.encode | as list_str
 }
 scope "decode an list" {
     json.decode $list_str | as list
-    assert (($list . 0) == 1)
-    assert (($list : length) == 5)
-    assert (($list . 4) == 5)
+    o (($list . 0) == 1) | :: assert
+    o (($list : length) == 5) | :: assert
+    o (($list . 4) == 5) | :: assert
 }
 
 log success

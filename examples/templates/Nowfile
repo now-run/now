@@ -55,12 +55,12 @@ o $rendered_template
 
 o $line_count
     | :: eq 22
-    | assert "Rendered template should have 22 lines, not $line_count ."
+    | :: assert "Rendered template should have 22 lines, not $line_count ."
 
 o $rendered_template
     | :: find "<h2>Files in /home</h2>"
     | :: neq -1
-    | assert "There should be a h2 header for /home"
+    | :: assert "There should be a h2 header for /home"
 
 return $rendered_template
 

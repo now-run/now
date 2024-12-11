@@ -11,7 +11,7 @@ scope "Create the Dict" {
 
 scope "Access a value as a variable" {
     o $d | :: run {
-        o $k | :: eq v | assert
+        o $k | :: eq v | :: assert
     }
 }
 
@@ -22,7 +22,7 @@ scope "Set values as variables" {
         }}
         | :: get k2
         | :: eq v2
-        | assert
+        | :: assert
 }
 
 log success

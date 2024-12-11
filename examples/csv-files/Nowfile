@@ -11,7 +11,7 @@ path "test.csv" | :: read | csv.decode
         o
         | :: length
         | :: eq 6
-        | assert "lista length should be 6"
+        | :: assert "lista length should be 6"
     }
     | >> {
         o
@@ -19,7 +19,7 @@ path "test.csv" | :: read | csv.decode
         | as first
         | :: length
         | :: eq 5
-        | assert "first length should be 5"
+        | :: assert "first length should be 5"
     }
     | __ {log "------------"}
     | csv.encode
