@@ -87,9 +87,8 @@ to be used as the last argument for the next one."
     format h3
     content "And it gets worse"
 }
-- "Getting an item from a list was done using `:`, that is like a pipe, but
-indicates that the next command is a <strong>method</strong> of the previous
-command's result. So, in this case:"
+- "Getting an item from a list was done using `::`, that is actually and
+alias for the `method` command. So, in this case:"
 - {
     type snippet
     format code
@@ -249,7 +248,7 @@ considered an anti-pattern in Now.'
         >         | as username
         >     path "/etc/passwd"
         >         | :: read.lines
-        >         | filter {o | :: contains \$username | :: eq false}
+        >         | filter {:: contains \$username | :: eq false}
         >         | {print}
         > }
     }
