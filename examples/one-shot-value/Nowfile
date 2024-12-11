@@ -1,0 +1,57 @@
+[One-shot Value Example]
+
+Shows how to use one-shot values.
+
+[configuration/global]
+value 0
+
+[procedures/one_shot]
+
+log "one_shot procedure was called!"
+o $global | :: set (value = (($global . value) + 1))
+return ($global . value)
+
+[procedures/is_pair]
+parameters {
+    x {
+        type integer
+    }
+}
+
+when ($x % 2 == 0) {
+    return $x "$x is pair!"
+}
+default {
+    return $x "$x is odd..."
+}
+
+[commands/run]
+
+scope "static key" {
+    range 5 | foreach i {
+        once key {one_shot}
+            | >> {:: eq 1 | :: assert "GLOBAL_VALUE should not be changed."}
+            | print "$i> "
+    }
+}
+
+scope "dynamic keys" {
+    # Please notice that parameters inside the SubProgram
+    # used as argument to `once` will be evaluated only
+    # once per key!
+
+    range 5 | foreach i {
+        once ($i % 2 == 0) {is_pair $i}
+            | list
+            | >> {
+                :: first | as x
+                    | :: eq 0 1
+                    | any
+                    | :: assert "the return of is_pair should always be 0 or 1."
+            }
+            | >> {
+                :: last | as veredict
+                print "$i = $x; veredict is: $veredict"
+            }
+    }
+}
