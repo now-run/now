@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Home - Now</title>
+    <title>Now</title>
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
@@ -39,7 +39,7 @@ puts [lindex lista 1]
 
     <pre>
 set lista [list a "This value gets printed" c d]
-print [o $lista : get 1]
+print [o $lista | :: get 1]
 # This value gets printed
     </pre>
 
@@ -104,7 +104,7 @@ command's result. So, in this case:
     </p>
 
     <pre>
-print [o $lista : get 1]
+print [o $lista | :: get 1]
     </pre>
 
     <p>
@@ -119,7 +119,7 @@ of that.
 
     <pre>
 o $lista
-    : get 1
+    | :: get 1
     | print
     </pre>
 
@@ -274,16 +274,16 @@ considered an anti-pattern in Now.
     <pre>
 # Remove the current user from /etc/passwd
 o $env
-    : get "USER"
+    | :: get "USER"
     | as username
 path "/etc/passwd"
     | as filepath
 o $filepath
-    : read.lines
+    | :: read.lines
     | as lines
 o $lines
     | foreach line {
-        if [o $line : contains $username] {
+        if [o $line | :: contains $username] {
             skip
         } {
             print $line
@@ -298,11 +298,11 @@ o $lines
     <pre>
 scope "Remove the current user from /etc/passwd" {
     o $env
-        : get "USER"
+        | :: get "USER"
         | as username
     path "/etc/passwd"
-        : read.lines
-        | filter {o : contains $username : eq false}
+        | :: read.lines
+        | filter {o | :: contains $username | :: eq false}
         | {print}
 }
     </pre>
@@ -334,7 +334,7 @@ life easy by avoiding to write this all the time:
 
     <pre>
 list  1 2 3
-   | {o : mul 10}  # this thing
+   | {o | :: mul 10}  # this thing
    | {print}
 # 10
 # 20
@@ -636,7 +636,7 @@ date +$format
 
 date "%Y"
     | collect
-    : first
+    | :: first
     | print "The current year is "
     </pre>
 
@@ -716,9 +716,8 @@ per second. We all know that.
 
     <p>
     My advice: stay away from
-        <a href="http://github.com/now-run/now" target="_blank">the project repository on Github</a>
-
-    .
+dict (type = link) (format = link) (text = the project repository on Github) (href = http://github.com/now-run/now)
+.
     </p>
 
     </div>

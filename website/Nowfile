@@ -36,7 +36,7 @@ lists or dicts."
     format code
     content {
         > set lista [list a "This value gets printed" c d]
-        > print [o \$lista : get 1]
+        > print [o \$lista | :: get 1]
         > # This value gets printed
     }
 }
@@ -94,7 +94,7 @@ command's result. So, in this case:"
     type snippet
     format code
     content {
-        > print [o \$lista : get 1]
+        > print [o \$lista | :: get 1]
     }
 }
 - "You're basically telling Now to get the <em>object</em> \"lista\",
@@ -106,7 +106,7 @@ of that."
     format code
     content {
         > o \$lista
-        >     : get 1
+        >     | :: get 1
         >     | print
     }
 }
@@ -221,16 +221,16 @@ considered an anti-pattern in Now.'
     code {
         > # Remove the current user from /etc/passwd
         > o \$env
-        >     : get "USER"
+        >     | :: get "USER"
         >     | as username
         > path "/etc/passwd"
         >     | as filepath
         > o \$filepath
-        >     : read.lines
+        >     | :: read.lines
         >     | as lines
         > o \$lines
         >     | foreach line {
-        >         if [o \$line : contains \$username] {
+        >         if [o \$line | :: contains \$username] {
         >             skip
         >         } {
         >             print \$line
@@ -245,11 +245,11 @@ considered an anti-pattern in Now.'
     code {
         > scope "Remove the current user from /etc/passwd" {
         >     o \$env
-        >         : get "USER"
+        >         | :: get "USER"
         >         | as username
         >     path "/etc/passwd"
-        >         : read.lines
-        >         | filter {o : contains \$username : eq false}
+        >         | :: read.lines
+        >         | filter {o | :: contains \$username | :: eq false}
         >         | {print}
         > }
     }
@@ -273,7 +273,7 @@ life easy by avoiding to write this all the time:'
 - {
     code {
         > list  1 2 3
-        >    | {o : mul 10}  # this thing
+        >    | {o | :: mul 10}  # this thing
         >    | {print}
         > # 10
         > # 20
@@ -493,7 +493,7 @@ document and call it a <em>script</em>, to be executed by some <em>shell</em>."
         > 
         > date "%Y"
         >     | collect
-        >     : first
+        >     | :: first
         >     | print "The current year is "
     }
 }
@@ -630,7 +630,7 @@ pre {
 <html>
   <head>
     <title>$[
-        when [vars : contains "page_title"] {
+        when [vars | :: contains "page_title"] {
             return "$page_title - Now"
         }
         default {
@@ -714,11 +714,12 @@ parameters {
 returns string
 
 o $content
-    | switch {type}
+    | type
+    | switch
     ! string {
         template p
-            : emit content
-            : render
+            | :: emit content
+            | :: render
             | list
             | return
     }
@@ -726,7 +727,7 @@ o $content
         o $content
             | {
                 render_item
-                : to.sequence
+                | :: to.sequence
             }
             | collect
             | return
@@ -734,20 +735,20 @@ o $content
     ! dict {
         scope "Prepare content" {
             o $content
-                : keys
+                | :: keys
                 | as keys
-                : contains "type"
-                : then {
+                | :: contains "type"
+                | :: then {
                     set format ($content . format)
                     set type ($content . type)
                 } {
                     set type none
                     o $keys
-                        : first
+                        | :: first
                         | as format
 
                     o $content
-                        : set (content = ($content . $format))
+                        | :: set (content = ($content . $format))
                 }
         }
 
@@ -756,34 +757,34 @@ o $content
         switch {o $type}
             ! sequence {
                 o $content
-                    : get content
+                    | :: get content
                     | foreach sub_item {
                         print "sub_item=<$sub_item>"
                         type $sub_item
                             | as sub_item_type
-                            : eq string
-                            : then {
+                            | :: eq string
+                            | :: then {
                                 o $tpl
-                                    : emit content (content = $sub_item)
+                                    | :: emit content (content = $sub_item)
                             } {
                                 print ">> type is $sub_item_type"
                                 render_item $sub_item
                                     | foreach x {
                                         o $tpl
-                                            : emit content (content = $x)
+                                            | :: emit content (content = $x)
                                     }
                             }
                     }
 
                 o $tpl
-                    : render
+                    | :: render
                     | list
                     | return
             }
             ! reference {
                 o $content
-                    : get reference
-                    : to.sequence
+                    | :: get reference
+                    | :: to.sequence
                     | . $text
                     | as content
             }
@@ -793,19 +794,19 @@ o $content
             }
             ! * {
                 o $content
-                    : get content
+                    | :: get content
                     | as content
                     | type
-                    : eq list
-                    : then {
+                    | :: eq list
+                    | :: then {
                         o $content
-                            : join "\n"
+                            | :: join "\n"
                             | as content
                     }
             }
 
             scope "Render" {
-                o $tpl : emit content : render | list | return
+                o $tpl | :: emit content | :: render | list | return
             }
     }
 
@@ -823,22 +824,22 @@ parameters {
     }
 }
 
-template $template [o $data : pairs] | as tpl
+template $template [o $data | :: pairs] | as tpl
 
 scope "page content" {
-    o $data : get content : pairs | list | foreach pair {
+    o $data | :: get content | :: pairs | list | foreach pair {
         set item_data ($pair . 1)
         render_item $item_data | foreach content {
-            o $tpl : emit content
+            o $tpl | :: emit content
         }
     }
 }
 
 scope "page body" {
-    # o $tpl : emit content
-    # o $tpl : emit subheader [o $data : pairs]
-    path "$dist_dir/$filename" : write [o $tpl : render]
-    o $tpl : render | print
+    # o $tpl | :: emit content
+    # o $tpl | :: emit subheader [o $data | :: pairs]
+    path "$dist_dir/$filename" | :: write [o $tpl | :: render]
+    o $tpl | :: render | print
 }
 
 [commands/build]
@@ -849,18 +850,18 @@ if (($dist_dir : exists) == false) {
     mkdir $dist_dir
 }
 
-path "resources" : glob "*" | foreach entry {
-    o $entry : basename | as filename
+path "resources" | :: glob "*" | foreach entry {
+    o $entry | :: basename | as filename
     # TODO: make the copy automatically recursive.
     # copy $entry [path "$dist_dir/$filename"]
 }
 
 scope "style" {
     template style | as tpl
-    path "$dist_dir/style.css" : write [o $tpl : render]
+    path "$dist_dir/style.css" | :: write [o $tpl | :: render]
 }
 
-o $text : get "Pages" : pairs | list | foreach pair {
+o $text | :: get "Pages" | :: pairs | list | foreach pair {
     set filename ($pair . 0)
     set data ($pair . 1)
     render_page $filename $data
@@ -871,10 +872,10 @@ description "Test the code for 'grepping -v' the /etc/passwd file"
 
 scope "Remove the current user from /etc/passwd" {
     o $env
-        : get "USER"
+        | :: get "USER"
         | as username
     path "/etc/passwd"
-        : read.lines
-        | filter {o : contains $username : eq false}
+        | :: read.lines
+        | filter {o | :: contains $username | :: eq false}
         | {print}
 }
