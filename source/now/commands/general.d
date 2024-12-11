@@ -450,69 +450,9 @@ static this()
         throw new Event(input.escopo, item.toString);
     };
 
-    // ---------------------------------------------
-    /**
-    ## Debugging
-    */
-
-    /**
-    Examples:
-    ---
-    > assert true
-    > assert false
-    assertion error: false
-    ---
-    > assert "this should be true" false
-    assertion error: this should be true
-    ---
-    */
-    builtinCommands["assert"] = function(string path, Input input, Output output)
-    {
-        string givenMessage = null;
-        foreach (item; input.popAll)
-        {
-            if (item.type == ObjectType.String)
-            {
-                givenMessage = item.toString;
-            }
-            else if (!item.toBool())
-            {
-                auto msg = "assertion error";
-                if (givenMessage !is null)
-                {
-                    msg ~= ": " ~  givenMessage;
-                }
-                throw new AssertionError(
-                    input.escopo,
-                    msg,
-                    -1,
-                    item
-                );
-            }
-        }
-        return ExitCode.Success;
-    };
-    /**
-    Examples:
-    ---
-    [procedures/quit]
-    parameters {
-        code {
-            type int
-        }
-    }
-
-    [commands/run]
-    parameters {}
-
-    exit 10
-    ---
-    $ now ; echo $?
-    10
-    ---
-    */
     builtinCommands["exit"] = function(string path, Input input, Output output)
     {
+        // TODO: make it actually work and exit from anywhere.
         int code = cast(int)(input.pop!long(0));
         auto message = input.pop!string("Process was stopped");
 
@@ -533,14 +473,6 @@ static this()
     };
 
     // Names:
-    /**
-    Examples:
-    ---
-    > set a 1
-    > print $a
-    1
-    ---
-    */
     builtinCommands["set"] = function(string path, Input input, Output output)
     {
         auto key = input.pop!string(null);
@@ -741,7 +673,7 @@ static this()
             | run.if $debug {o | as lista ; log $lista ; return $lista}
             | return
 
-        If the body don't Return, then the same input will
+        If the body doesn't Return, then the same input will
         be used as output:
 
         list 1 2 3
@@ -1466,6 +1398,48 @@ But what if only one of them returns Skip or Break???
         return exitCode;
     };
     builtinCommands["__"] = builtinCommands["aside"];
+
+    builtinCommands["once"] = function (string path, Input input, Output output)
+    {
+        /*
+        > once { count_and_print }
+        1
+        > once { count_and_print }
+        1
+
+        count_and_print will be called only once!
+        */
+        string givenKey = input.pop!string;
+        string key = "__once:" ~ givenKey;
+        auto body = input.pop!SubProgram;
+
+        auto escopo = input.escopo.addPathEntry("run");
+        auto value = escopo.get(key, null);
+
+        ExitCode exitCode;
+
+        if (value !is null)
+        {
+            output.push(value.evaluate(escopo));
+        }
+        else
+        {
+            auto items = input.popAll;
+            auto bodyScope = new Output();
+            exitCode = body.run(escopo, items, bodyScope);
+            if (exitCode == ExitCode.Return)
+            {
+                exitCode = ExitCode.Success;
+            }
+            auto returnedValues = bodyScope.items;
+            escopo[key] = returnedValues;
+            foreach (item; returnedValues)
+            {
+                output.push(item);
+            }
+        }
+        return exitCode;
+    };
 
     // System commands
     builtinCommands["syscmd"] = function (string path, Input input, Output output)
