@@ -31,14 +31,8 @@ template CreateComparisonOperator(string cmdName, string operator)
             foreach (item; input.popAll)
             {
                 long x = item.toLong();
-                if (!(pivot " ~ operator ~ " x))
-                {
-                    output.push(false);
-                    return ExitCode.Success;
-                }
-                pivot = x;
+                output.push(pivot " ~ operator ~ " x);
             }
-            output.push(true);
             return ExitCode.Success;
         };
         integerMethods[\"" ~ operator ~ "\"] = integerMethods[\"" ~ cmdName ~ "\"];
