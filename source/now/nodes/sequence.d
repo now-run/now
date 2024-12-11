@@ -16,7 +16,7 @@ class Sequence : Item
 
     override string toString()
     {
-        return "<" ~ items.map!(x => x.toString()).join(" ") ~ ">";
+        return "<Sequence: " ~ items.map!(x => x.toString()).join(" ") ~ ">";
     }
 
     override Items evaluate(Escopo escopo)
