@@ -150,7 +150,6 @@ class Document : Dict {
         auto configuration = data.getOrCreate!Dict("configuration");
         foreach (configSectionName, configSection; configuration)
         {
-            auto scopeDict = new Dict();
             if (this.get(configSectionName, null) !is null)
             {
                 throw new InvalidConfigurationException(
@@ -161,7 +160,8 @@ class Document : Dict {
                 );
             }
             log("- configuration/", configSectionName);
-            this[configSectionName] = scopeDict;
+            auto dict = new Dict();
+            this[configSectionName] = dict;
             // Example: configSectionName = "http"
 
             // "name" = host
@@ -203,7 +203,7 @@ class Document : Dict {
                     }
                 }
                 // ($client . password) -> x123
-                scopeDict[name] = finalValue;
+                dict[name] = finalValue;
                 // val "CLIENT_PASSWORD" -> x123
                 this[envName] = finalValue;
                 // $password -> x123
