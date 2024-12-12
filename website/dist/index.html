@@ -98,9 +98,8 @@ to be used as the last argument for the next one.
     </h3>
 
     <p>
-    Getting an item from a list was done using `:`, that is like a pipe, but
-indicates that the next command is a <strong>method</strong> of the previous
-command's result. So, in this case:
+    Getting an item from a list was done using `::`, that is actually and
+alias for the `method` command. So, in this case:
     </p>
 
     <pre>
@@ -302,7 +301,7 @@ scope "Remove the current user from /etc/passwd" {
         | as username
     path "/etc/passwd"
         | :: read.lines
-        | filter {o | :: contains $username | :: eq false}
+        | filter {:: contains $username | :: eq false}
         | {print}
 }
     </pre>
@@ -686,26 +685,6 @@ where you can write Markdown and it's capable of rendering itself.
 have the same effect.
     </p>
 
-    <h2>
-    It's not Web-focused
-    </h2>
-
-    <p>
-    What's the use on <em>anything</em> that can't serve HTTP???
-    </p>
-
-    <p>
-    Now <strong>is</strong> fully capable of serving SCGI, though, but
-what's the point? SCGI probably stands for SlowCGI, right?, the exact
-opposite of FastCGI! Who cares if it's simple? What we all need
-is <strong>fast!</strong>
-    </p>
-
-    <p>
-    Because every single Website we create absolutely must support 100k clients
-per second. We all know that.
-    </p>
-
     <p>
     <hr/>
     </p>
@@ -716,8 +695,9 @@ per second. We all know that.
 
     <p>
     My advice: stay away from
-dict (type = link) (format = link) (text = the project repository on Github) (href = http://github.com/now-run/now)
-.
+        <a href="http://github.com/now-run/now" target="_blank">the project repository on Github</a>
+
+    .
     </p>
 
     </div>

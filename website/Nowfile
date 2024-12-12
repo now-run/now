@@ -519,16 +519,6 @@ write the \"scripts\" inside the document. Like, imagine having a document
 where you can write Markdown and it's capable of rendering itself."
 - "And that's a waste. A folder with a 'document.md' and a 'run.sh' will
 have the same effect."
-- {
-    h2 "It's not Web-focused"
-}
-- "What's the use on <em>anything</em> that can't serve HTTP???"
-- "Now <strong>is</strong> fully capable of serving SCGI, though, but
-what's the point? SCGI probably stands for SlowCGI, right?, the exact
-opposite of FastCGI! Who cares if it's simple? What we all need
-is <strong>fast!</strong>"
-- "Because every single Website we create absolutely must support 100k clients
-per second. We all know that."
 - "<hr/>"
 - {
     h2 "Stay away"
@@ -752,13 +742,15 @@ o $content
         }
 
         template $format | as tpl
+        log "template: $format"
+        log "type: $type"
 
-        switch {o $type}
+        o $type | switch
             ! sequence {
                 o $content
                     | :: get content
                     | foreach sub_item {
-                        print "sub_item=<$sub_item>"
+                        log "sub_item=<$sub_item>"
                         type $sub_item
                             | as sub_item_type
                             | :: eq string
@@ -766,7 +758,7 @@ o $content
                                 o $tpl
                                     | :: emit content (content = $sub_item)
                             } {
-                                print ">> type is $sub_item_type"
+                                log ">> type is $sub_item_type"
                                 render_item $sub_item
                                     | foreach x {
                                         o $tpl
