@@ -1053,6 +1053,34 @@ static this()
         output.push(iterator);
         return ExitCode.Success;
     };
+    builtinCommands["count"] = function(string path, Input input, Output output)
+    {
+        foreach (target; input.popAll)
+        {
+            auto range = target.range();
+
+            long count = 0;
+countLoop:
+            while (true)
+            {
+                auto nextOutput = new Output;
+                auto exitCode = range.next(input.escopo, nextOutput);
+                switch (exitCode)
+                {
+                    case ExitCode.Return:
+                    case ExitCode.Break:
+                        break countLoop;
+                    case ExitCode.Skip:
+                        continue countLoop;
+
+                    default:
+                        count++;
+                }
+            }
+            output.push(count);
+        }
+        return ExitCode.Success;
+    };
 
     builtinCommands["try"] = function(string path, Input input, Output output)
     {
