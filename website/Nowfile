@@ -1,7 +1,32 @@
 [Now Website]
 
-[constants]
-dist_dir "dist"
+[configuration/dist]
+dir "dist"
+
+[configuration/log]
+level {
+    default info
+}
+
+[logging/formats/default]
+
+o $log_levels
+    | >> {:: get $log_level | as limit}
+    | >> {:: get $level | as l}
+
+print "LOG: $message / $l ($level) vs $limit ($log_level)"
+o $l | :: gte $limit
+    | :: then {
+        return "$message"
+    }
+
+discard
+
+[constants/log_levels]
+debug 1
+info 2
+warning 3
+error 4
 
 [Pages/index.html]
 page_title "Home"
@@ -462,10 +487,10 @@ would do that?"
     format h2
     content "It can't even work with YAML!"
 }
-- "Yeah, it was abandoned because the author consider that there's no hope
-for YAML, that the format is terrible and overly complex. Now you have to
-convert everything to JSON if you want to work with data that's originally
-in YAML."
+- "Yeah, support for YAML was abandoned because the author consider that
+there's no hope for YAML, that the format is terrible and overly complex.
+Now you have to convert everything to JSON if you want to work with data
+that's persisted in YAML."
 - {
     type header
     format h2
@@ -702,9 +727,7 @@ parameters {
 }
 returns string
 
-o $content
-    | type
-    | switch
+o $content | type | switch
     ! string {
         template p
             | :: emit content
@@ -713,6 +736,7 @@ o $content
             | return
     }
     ! list {
+        error "shouldn't be list...: $content"
         o $content
             | {
                 render_item
@@ -723,22 +747,22 @@ o $content
     }
     ! dict {
         scope "Prepare content" {
+            set type none
             o $content
-                | :: keys
-                | as keys
-                | :: contains "type"
-                | :: then {
-                    set format ($content . format)
-                    set type ($content . type)
-                } {
-                    set type none
-                    o $keys
-                        | :: first
-                        | as format
-
-                    o $content
-                        | :: set (content = ($content . $format))
+                | >> {log -- (level = debug)}
+                | >> {:: get type -- (default = none) | as type}
+                | >> {:: get format -- (default = [
+                            o $content
+                            | :: keys | :: first
+                        ]) | as format
                 }
+                | >> {:: keys
+                        | :: contains "type"
+                        | :: else {
+                            o $content | :: set (content = ($content . $format))
+                        }
+                }
+                # | __ {log "format=$format; content=$content" -- (level = debug)}
         }
 
         template $format | as tpl
@@ -747,22 +771,18 @@ o $content
 
         o $type | switch
             ! sequence {
-                o $content
-                    | :: get content
+                o $content | :: get content
                     | foreach sub_item {
-                        log "sub_item=<$sub_item>"
-                        type $sub_item
-                            | as sub_item_type
+                        log "sub_item=<$sub_item>" -- (level = debug)
+                        type $sub_item | as sub_item_type
                             | :: eq string
                             | :: then {
-                                o $tpl
-                                    | :: emit content (content = $sub_item)
+                                o $tpl | :: emit content (content = $sub_item)
                             } {
-                                log ">> type is $sub_item_type"
+                                log ">> type is $sub_item_type" -- (level = debug)
                                 render_item $sub_item
                                     | foreach x {
-                                        o $tpl
-                                            | :: emit content (content = $x)
+                                        o $tpl | :: emit content (content = $x)
                                     }
                             }
                     }
@@ -784,9 +804,7 @@ o $content
                 set href ($content . href)
             }
             ! * {
-                o $content
-                    | :: get content
-                    | as content
+                o $content | :: get content | as content
                     | type
                     | :: eq list
                     | :: then {
