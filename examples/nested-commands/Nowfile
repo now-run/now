@@ -1,0 +1,24 @@
+[Nested Commands Example]
+
+We **could** implement nested commands like this:
+
+$ now run ls
+
+But it'd make a lot of things more complicated than
+really necessary, so we're sticking with a simpler
+separator-based approach.
+
+[commands/run:ls]
+description "List things."
+
+log "Of course, let's ls!"
+
+[commands/run:get]
+description "Get things."
+
+log "Yes, go get!"
+
+[commands/run:set]
+description "Set something, somewhere."
+
+log "Sure, let's set!"
