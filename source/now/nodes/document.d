@@ -7,7 +7,7 @@ import std.file : exists, isFile, read;
 import std.path : buildNormalizedPath, buildPath, dirName;
 import std.parallelism : TaskPool;
 import std.string : toStringz;
-import std.uni : toUpper;
+import std.uni : toLower, toUpper;
 
 
 import now.nodes;
@@ -31,6 +31,7 @@ class Document : Dict {
     Dict data;
     Dict text;
     TaskPool taskPool;
+    LogLevel logLevel = LogLevel.Info;
 
     Procedure[string] commands;
     BaseCommand[string] procedures;
@@ -72,6 +73,8 @@ class Document : Dict {
         this["env"] = environmentVariables;
         setNowPath(environmentVariables);
 
+        setLogLevel(environmentVariables);
+
         importPackages();
         loadConfiguration(environmentVariables);
 
@@ -90,6 +93,39 @@ class Document : Dict {
         loadDataSources();
     }
 
+    void setLogLevel(Dict environmentVariables)
+    {
+        auto levelStr = environmentVariables.get!string(
+            "LOG_LEVEL", null
+        );
+        if (levelStr !is null)
+        {
+            levelStr = levelStr.toLower;
+            switch (levelStr)
+            {
+                case "debug":
+                    logLevel = LogLevel.Debug;
+                    break;
+                case "":
+                case "info":
+                    logLevel = LogLevel.Info;
+                    break;
+                case "warning":
+                    logLevel = LogLevel.Warning;
+                    break;
+                case "error":
+                    logLevel = LogLevel.Error;
+                    break;
+                default:
+                    auto escopo = new Escopo(this, "setLogLevel");
+                    throw new InvalidException(
+                        escopo,
+                        "Unkown log level: " ~ levelStr
+                    );
+            }
+            this["log_level"] = new String(levelStr);
+        }
+    }
     void setNowPath(Dict environmentVariables)
     {
         log("- Setting nowPath");
@@ -170,6 +206,7 @@ class Document : Dict {
             {
                 log("-- ", name);
                 string envName = (configSectionName ~ "_" ~ name).toUpper;
+                string envNameLower = (configSectionName ~ "_" ~ name).toLower;
                 Item finalValue;
 
                 Item *envValuePtr = (envName in environmentVariables.values);
@@ -206,6 +243,8 @@ class Document : Dict {
                 dict[name] = finalValue;
                 // val "CLIENT_PASSWORD" -> x123
                 this[envName] = finalValue;
+                // val "client_password" -> x123
+                this[envNameLower] = finalValue;
                 // $password -> x123
                 log("document.", name, "=", finalValue);
                 this[name] = finalValue;
@@ -508,7 +547,6 @@ class Document : Dict {
         }
         else
         {
-            stderr.writeln("Command ", name, " not found.");
             return null;
         }
     }

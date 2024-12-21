@@ -1,6 +1,7 @@
 module now.commands.general;
 
 import core.thread : Thread;
+import std.algorithm : canFind;
 import std.algorithm.mutation : stripRight;
 import std.array;
 import std.datetime;
@@ -297,6 +298,38 @@ static this()
     builtinCommands["log"] = function(string path, Input input, Output output)
     {
         auto exitCode = ExitCode.Success;
+        LogLevel level = LogLevel.Info;
+
+        if (path.canFind('.'))
+        {
+            auto parts = path.split(".");
+            auto levelStr = parts[1];
+            switch (levelStr)
+            {
+                case "debug":
+                    level = LogLevel.Debug;
+                    break;
+                case "info":
+                    level = LogLevel.Info;
+                    break;
+                case "warning":
+                    level = LogLevel.Warning;
+                    break;
+                case "error":
+                    level = LogLevel.Error;
+                    break;
+                default:
+                    throw new InvalidException(
+                        input.escopo,
+                        "Unkown log level: " ~ levelStr
+                    );
+            }
+        }
+
+        if (level < input.escopo.document.logLevel)
+        {
+            return ExitCode.Success;
+        }
 
         string formatName = "default";
         if (auto fmtPtr = ("format" in input.kwargs))
@@ -326,17 +359,24 @@ static this()
                     "log/" ~ formatName ~ "/" ~ index.to!string
                 );
                 newScope["message"] = item;
+
                 exitCode = format.run(newScope, logOutput);
                 if (exitCode == ExitCode.Return)
                 {
                     exitCode = ExitCode.Success;
                 }
+                // TODO: handle the exit code!
 
+                bool hasOutput = false;
                 foreach (x; logOutput.items)
                 {
                     stderr.write(x);
+                    hasOutput = true;
                 }
-                stderr.writeln();
+                if (hasOutput)
+                {
+                    stderr.writeln();
+                }
                 logOutput.items.length = 0;
             }
         }
@@ -345,6 +385,10 @@ static this()
 
         return exitCode;
     };
+    builtinCommands["log.debug"] = builtinCommands["log"];
+    builtinCommands["log.info"] = builtinCommands["log"];
+    builtinCommands["log.warning"] = builtinCommands["log"];
+    builtinCommands["log.error"] = builtinCommands["log"];
 
     /**
     Read the entire stdin.

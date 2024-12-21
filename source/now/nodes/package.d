@@ -81,6 +81,13 @@ enum ObjectType
 
     Timer,
 }
+enum LogLevel
+{
+    Debug,
+    Info,
+    Warning,
+    Error
+}
 
 alias Items = Item[];
 alias Args = Items;
