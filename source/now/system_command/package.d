@@ -105,10 +105,11 @@ class SystemCommand : BaseCommand
             }
             if (status != 0)
             {
-                throw new Exception(
-                    "commands/" ~ name
+                stderr.writeln(
+                    "Warning: system_commands/" ~ name
                     ~ ": `which` failed with code " ~ status.to!string
                     ~ "; command line was: " ~ whichCmdLine.to!string
+                    ~ "\n"
                 );
             }
         }
