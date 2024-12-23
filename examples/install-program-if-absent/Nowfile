@@ -1,0 +1,22 @@
+[Install Program if Absent Example]
+
+Show how to proceed to instruct the user who to install
+a program in the system if it's necessary but absent.
+
+[system_commands/kataploft]
+command {
+    - kataploft
+}
+install_message "Install from source or something."
+
+[system_commands/kataploft/on.error]
+
+log "ERROR> $error"
+
+[commands/run]
+
+log "START"
+
+kataploft
+
+log "END"

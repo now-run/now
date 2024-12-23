@@ -38,6 +38,8 @@ class SystemCommand : BaseCommand
         */
         this.workdir = info.get!Item("workdir", null);
 
+        auto installMessage = info.get!String("install_message", null);
+
         auto cmdItem = info.getOr(
             "command",
             delegate Item (d) {
@@ -108,9 +110,17 @@ class SystemCommand : BaseCommand
                 stderr.writeln(
                     "Warning: system_commands/" ~ name
                     ~ ": `which` failed with code " ~ status.to!string
-                    ~ "; command line was: " ~ whichCmdLine.to!string
-                    ~ "\n"
+                    ~ "; command line was: " ~ whichCmdLine.to!string,
                 );
+
+                if (installMessage !is null)
+                {
+                    stderr.writeln(
+                        installMessage.toString,
+                    );
+                }
+
+                stderr.writeln();
             }
         }
 
