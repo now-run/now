@@ -69,6 +69,11 @@ static this()
     };
     booleanMethods["then"] = function(Item object, string path, Input input, Output output)
     {
+        /*
+        o false
+            | :: then {print "it's true!"}
+            | :: else {print "it's actually false!"}
+        */
         bool isConditionTrue = (cast(Boolean)object).toBool;
         auto thenBody = input.pop!SubProgram;
         auto elseBody = input.pop!SubProgram(null);

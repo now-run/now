@@ -1,0 +1,24 @@
+[Prompts Usage Example]
+
+Show how to use prompts to read information
+from the user.
+
+[commands/run]
+description "Offer some prompts to the user."
+
+prompt "What is your name? "
+    . -- (default = "John Doe")
+    | >> {print "Welcome, "}
+    | prompt "What is your favorite animal? "
+        . ("Dog" = {print "Wuff!, "})
+        . ("Cat" = {print "Meow!, "})
+        . ("Cow" = {print "Moo!, "})
+        . ("Other" = {print "Bruh!, "})
+        . --
+        . (default = "Dog")
+        . (unknown = {
+            as who
+            print "You failed this simple test, ${who}..."
+            return "FAILED"
+        })
+    | print "Favorite animal: "

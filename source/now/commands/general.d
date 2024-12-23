@@ -2,14 +2,13 @@ module now.commands.general;
 
 import core.thread : Thread;
 import std.algorithm : canFind;
-import std.algorithm.mutation : stripRight;
 import std.array;
 import std.datetime;
 import std.digest.md;
 import std.file : read;
 import std.random : uniform;
 import std.stdio;
-import std.string : toLower;
+import std.string : strip, toLower;
 import std.uuid : sha1UUID, randomUUID;
 
 import now.nodes;
@@ -409,6 +408,130 @@ static this()
     {
         output.push(new PathFileRange(stdin));
         return ExitCode.Success;
+    };
+    builtinCommands["prompt"] = function(string path, Input input, Output output)
+    {
+        /*
+        > o "this!" | prompt "select a letter: "
+            . (a = {print})
+        select a letter: a
+        this!
+        */
+
+        auto message = input.pop!string;
+        auto defaultKeyRef = ("default" in input.kwargs);
+        string defaultKey;
+
+        if (defaultKeyRef is null)
+        {
+            write(message);
+        }
+        else
+        {
+            defaultKey = (*defaultKeyRef).toString;
+            write(message ~ "[" ~ defaultKey ~ "] ");
+        }
+        stdout.flush();
+
+        Item[string] options;
+
+        foreach (item; input.args[1..$])
+        {
+            auto pair = cast(Pair)item;
+            auto key = pair.items[0].toString;
+            auto value = pair.items[1];
+            options[key] = value;
+        }
+
+        if (options.length == 0)
+        {
+            string content = stdin.readln.to!string.strip();
+            if (content.length == 0)
+            {
+                if (defaultKey is null)
+                {
+                    return ExitCode.Skip;
+                }
+                else
+                {
+                    output.push(defaultKey);
+                    return ExitCode.Success;
+                }
+            }
+            else
+            {
+                output.push(content);
+            }
+            return ExitCode.Success;
+        }
+        else
+        {
+            auto unknownHandlerRef = ("unknown" in input.kwargs);
+
+            while (true)
+            {
+                string key;
+                if (stdin.eof)
+                {
+                    return ExitCode.Skip;
+                }
+                else {
+                    key = stdin.readln.to!string.strip;
+                }
+
+                if (key.length == 0)
+                {
+                    if (defaultKey !is null)
+                    {
+                        key = defaultKey;
+                    }
+                }
+
+                auto valueRef = (key in options);
+                Item value;
+                if (valueRef is null)
+                {
+                    if (unknownHandlerRef is null)
+                    {
+                        stderr.writeln("Invalid option!");
+                        continue;
+                    }
+                    else
+                    {
+                        value = *unknownHandlerRef;
+                    }
+                }
+                else
+                {
+                    value = *valueRef;
+                }
+
+                if (value.type != ObjectType.SubProgram)
+                {
+                    throw new InvalidArgumentsException(
+                        input.escopo,
+                        path
+                        ~ " expects a SubProgram as value for "
+                        ~ key
+                    );
+                }
+                auto subprogram = cast(SubProgram)value;
+                auto exitCode = subprogram.run(
+                    input.escopo, input.inputs, output
+                );
+                if (exitCode == ExitCode.Success)
+                {
+                    // SubProgram didn't return, so
+                    // we'll pass forward the key:
+                    output.push(key);
+                }
+                else if (exitCode == ExitCode.Return)
+                {
+                    exitCode = ExitCode.Success;
+                }
+                return exitCode;
+            }
+        }
     };
 
     // ---------------------------------------------
