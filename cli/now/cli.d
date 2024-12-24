@@ -193,6 +193,9 @@ int runDocument(Document document, string commandName, string[] commandArgs)
     {
         // Instead of trying any of the eventually existent
         // commands, just show the help text for the document.
+        stderr.writeln(
+            "Command not found: " ~ commandName
+        );
         show_document_help(document, commandArgs);
         return 4;
     }
@@ -316,7 +319,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
 }
 
 
-int show_document_help(Document document, string[] args)
+void show_document_help(Document document, string[] args)
 {
     stdout.writeln(document.title);
     if (document.description)
@@ -366,8 +369,6 @@ int show_document_help(Document document, string[] args)
             stdout.writeln("    ", parameter, " : ", type, defaultStr);
         }
     }
-
-    return 0;
 }
 
 int now_help()
