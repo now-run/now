@@ -20,7 +20,6 @@ static this()
         }
 
         // Variables passed manually:
-        // TODO: use kwargs!
         foreach (item; input.popAll)
         {
             if (item.type == ObjectType.Pair)

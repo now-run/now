@@ -141,7 +141,7 @@ parameters {
 
 list
     | as extra
-    | run.if $debug {:: push "--d-debug"}
+    | if $debug {:: push "--d-debug"}
     | json.encode $extra
     | md5
     | as options_hash

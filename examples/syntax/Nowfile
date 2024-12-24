@@ -338,11 +338,11 @@ bashdate "%Y"
 set debug true
 
 list a b c d
-    | run.if $debug {
+    | if $debug {
         as x
         log "debug> <<$x>>"
     }
-    | print "list: "
+    | log "list: "
 
 
 [commands/test]

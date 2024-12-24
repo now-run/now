@@ -788,6 +788,9 @@ static this()
         output.push(new Pair([key, value]));
         return ExitCode.Success;
     };
+    builtinCommands["to"] = builtinCommands["="];
+    builtinCommands["pair"] = builtinCommands["="];
+
     builtinCommands["path"] = function (string name, Input input, Output output)
     {
         foreach (item; input.popAll)
@@ -810,41 +813,23 @@ static this()
         /*
         > if true {print "TRUE!"}
         TRUE!
-        */
-        auto condition = input.pop!bool;
-        auto thenBody = input.pop!SubProgram;
-        auto inputs = input.popAll;
 
-        if (condition)
-        {
-            return thenBody.run(input.escopo, inputs, output);
-        }
-
-        return ExitCode.Success;
-    };
-    builtinCommands["run.if"] = function(string path, Input input, Output output)
-    {
-        /*
-        > run.if true {print "TRUE!"}
-        TRUE!
-
-
-        Anything from 3rd position on is passed
-        as inputs for the body:
+        Anything from 3rd position on (that is, input.inputs)
+        is passed as inputs (as if coming from a pipe) for the body:
         > if true {print "what> "} "WHAT?"
         what> WHAT?
 
         So this construct can work:
 
-        list 1 2 3
-            | run.if $debug {o | as lista ; log $lista ; return $lista}
+        > list 1 2 3
+            | if $debug {o | as lista ; log $lista ; return $lista}
             | return
 
         If the body doesn't Return, then the same input will
         be used as output:
 
         list 1 2 3
-            | run.if $debug {o | as lista ; log $lista}
+            | if $debug {o | as lista ; log $lista}
             | return
         */
         auto condition = input.pop!bool;
@@ -863,6 +848,10 @@ static this()
                     output.items = inputs;
                     return exitCode;
             }
+        }
+        else
+        {
+            output.push(inputs);
         }
 
         return ExitCode.Success;
