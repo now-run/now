@@ -1,0 +1,45 @@
+[Example of `if` Command]
+
+[commands/run]
+
+if true {
+    print "true"
+}
+if false {
+    print "false"
+} | print "nothing: "
+
+o "pipe data"
+    | if true {
+        discard
+        return "if body data"
+    }
+    | print "should be 'if body data': "
+
+o "pipe data"
+    | if true {
+        discard
+        print "if won't return this time"
+    }
+    | print "should be 'pipe data': "
+
+o "pipe data"
+    | if false {
+        print "THIS MESSAGE SHOULDN'T BE PRINTED!"
+    }
+    | print "should be 'pipe data': "
+
+# range (1 to 10) | {
+range 1 10 | {
+    as x
+    | if ($x % 7 == 0) {
+        discard
+        print "x is $x!"
+        break
+    }
+    | if ($x % 2 == 0) {
+        discard
+        return "$x (pair)"
+    }
+    | print "x: "
+}
