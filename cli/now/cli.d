@@ -546,8 +546,7 @@ int lineProcessor(Document document, string[] documentArgs)
         document.initialize(envVars);
     }
 
-    auto escopo = new Escopo(document, "cmd");
-    escopo["env"] = envVars;
+    auto escopo = new Escopo(document, "lp");
     Items inputs = [new PathFileRange(stdin)];
     auto output = new Output;
 
@@ -566,17 +565,12 @@ int lineProcessor(Document document, string[] documentArgs)
             return -1;
         }
 
-        auto filter = new CommandCall(
-            "transform.inline",
-            [new SubProgram([pipeline])], []
-        );
-
-        // Reset output before running a new filter:
+        // Reset output before running a new pipeline:
         output.items.length = 0;
         try
         {
             exitCode = errorPrinter({
-                return filter.run(escopo, inputs, output);
+                return pipeline.run(escopo, inputs, output);
             });
         }
         catch (NowException ex)
