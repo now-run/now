@@ -1409,19 +1409,7 @@ But what if only one of them returns Skip or Break???
         log("- builtinCommands[.]: calling `", path, "` on ", target, ":", target.type);
         return target.runMethod(path, input, output);
     };
-    builtinCommands[":"] = function(string path, Input input, Output output)
-    {
-        /*
-        > path /boot/grub | as p
-        > print ($p : basename)
-        --> : $p basename
-
-        (Doesn't work as a commandCall, though.)
-        */
-        auto target = input.pop!Item;
-        auto methodName = input.pop!string;
-        return target.runMethod(methodName, input, output);
-    };
+    builtinCommands[":"] = builtinCommands["on"];
     builtinCommands["+"] = builtinCommands["."];
     builtinCommands["-"] = builtinCommands["."];
     builtinCommands["*"] = builtinCommands["."];
