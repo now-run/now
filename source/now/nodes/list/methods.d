@@ -15,7 +15,7 @@ static this()
     listMethods["get"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        > list a b c : get 0
+        > list a b c | :: get 0
         a
         */
         List l = cast(List)object;
@@ -35,6 +35,12 @@ static this()
 
     listMethods["as"] = function (Item object, string path, Input input, Output output)
     {
+        /*
+        > list 1 2 3 | :: as a b c
+        # set a 1
+        # set b 2
+        # set c 3
+        */
         List l = cast(List)object;
         foreach (index, varName; input.popAll)
         {
@@ -83,7 +89,7 @@ static this()
     listMethods["slice"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        > list a b c d e : slice 0 2
+        > list a b c d e | :: slice 0 2
         a b
         */
         List l = cast(List)object;
@@ -95,6 +101,7 @@ static this()
         output.push(new List(l.items[start..end]));
         return ExitCode.Success;
     };
+
     listMethods["to.sequence"] = function (Item object, string path, Input input, Output output)
     {
         List list = cast(List)object;
@@ -141,7 +148,7 @@ static this()
     listMethods["to.pairs"] = function (Item object, string path, Input input, Output output)
     {
         /*
-        > list a 1 b 2 c 3 : to.pairs
+        > list a 1 b 2 c 3 | :: to.pairs
         (a = 1) (b = 2) (c = 3)
         */
         List l = cast(List)object;
