@@ -367,7 +367,7 @@ class NowParser : Parser
 
         consumeWhitespaces();
 
-        while(!isBlockCloser)
+        while (!isBlockCloser)
         {
             pipelines ~= consumePipeline();
 
@@ -1104,7 +1104,7 @@ class NowParser : Parser
             }
             else if (dotCounter == 0)
             {
-                uint multiplier = 1;
+                int multiplier = 1;
                 uint* p = (currentChar in units);
                 if (p !is null)
                 {
@@ -1120,7 +1120,7 @@ class NowParser : Parser
                     }
                 }
 
-                auto result = new Integer(s.to!int * multiplier);
+                auto result = new Integer(s.to!long * multiplier);
                 result.documentLineNumber = line;
                 result.documentColNumber = col;
                 return result;
