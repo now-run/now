@@ -8,19 +8,19 @@ import now;
 
 static this()
 {
-    tcpConnectionMethods["next"] = function (Item object, string name, Input input, Output output)
+    tcpConnectionMethods["next"] = function(Item object, string name, Input input, Output output)
     {
         TcpConnection c = cast(TcpConnection)object;
         return c.next(input.escopo, output);
     };
 
-    tcpConnectionMethods["close"] = function (Item object, string name, Input input, Output output)
+    tcpConnectionMethods["close"] = function(Item object, string name, Input input, Output output)
     {
         TcpConnection c = cast(TcpConnection)object;
         c.socket.close();
         return ExitCode.Success;
     };
-    tcpConnectionMethods["send"] = function (Item object, string name, Input input, Output output)
+    tcpConnectionMethods["send"] = function(Item object, string name, Input input, Output output)
     {
         TcpConnection c = cast(TcpConnection)object;
         log("socket send input.items=", input.items);

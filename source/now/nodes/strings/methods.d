@@ -13,7 +13,7 @@ import now.conv;
 
 static this()
 {
-    stringMethods["eval"] = function (Item object, string path, Input input, Output output)
+    stringMethods["eval"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > eval "set x 10"
@@ -32,7 +32,7 @@ static this()
         return subprogram.run(input.escopo, input.inputs, output);
     };
 
-    stringMethods["get"] = function (Item object, string path, Input input, Output output)
+    stringMethods["get"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "abcde" : get 2
@@ -52,20 +52,20 @@ static this()
     };
     stringMethods["."] = stringMethods["get"];
 
-    stringMethods["to.lower"] = function (Item object, string path, Input input, Output output)
+    stringMethods["to.lower"] = function(Item object, string path, Input input, Output output)
     {
         string target = (cast(String)object).toString;
         output.push(target.toLower);
         return ExitCode.Success;
     };
-    stringMethods["to.upper"] = function (Item object, string path, Input input, Output output)
+    stringMethods["to.upper"] = function(Item object, string path, Input input, Output output)
     {
         string target = (cast(String)object).toString;
         output.push(target.toUpper);
         return ExitCode.Success;
     };
 
-    stringMethods["netstrings"] = function (Item object, string path, Input input, Output output)
+    stringMethods["netstrings"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "5:hello,5:world,blebs" : netstrings
@@ -110,7 +110,7 @@ static this()
         );
         return ExitCode.Success;
     };
-    stringMethods["c.strings"] = function (Item object, string path, Input input, Output output)
+    stringMethods["c.strings"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "key\0value\0key2\0value2\0\k3\0v3" : c.strings
@@ -140,7 +140,7 @@ static this()
         return ExitCode.Success;
     };
 
-    stringMethods["slice"] = function (Item object, string path, Input input, Output output)
+    stringMethods["slice"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "abcde" : slice 1 3
@@ -175,7 +175,7 @@ static this()
         return ExitCode.Success;
     };
 
-    stringMethods["length"] = function (Item object, string path, Input input, Output output)
+    stringMethods["length"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > $string : length
@@ -184,7 +184,7 @@ static this()
         output.push(target.repr.length);
         return ExitCode.Success;
     };
-    stringMethods["split"] = function (Item object, string path, Input input, Output output)
+    stringMethods["split"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "a/b/c" : split "/"
@@ -200,7 +200,7 @@ static this()
         output.push(l);
         return ExitCode.Success;
     };
-    stringMethods["indent"] = function (Item object, string path, Input input, Output output)
+    stringMethods["indent"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "a" : indent 1
@@ -212,7 +212,7 @@ static this()
         output.push(new String(spacer ~ target));
         return ExitCode.Success;
     };
-    stringMethods["strip"] = function (Item object, string path, Input input, Output output)
+    stringMethods["strip"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "abcxxxyy" : strip "yx"
@@ -229,7 +229,7 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
-    stringMethods["strip.left"] = function (Item object, string path, Input input, Output output)
+    stringMethods["strip.left"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "xabcxxxyy" : strip.left "yx"
@@ -246,7 +246,7 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
-    stringMethods["strip.right"] = function (Item object, string path, Input input, Output output)
+    stringMethods["strip.right"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "xabcxxxyy" : strip "yx"
@@ -263,7 +263,7 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
-    stringMethods["find"] = function (Item object, string path, Input input, Output output)
+    stringMethods["find"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "abc/def" : find "/"
@@ -274,7 +274,7 @@ static this()
         output.push(haystack.indexOf(needle));
         return ExitCode.Success;
     };
-    stringMethods["matches"] = function (Item object, string path, Input input, Output output)
+    stringMethods["matches"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "http://example.com" : matches "^http:.\+"
@@ -284,14 +284,14 @@ static this()
         string expression = input.pop!string();
 
         List l = new List([]);
-        foreach(m; target.matchAll(expression))
+        foreach (m; target.matchAll(expression))
         {
             l.items ~= new String(m.hit);
         }
         output.push(l);
         return ExitCode.Success;
     };
-    stringMethods["match"] = function (Item object, string path, Input input, Output output)
+    stringMethods["match"] = function(Item object, string path, Input input, Output output)
     {
         /*
         # Returns the FIRST match
@@ -300,13 +300,13 @@ static this()
         */
         auto target = (cast(String)object).toString;
         string expression = input.pop!string();
-        foreach(m; target.matchFirst(expression))
+        foreach (m; target.matchFirst(expression))
         {
             output.push(m);
         }
         return ExitCode.Success;
     };
-    stringMethods["contains"] = function (Item object, string path, Input input, Output output)
+    stringMethods["contains"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "http://example.com" : contains "^//.\+"
@@ -314,7 +314,7 @@ static this()
         */
         auto target = (cast(String)object).toString;
         string expression = input.pop!string();
-        foreach(m; target.matchFirst(expression))
+        foreach (m; target.matchFirst(expression))
         {
             output.push(true);
             return ExitCode.Success;
@@ -323,7 +323,7 @@ static this()
         output.push(false);
         return ExitCode.Success;
     };
-    stringMethods["replace"] = function (Item object, string path, Input input, Output output)
+    stringMethods["replace"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > o "http://example.com" : replace "http" "ftp"
@@ -350,7 +350,7 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
-    stringMethods["snake_case"] = function (Item object, string path, Input input, Output output)
+    stringMethods["snake_case"] = function(Item object, string path, Input input, Output output)
     {
         import std.regex : ctRegex, replace;
 
@@ -370,7 +370,7 @@ static this()
         output.push(s.toLower);
         return ExitCode.Success;
     };
-    stringMethods["camel_case"] = function (Item object, string path, Input input, Output output)
+    stringMethods["camel_case"] = function(Item object, string path, Input input, Output output)
     {
         auto s = (cast(String)object).toString;
         s = s.split("_")
@@ -379,13 +379,13 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
-    stringMethods["capitalize"] = function (Item object, string path, Input input, Output output)
+    stringMethods["capitalize"] = function(Item object, string path, Input input, Output output)
     {
         auto s = (cast(String)object).toString;
         output.push(s.capitalize);
         return ExitCode.Success;
     };
-    stringMethods["range"] = function (Item object, string path, Input input, Output output)
+    stringMethods["range"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > o "12345" : range | collect
@@ -427,7 +427,7 @@ static this()
     };
 
     // Operators
-    stringMethods["eq"] = function (Item object, string path, Input input, Output output)
+    stringMethods["eq"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "abc" : eq "abc"
@@ -443,7 +443,7 @@ static this()
         return ExitCode.Success;
     };
     stringMethods["=="] = stringMethods["eq"];
-    stringMethods["neq"] = function (Item object, string path, Input input, Output output)
+    stringMethods["neq"] = function(Item object, string path, Input input, Output output)
     {
         auto target = (cast(String)object).toString;
         foreach (item; input.popAll)
@@ -454,7 +454,7 @@ static this()
     };
     stringMethods["!="] = stringMethods["neq"];
 
-    stringMethods["to.bytes"] = function (Item object, string path, Input input, Output output)
+    stringMethods["to.bytes"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "ab" | :: to.bytes
@@ -469,7 +469,7 @@ static this()
         output.push(new List(items));
         return ExitCode.Success;
     };
-    stringMethods["reverse"] = function (Item object, string path, Input input, Output output)
+    stringMethods["reverse"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > "abc" | :: reverse

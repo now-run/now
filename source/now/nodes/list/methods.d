@@ -12,7 +12,7 @@ import now;
 // Methods:
 static this()
 {
-    listMethods["get"] = function (Item object, string path, Input input, Output output)
+    listMethods["get"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > list a b c | :: get 0
@@ -33,7 +33,7 @@ static this()
     };
     listMethods["."] = listMethods["get"];
 
-    listMethods["as"] = function (Item object, string path, Input input, Output output)
+    listMethods["as"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > list 1 2 3 | :: as a b c
@@ -50,7 +50,7 @@ static this()
     };
 
 
-    listMethods["first"] = function (Item object, string path, Input input, Output output)
+    listMethods["first"] = function(Item object, string path, Input input, Output output)
     {
         List l = cast(List)object;
         if (l.items.length == 0)
@@ -65,7 +65,7 @@ static this()
         output.push(l.items[0]);
         return ExitCode.Success;
     };
-    listMethods["last"] = function (Item object, string path, Input input, Output output)
+    listMethods["last"] = function(Item object, string path, Input input, Output output)
     {
         List l = cast(List)object;
         if (l.items.length == 0)
@@ -80,13 +80,13 @@ static this()
         output.push(l.items[$ - 1]);
         return ExitCode.Success;
     };
-    listMethods["truncate"] = function (Item object, string path, Input input, Output output)
+    listMethods["truncate"] = function(Item object, string path, Input input, Output output)
     {
         List l = cast(List)object;
         l.items = [];
         return ExitCode.Success;
     };
-    listMethods["slice"] = function (Item object, string path, Input input, Output output)
+    listMethods["slice"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > list a b c d e | :: slice 0 2
@@ -102,20 +102,20 @@ static this()
         return ExitCode.Success;
     };
 
-    listMethods["to.sequence"] = function (Item object, string path, Input input, Output output)
+    listMethods["to.sequence"] = function(Item object, string path, Input input, Output output)
     {
         List list = cast(List)object;
         output.push(list.items);
         return ExitCode.Success;
     };
-    listMethods["push"] = function (Item object, string path, Input input, Output output)
+    listMethods["push"] = function(Item object, string path, Input input, Output output)
     {
         List list = cast(List)object;
         list.items ~= input.popAll;
         output.push(list);
         return ExitCode.Success;
     };
-    listMethods["pop"] = function (Item object, string path, Input input, Output output)
+    listMethods["pop"] = function(Item object, string path, Input input, Output output)
     {
         List list = cast(List)object;
         if (list.items.length == 0)
@@ -130,7 +130,7 @@ static this()
 
         return ExitCode.Success;
     };
-    listMethods["pop.front"] = function (Item object, string path, Input input, Output output)
+    listMethods["pop.front"] = function(Item object, string path, Input input, Output output)
     {
         List list = cast(List)object;
         if (list.items.length == 0)
@@ -145,7 +145,7 @@ static this()
 
         return ExitCode.Success;
     };
-    listMethods["to.pairs"] = function (Item object, string path, Input input, Output output)
+    listMethods["to.pairs"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > list a 1 b 2 c 3 | :: to.pairs
@@ -170,7 +170,7 @@ static this()
         return ExitCode.Success;
     };
 
-    listMethods["sort"] = function (Item object, string path, Input input, Output output)
+    listMethods["sort"] = function(Item object, string path, Input input, Output output)
     {
         class Comparator
         {
@@ -211,14 +211,14 @@ static this()
         output.push(new List(sorted));
         return ExitCode.Success;
     };
-    listMethods["reverse"] = function (Item object, string path, Input input, Output output)
+    listMethods["reverse"] = function(Item object, string path, Input input, Output output)
     {
         List list = cast(List)object;
         Items reversed = list.items.retro.array;
         output.push(new List(reversed));
         return ExitCode.Success;
     };
-    listMethods["contains"] = function (Item object, string path, Input input, Output output)
+    listMethods["contains"] = function(Item object, string path, Input input, Output output)
     {
         List list = cast(List)object;
 
@@ -232,13 +232,13 @@ static this()
         }
         return ExitCode.Success;
     };
-    listMethods["length"] = function (Item object, string path, Input input, Output output)
+    listMethods["length"] = function(Item object, string path, Input input, Output output)
     {
         List l = cast(List)object;
         output.push(l.items.length);
         return ExitCode.Success;
     };
-    listMethods["eq"] = function (Item object, string path, Input input, Output output)
+    listMethods["eq"] = function(Item object, string path, Input input, Output output)
     {
         // XXX: is rhs and lhs inverted, here?
         List rhs = cast(List)object;
@@ -262,7 +262,7 @@ static this()
     };
     listMethods["=="] = listMethods["eq"];
 
-    listMethods["neq"] = function (Item object, string path, Input input, Output output)
+    listMethods["neq"] = function(Item object, string path, Input input, Output output)
     {
         List rhs = cast(List)object;
         Item other = input.pop!Item();
@@ -286,7 +286,7 @@ static this()
     listMethods["!="] = listMethods["neq"];
 
     // String-related:
-    listMethods["join"] = function (Item object, string path, Input input, Output output)
+    listMethods["join"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > o (a , b , c) | :: join "/"
@@ -299,7 +299,7 @@ static this()
         );
         return ExitCode.Success;
     };
-    listMethods["to.ascii"] = function (Item object, string path, Input input, Output output)
+    listMethods["to.ascii"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > o (97 , 98 , 99) | :: to.ascii
@@ -317,7 +317,7 @@ static this()
     };
 
     // Iterators:
-    listMethods["foreach"] = function (Item object, string path, Input input, Output output)
+    listMethods["foreach"] = function(Item object, string path, Input input, Output output)
     {
         throw new NotImplementedException(
             input.escopo,

@@ -24,7 +24,7 @@ class SubProgram : Item
         string s = "";
         if (pipelines.length < 2)
         {
-            foreach(pipeline; pipelines)
+            foreach (pipeline; pipelines)
             {
                 s ~= pipeline.toString();
             }
@@ -32,7 +32,7 @@ class SubProgram : Item
         else
         {
             s ~= "{\n";
-            foreach(pipeline; pipelines)
+            foreach (pipeline; pipelines)
             {
                 s ~= pipeline.toString() ~ "\n";
             }
@@ -51,7 +51,7 @@ class SubProgram : Item
 
         log("- SubProgram.run: ", inputs, output);
 
-        foreach(pipeline; pipelines)
+        foreach (pipeline; pipelines)
         {
             // No output will be shared:
             output.items.length = 0;

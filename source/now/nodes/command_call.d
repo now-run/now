@@ -56,7 +56,7 @@ class CommandCall
     {
         Items items;
 
-        foreach(argument; this.args)
+        foreach (argument; this.args)
         {
             items ~= argument.evaluate(escopo);
         }
@@ -67,12 +67,12 @@ class CommandCall
         KwArgs kwargs;
         Items items;
 
-        foreach(argument; this.kwargs)
+        foreach (argument; this.kwargs)
         {
             items ~= argument.evaluate(escopo);
         }
 
-        foreach(item; items)
+        foreach (item; items)
         {
             if (item.type == ObjectType.Pair)
             {

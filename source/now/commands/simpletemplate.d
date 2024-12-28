@@ -5,7 +5,7 @@ import now;
 
 void loadTemplateCommands(CommandsMap commands)
 {
-    commands["template"] = function (string path, Input input, Output output)
+    commands["template"] = function(string path, Input input, Output output)
     {
         string name = input.pop!string;
         auto templates = input.escopo.document.data.getOrCreate!Dict("templates");

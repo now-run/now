@@ -6,7 +6,7 @@ import now;
 
 static this()
 {
-    taskRunMethods["wait"] = function (Item object, string path, Input input, Output output)
+    taskRunMethods["wait"] = function(Item object, string path, Input input, Output output)
     {
         auto t = cast(TaskRun)object;
 

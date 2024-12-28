@@ -49,7 +49,7 @@ class Pipeline
         cmdOutput.items = inputs;
 
 forLoop:
-        foreach(index, commandCall; commandCalls)
+        foreach (index, commandCall; commandCalls)
         {
             // Before going to the next commandCall
             // (after re-entering this loop):

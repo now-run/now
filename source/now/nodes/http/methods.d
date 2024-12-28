@@ -7,7 +7,7 @@ import now;
 
 static this()
 {
-    httpMethods["get"] = function (Item object, string path, Input input, Output output)
+    httpMethods["get"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > o $connection : get (authorization = "bearer 1234")
@@ -17,7 +17,7 @@ static this()
         output.push(connection.perform(HTTP.Method.get, input));
         return ExitCode.Success;
     };
-    httpMethods["post"] = function (Item object, string path, Input input, Output output)
+    httpMethods["post"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > o $connection : post "http://example.org"
@@ -28,7 +28,7 @@ static this()
         output.push(connection.perform(HTTP.Method.post, input));
         return ExitCode.Success;
     };
-    httpMethods["put"] = function (Item object, string path, Input input, Output output)
+    httpMethods["put"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > o $connection : put "http://example.org"
@@ -39,7 +39,7 @@ static this()
         output.push(connection.perform(HTTP.Method.put, input));
         return ExitCode.Success;
     };
-    httpMethods["delete"] = function (Item object, string path, Input input, Output output)
+    httpMethods["delete"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > o $connection : delete "http://example.org"
@@ -51,7 +51,7 @@ static this()
         return ExitCode.Success;
     };
 
-    httpMethods["close"] = function (Item object, string path, Input input, Output output)
+    httpMethods["close"] = function(Item object, string path, Input input, Output output)
     {
         auto http = cast(Http)object;
         return ExitCode.Success;
@@ -59,13 +59,13 @@ static this()
 
     // ======================================================
 
-    httpResponseMethods["status"] = function (Item object, string path, Input input, Output output)
+    httpResponseMethods["status"] = function(Item object, string path, Input input, Output output)
     {
         auto response = cast(HttpResponse)object;
         output.push(cast(long)response.parent.http.statusLine.code);
         return ExitCode.Success;
     };
-    httpResponseMethods["content"] = function (Item object, string path, Input input, Output output)
+    httpResponseMethods["content"] = function(Item object, string path, Input input, Output output)
     {
         auto response = cast(HttpResponse)object;
         output.push(cast(string)response.content);

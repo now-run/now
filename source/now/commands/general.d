@@ -102,7 +102,7 @@ static this()
 
     builtinCommands["to.string"] = function(string path, Input input, Output output)
     {
-        foreach(item; input.popAll)
+        foreach (item; input.popAll)
         {
             output.push(item.toString());
         }
@@ -110,7 +110,7 @@ static this()
     };
     builtinCommands["to.bool"] = function(string path, Input input, Output output)
     {
-        foreach(item; input.popAll)
+        foreach (item; input.popAll)
         {
             output.push(item.toBool());
         }
@@ -118,7 +118,7 @@ static this()
     };
     builtinCommands["to.integer"] = function(string path, Input input, Output output)
     {
-        foreach(item; input.popAll)
+        foreach (item; input.popAll)
         {
             output.push(item.toLong());
         }
@@ -126,7 +126,7 @@ static this()
     };
     builtinCommands["to.float"] = function(string path, Input input, Output output)
     {
-        foreach(item; input.popAll)
+        foreach (item; input.popAll)
         {
             output.push(item.toFloat());
         }
@@ -259,7 +259,7 @@ static this()
     /**
     ## Text I/O
     */
-    builtinCommands["print"] = function (string path, Input input, Output output)
+    builtinCommands["print"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
@@ -268,7 +268,7 @@ static this()
         stdout.writeln();
         return ExitCode.Success;
     };
-    builtinCommands["print.sameline"] = function (string path, Input input, Output output)
+    builtinCommands["print.sameline"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
@@ -673,7 +673,7 @@ static this()
         input.escopo[key] = value;
         return ExitCode.Success;
     };
-    builtinCommands["unset"] = function (string path, Input input, Output output)
+    builtinCommands["unset"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
@@ -731,7 +731,7 @@ static this()
         */
         auto dict = new Dict();
 
-        foreach(argument; input.popAll)
+        foreach (argument; input.popAll)
         {
             auto pair = cast(Pair)argument;
             if (pair.type != ObjectType.Pair)
@@ -791,7 +791,7 @@ static this()
     builtinCommands["to"] = builtinCommands["="];
     builtinCommands["pair"] = builtinCommands["="];
 
-    builtinCommands["path"] = function (string name, Input input, Output output)
+    builtinCommands["path"] = function(string name, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
@@ -800,7 +800,7 @@ static this()
         }
         return ExitCode.Success;
     };
-    builtinCommands["http"] = function (string name, Input input, Output output)
+    builtinCommands["http"] = function(string name, Input input, Output output)
     {
         auto hostname = input.pop!String();
         output.push(new Http(hostname));
@@ -983,7 +983,7 @@ static this()
         return ExitCode.Success;
     };
 
-    builtinCommands["range"] = function (string path, Input input, Output output)
+    builtinCommands["range"] = function(string path, Input input, Output output)
     {
         /*
         > range 10       # [zero, 10]
@@ -1425,7 +1425,7 @@ But what if only one of them returns Skip or Break???
     builtinCommands["||"] = builtinCommands["."];
 
     // Other useful stuff
-    builtinCommands["incr"] = function (string path, Input input, Output output)
+    builtinCommands["incr"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
@@ -1455,7 +1455,7 @@ But what if only one of them returns Skip or Break???
         }
         return ExitCode.Success;
     };
-    builtinCommands["decr"] = function (string path, Input input, Output output)
+    builtinCommands["decr"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
@@ -1487,7 +1487,7 @@ But what if only one of them returns Skip or Break???
     };
 
     // SubProgram related:
-    builtinCommands["run"] = function (string path, Input input, Output output)
+    builtinCommands["run"] = function(string path, Input input, Output output)
     {
         /*
         > run { print 123 }
@@ -1515,7 +1515,7 @@ But what if only one of them returns Skip or Break???
         }
         return exitCode;
     };
-    builtinCommands["aposto"] = function (string path, Input input, Output output)
+    builtinCommands["aposto"] = function(string path, Input input, Output output)
     {
         /*
         > o 123 | aside {o 456} | print
@@ -1543,7 +1543,7 @@ But what if only one of them returns Skip or Break???
     };
     builtinCommands[">>"] = builtinCommands["aposto"];
 
-    builtinCommands["aside"] = function (string path, Input input, Output output)
+    builtinCommands["aside"] = function(string path, Input input, Output output)
     {
         /*
         > o 123 | aposto {print "inner: "} | print "outer: "
@@ -1571,7 +1571,7 @@ But what if only one of them returns Skip or Break???
     };
     builtinCommands["__"] = builtinCommands["aside"];
 
-    builtinCommands["once"] = function (string path, Input input, Output output)
+    builtinCommands["once"] = function(string path, Input input, Output output)
     {
         /*
         > once { count_and_print }
@@ -1614,7 +1614,7 @@ But what if only one of them returns Skip or Break???
     };
 
     // System commands
-    builtinCommands["syscmd"] = function (string path, Input input, Output output)
+    builtinCommands["syscmd"] = function(string path, Input input, Output output)
     {
         import now.system_command : SystemProcess;
         /*
@@ -1643,7 +1643,7 @@ But what if only one of them returns Skip or Break???
             );
         }
 
-        foreach(key, value; input.kwargs)
+        foreach (key, value; input.kwargs)
         {
             env[key] = value.toString;
         }

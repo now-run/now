@@ -27,7 +27,7 @@ class List : Item
             .map!(x => to!string(x))
             .join(" , ")) ~ ")";
     }
-    // TODO: allow `foreach(item; list)` instead
+    // TODO: allow `foreach (item; list)` instead
     // of using `list.items`.
 
     override Item range()

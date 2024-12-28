@@ -37,28 +37,28 @@ ExitCode printColor(int red, int green, int blue, Input input)
 void loadTerminalCommands(CommandsMap commands)
 {
     // print.color red "ERROR"
-    commands["print.red"] = function (string path, Input input, Output output)
+    commands["print.red"] = function(string path, Input input, Output output)
     {
         return printColor(255, 0, 0, input);
     };
-    commands["print.green"] = function (string path, Input input, Output output)
+    commands["print.green"] = function(string path, Input input, Output output)
     {
         return printColor(0, 255, 0, input);
     };
 
-    commands["print.gray"] = function (string path, Input input, Output output)
+    commands["print.gray"] = function(string path, Input input, Output output)
     {
         return printColor(120, 120, 120, input);
     };
-    commands["print.blue"] = function (string path, Input input, Output output)
+    commands["print.blue"] = function(string path, Input input, Output output)
     {
         return printColor(0, 255, 255, input);
     };
-    commands["print.yellow"] = function (string path, Input input, Output output)
+    commands["print.yellow"] = function(string path, Input input, Output output)
     {
         return printColor(255, 255, 0, input);
     };
-    commands["print.emphasis"] = function (string path, Input input, Output output)
+    commands["print.emphasis"] = function(string path, Input input, Output output)
     {
         if (isTTY)
         {

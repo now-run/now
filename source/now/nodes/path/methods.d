@@ -25,25 +25,25 @@ ExitCode glob(Item object, Input input, Output output, SpanMode mode)
 static this()
 {
     // About whatever the path points to:
-    pathMethods["is.file"] = function (Item object, string name, Input input, Output output)
+    pathMethods["is.file"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.isFile());
             return ExitCode.Success;
     };
-    pathMethods["is.dir"] = function (Item object, string name, Input input, Output output)
+    pathMethods["is.dir"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.isDir());
             return ExitCode.Success;
     };
-    pathMethods["is.symlink"] = function (Item object, string name, Input input, Output output)
+    pathMethods["is.symlink"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.isSymlink());
             return ExitCode.Success;
     };
-    pathMethods["exists"] = function (Item object, string name, Input input, Output output)
+    pathMethods["exists"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.exists());
@@ -51,7 +51,7 @@ static this()
     };
 
     // Operations:
-    pathMethods["read"] = function (Item object, string name, Input input, Output output)
+    pathMethods["read"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
 
@@ -66,13 +66,13 @@ static this()
         output.push(cast(string)content);
         return ExitCode.Success;
     };
-    pathMethods["read.lines"] = function (Item object, string name, Input input, Output output)
+    pathMethods["read.lines"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(new PathFileRange(path));
         return ExitCode.Success;
     };
-    pathMethods["write"] = function (Item object, string name, Input input, Output output)
+    pathMethods["write"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         foreach (item; input.popAll)
@@ -82,7 +82,7 @@ static this()
         }
         return ExitCode.Success;
     };
-    pathMethods["append"] = function (Item object, string name, Input input, Output output)
+    pathMethods["append"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         foreach (item; input.popAll)
@@ -93,13 +93,13 @@ static this()
         return ExitCode.Success;
     };
 
-    pathMethods["size"] = function (Item object, string name, Input input, Output output)
+    pathMethods["size"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.getSize());
         return ExitCode.Success;
     };
-    pathMethods["time"] = function (Item object, string name, Input input, Output output)
+    pathMethods["time"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         SysTime accessTime, modificationTime;
@@ -108,21 +108,21 @@ static this()
         return ExitCode.Success;
     };
 
-    pathMethods["copy"] = function (Item object, string name, Input input, Output output)
+    pathMethods["copy"] = function(Item object, string name, Input input, Output output)
     {
         auto source = cast(Path)object;
         auto target = input.pop!Path();
         source.path.copy(target.path);
         return ExitCode.Success;
     };
-    pathMethods["rename"] = function (Item object, string name, Input input, Output output)
+    pathMethods["rename"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         auto newName = input.pop!string();
         path.path.rename(newName);
         return ExitCode.Success;
     };
-    pathMethods["delete"] = function (Item object, string name, Input input, Output output)
+    pathMethods["delete"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         try
@@ -137,31 +137,31 @@ static this()
     };
 
     // On the path itself:
-    pathMethods["absolute"] = function (Item object, string name, Input input, Output output)
+    pathMethods["absolute"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.absolutePath());
         return ExitCode.Success;
     };
-    pathMethods["basename"] = function (Item object, string name, Input input, Output output)
+    pathMethods["basename"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.baseName());
         return ExitCode.Success;
     };
-    pathMethods["dirname"] = function (Item object, string name, Input input, Output output)
+    pathMethods["dirname"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.dirName());
         return ExitCode.Success;
     };
-    pathMethods["extension"] = function (Item object, string name, Input input, Output output)
+    pathMethods["extension"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.extension());
         return ExitCode.Success;
     };
-    pathMethods["normalize"] = function (Item object, string name, Input input, Output output)
+    pathMethods["normalize"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         auto n = path.path.asNormalizedPath();
@@ -171,19 +171,19 @@ static this()
 
     // ---------------------------
     // Directories (generally)
-    pathMethods["glob"] = function (Item object, string name, Input input, Output output)
+    pathMethods["glob"] = function(Item object, string name, Input input, Output output)
     {
         return glob(object, input, output, SpanMode.shallow);
     };
-    pathMethods["glob.depth"] = function (Item object, string name, Input input, Output output)
+    pathMethods["glob.depth"] = function(Item object, string name, Input input, Output output)
     {
         return glob(object, input, output, SpanMode.depth);
     };
-    pathMethods["glob.breadth"] = function (Item object, string name, Input input, Output output)
+    pathMethods["glob.breadth"] = function(Item object, string name, Input input, Output output)
     {
         return glob(object, input, output, SpanMode.breadth);
     };
-    pathMethods["mkdir"] = function (Item object, string name, Input input, Output output)
+    pathMethods["mkdir"] = function(Item object, string name, Input input, Output output)
     {
         /*
         > path "/tmp/a/b/c" | :: mkdir

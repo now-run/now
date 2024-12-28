@@ -7,7 +7,7 @@ import now;
 template CreateOperator(string cmdName, string operator)
 {
     const string CreateOperator = "
-        floatMethods[\"" ~ cmdName ~ "\"] = function (Item object, string path, Input input, Output output)
+        floatMethods[\"" ~ cmdName ~ "\"] = function(Item object, string path, Input input, Output output)
         {
             float result = (cast(Float)object).toFloat;
             foreach (item; input.popAll)
@@ -23,7 +23,7 @@ template CreateOperator(string cmdName, string operator)
 template CreateComparisonOperator(string cmdName, string operator)
 {
     const string CreateComparisonOperator = "
-        floatMethods[\"" ~ cmdName ~ "\"] = function (Item object, string path, Input input, Output output)
+        floatMethods[\"" ~ cmdName ~ "\"] = function(Item object, string path, Input input, Output output)
         {
             float pivot = (cast(Float)object).toFloat;
             foreach (item; input.popAll)
@@ -53,7 +53,7 @@ static this()
     mixin(CreateOperator!("div", "/"));
     mixin(CreateOperator!("mod", "%"));
 
-    floatMethods["eq"] = function (Item object, string path, Input input, Output output)
+    floatMethods["eq"] = function(Item object, string path, Input input, Output output)
     {
         auto f = cast(Float)object;
         int pivot = cast(int)(f.toFloat * 1000);
@@ -73,7 +73,7 @@ static this()
     };
     floatMethods["=="] = floatMethods["eq"];
 
-    floatMethods["neq"] = function (Item object, string path, Input input, Output output)
+    floatMethods["neq"] = function(Item object, string path, Input input, Output output)
     {
         auto f = cast(Float)object;
         float pivot = cast(int)(f.toFloat * 1000);

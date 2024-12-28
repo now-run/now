@@ -7,7 +7,7 @@ import now.system_command;
 
 static this()
 {
-    systemProcessMethods["get"] = function (Item target, string path, Input input, Output output)
+    systemProcessMethods["get"] = function(Item target, string path, Input input, Output output)
     {
         // TODO: get rid of this, probably.
 
@@ -43,7 +43,7 @@ static this()
 
         return ExitCode.Success;
     };
-    systemProcessMethods["wait"] = function (Item target, string path, Input input, Output output)
+    systemProcessMethods["wait"] = function(Item target, string path, Input input, Output output)
     {
         auto process = cast(SystemProcess)target;
 
@@ -63,7 +63,7 @@ static this()
         output.push(process.returnCode);
         return ExitCode.Success;
     };
-    systemProcessMethods["success"] = function (Item target, string path, Input input, Output output)
+    systemProcessMethods["success"] = function(Item target, string path, Input input, Output output)
     {
         auto process = cast(SystemProcess)target;
 
@@ -71,7 +71,7 @@ static this()
         output.push(process.returnCode == 0);
         return ExitCode.Success;
     };
-    systemProcessMethods["check"] = function (Item target, string path, Input input, Output output)
+    systemProcessMethods["check"] = function(Item target, string path, Input input, Output output)
     {
         auto process = cast(SystemProcess)target;
 
@@ -87,7 +87,7 @@ static this()
         }
         return ExitCode.Success;
     };
-    systemProcessMethods["kill"] = function (Item target, string path, Input input, Output output)
+    systemProcessMethods["kill"] = function(Item target, string path, Input input, Output output)
     {
         auto process = cast(SystemProcess)target;
 

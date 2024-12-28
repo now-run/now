@@ -8,7 +8,7 @@ import now;
 
 void loadUrlCommands(CommandsMap commands)
 {
-    commands["url.encode"] = function (string path, Input input, Output output)
+    commands["url.encode"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
@@ -17,7 +17,7 @@ void loadUrlCommands(CommandsMap commands)
         }
         return ExitCode.Success;
     };
-    commands["url.decode"] = function (string path, Input input, Output output)
+    commands["url.decode"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {

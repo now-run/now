@@ -12,7 +12,7 @@ Dict envVars;
 void loadEnvVars()
 {
     envVars = new Dict();
-    foreach(key, value; environment.toAA())
+    foreach (key, value; environment.toAA())
     {
         envVars[key] = new String(value);
     }

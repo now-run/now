@@ -78,14 +78,14 @@ class IniParser : Parser
 
 void loadIniCommands(CommandsMap commands)
 {
-    commands["ini.decode"] = function (string path, Input input, Output output)
+    commands["ini.decode"] = function(string path, Input input, Output output)
     {
         string content = input.pop!string();
         auto parser = new IniParser(content);
         output.push(parser.run());
         return ExitCode.Success;
     };
-    commands["ini.encode"] = function (string path, Input input, Output output)
+    commands["ini.encode"] = function(string path, Input input, Output output)
     {
         throw new NotImplementedException(
             input.escopo,

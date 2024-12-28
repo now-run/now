@@ -6,7 +6,7 @@ import now;
 
 static this()
 {
-    dictMethods["set"] = function (Item object, string path, Input input, Output output)
+    dictMethods["set"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > dict | as d
@@ -16,7 +16,7 @@ static this()
         */
         auto dict = cast(Dict)object;
 
-        foreach(argument; input.popAll)
+        foreach (argument; input.popAll)
         {
             Pair pair = cast(Pair)argument;
 
@@ -34,7 +34,7 @@ static this()
 
         return ExitCode.Success;
     };
-    dictMethods["unset"] = function (Item object, string path, Input input, Output output)
+    dictMethods["unset"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > dict (a = 10) | as d
@@ -64,7 +64,7 @@ static this()
 
         return ExitCode.Success;
     };
-    dictMethods["get"] = function (Item object, string path, Input input, Output output)
+    dictMethods["get"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > dict (a = 30) | as d
@@ -102,7 +102,7 @@ static this()
         return ExitCode.Success;
     };
     dictMethods["."] = dictMethods["get"];
-    dictMethods["keys"] = function (Item object, string path, Input input, Output output)
+    dictMethods["keys"] = function(Item object, string path, Input input, Output output)
     {
         auto dict = cast(Dict)object;
         output.push(new List(
@@ -112,13 +112,13 @@ static this()
         ));
         return ExitCode.Success;
     };
-    dictMethods["pairs"] = function (Item object, string path, Input input, Output output)
+    dictMethods["pairs"] = function(Item object, string path, Input input, Output output)
     {
         auto dict = cast(Dict)object;
         output.push(cast(Items)(dict.asPairs));
         return ExitCode.Success;
     };
-    dictMethods["run"] = function (Item object, string path, Input input, Output output)
+    dictMethods["run"] = function(Item object, string path, Input input, Output output)
     {
         auto dict = cast(Dict)object;
         auto subprogram = input.pop!SubProgram;

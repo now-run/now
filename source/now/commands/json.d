@@ -11,7 +11,7 @@ import now.json;
 
 void loadJsonCommands(CommandsMap commands)
 {
-    commands["json.decode"] = function (string path, Input input, Output output)
+    commands["json.decode"] = function(string path, Input input, Output output)
     {
         foreach (arg; input.popAll)
         {
@@ -21,7 +21,7 @@ void loadJsonCommands(CommandsMap commands)
         }
         return ExitCode.Success;
     };
-    commands["json.encode"] = function (string path, Input input, Output output)
+    commands["json.encode"] = function(string path, Input input, Output output)
     {
         foreach (arg; input.popAll)
         {

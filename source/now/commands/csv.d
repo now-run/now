@@ -56,7 +56,7 @@ class CsvParser : Parser
 
 void loadCsvCommands(CommandsMap commands)
 {
-    commands["csv.decode"] = function (string path, Input input, Output output)
+    commands["csv.decode"] = function(string path, Input input, Output output)
     {
         // TODO:
         // 1- accept multiple arguments;
@@ -74,7 +74,7 @@ void loadCsvCommands(CommandsMap commands)
         output.push(parser.run());
         return ExitCode.Success;
     };
-    commands["csv.encode"] = function (string path, Input input, Output output)
+    commands["csv.encode"] = function(string path, Input input, Output output)
     {
         auto source = input.pop!List();
 

@@ -69,7 +69,7 @@ auto getHttp(Items items, Item[string] kwargs=null)
 
 void loadHttpCommands(CommandsMap commands)
 {
-    commands["url"] = function (string path, Input input, Output output)
+    commands["url"] = function(string path, Input input, Output output)
     {
         /*
         > url "https://{domain}"
@@ -111,7 +111,7 @@ void loadHttpCommands(CommandsMap commands)
         output.push(address);
         return ExitCode.Success;
     };
-    commands["http.get"] = function (string path, Input input, Output output)
+    commands["http.get"] = function(string path, Input input, Output output)
     {
         /*
         > http.get "http://example.com" (authorization = "bearer 1234")
@@ -136,7 +136,7 @@ void loadHttpCommands(CommandsMap commands)
         output.push(content.to!string);
         return ExitCode.Success;
     };
-    commands["http.post"] = function (string path, Input input, Output output)
+    commands["http.post"] = function(string path, Input input, Output output)
     {
         /*
         > http.post "http://example.org"
@@ -161,7 +161,7 @@ void loadHttpCommands(CommandsMap commands)
         output.push(content.to!string);
         return ExitCode.Success;
     };
-    commands["http.put"] = function (string path, Input input, Output output)
+    commands["http.put"] = function(string path, Input input, Output output)
     {
         /*
         > http.put "http://example.org"
@@ -188,7 +188,7 @@ void loadHttpCommands(CommandsMap commands)
         output.push(content.to!string);
         return ExitCode.Success;
     };
-    commands["http.delete"] = function (string path, Input input, Output output)
+    commands["http.delete"] = function(string path, Input input, Output output)
     {
         /*
         > http.delete "http://example.org"

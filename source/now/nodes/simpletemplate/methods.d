@@ -6,7 +6,7 @@ import now;
 
 static this()
 {
-    templateMethods["emit"] = function (Item object, string path, Input input, Output output)
+    templateMethods["emit"] = function(Item object, string path, Input input, Output output)
     {
         auto tpl = cast(TemplateInstance)object;
         auto blockName = input.pop!string;
@@ -53,7 +53,7 @@ static this()
         output.push(tpl);
         return ExitCode.Success;
     };
-    templateMethods["render"] = function (Item object, string name, Input input, Output output)
+    templateMethods["render"] = function(Item object, string name, Input input, Output output)
     {
         auto tpl = cast(TemplateInstance)object;
         output.push(tpl.render(input.escopo));

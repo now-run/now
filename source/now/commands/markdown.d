@@ -92,7 +92,7 @@ string toMarkdown(Item item, int level=1)
 
 void loadMarkdownCommands(CommandsMap commands)
 {
-    commands["to.markdown"] = function (string path, Input input, Output output)
+    commands["to.markdown"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {

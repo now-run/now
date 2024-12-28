@@ -11,7 +11,7 @@ import now;
 template CreateComparisonOperator(string cmdName, string operator)
 {
     const string CreateComparisonOperator = "
-        booleanMethods[\"" ~ cmdName ~ "\"] = function (Item object, string path, Input input, Output output)
+        booleanMethods[\"" ~ cmdName ~ "\"] = function(Item object, string path, Input input, Output output)
         {
             bool pivot = (cast(Boolean)object).toBool;
             foreach (item; input.popAll)
@@ -31,7 +31,7 @@ static this()
     mixin(CreateComparisonOperator!("eq", "=="));
     mixin(CreateComparisonOperator!("neq", "!="));
 
-    booleanMethods["||"] = function (Item object, string path, Input input, Output output)
+    booleanMethods["||"] = function(Item object, string path, Input input, Output output)
     {
         if (object.toBool)
         {
@@ -49,7 +49,7 @@ static this()
         output.push(false);
         return ExitCode.Success;
     };
-    booleanMethods["&&"] = function (Item object, string path, Input input, Output output)
+    booleanMethods["&&"] = function(Item object, string path, Input input, Output output)
     {
         if (!object.toBool)
         {

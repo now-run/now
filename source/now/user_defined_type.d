@@ -7,7 +7,7 @@ import now;
 Procedure[string][string] userDefinedMethods;
 
 
-auto methodRunner = function (Item object, string path, Input input, Output output)
+auto methodRunner = function(Item object, string path, Input input, Output output)
 {
     log(
         ">>> methodRunner for ",

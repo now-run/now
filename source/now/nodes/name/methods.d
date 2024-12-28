@@ -7,7 +7,7 @@ import now;
 // Methods:
 static this()
 {
-    nameMethods["eq"] = function (Item object, string path, Input input, Output output)
+    nameMethods["eq"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > o a | :: eq a
@@ -27,7 +27,7 @@ static this()
         return ExitCode.Success;
     };
     nameMethods["=="] = nameMethods["eq"];
-    nameMethods["neq"] = function (Item object, string path, Input input, Output output)
+    nameMethods["neq"] = function(Item object, string path, Input input, Output output)
     {
         string target = (cast(Name)object).toString;
         foreach (item; input.popAll)

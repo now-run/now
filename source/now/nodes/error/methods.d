@@ -6,7 +6,7 @@ import now;
 
 static this()
 {
-    errorMethods["get"] = function (Item object, string path, Input input, Output output)
+    errorMethods["get"] = function(Item object, string path, Input input, Output output)
     {
         /*
         > print [get $error code]
@@ -56,7 +56,7 @@ static this()
     };
     errorMethods["."] = errorMethods["get"];
 
-    errorMethods["return"] = function (Item object, string path, Input input, Output output)
+    errorMethods["return"] = function(Item object, string path, Input input, Output output)
     {
         // Do not pop the error: we would stack it back, anyway...
         // auto target = input.pop!Erro();

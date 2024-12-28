@@ -8,7 +8,7 @@ import now;
 
 void loadTCPCommands(CommandsMap commands)
 {
-    commands["tcp.connect"] = function (string path, Input input, Output output)
+    commands["tcp.connect"] = function(string path, Input input, Output output)
     {
         /*
         > tcp.connect localhost 8080 | as socket
@@ -40,7 +40,7 @@ void loadTCPCommands(CommandsMap commands)
 
         return ExitCode.Success;
     };
-    commands["tcp.serve"] = function (string path, Input input, Output output)
+    commands["tcp.serve"] = function(string path, Input input, Output output)
     {
         /*
         > tcp.serve $host $port | {connection_handler}

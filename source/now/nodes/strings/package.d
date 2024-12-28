@@ -109,9 +109,9 @@ class SubstString : String
     {
         string result;
 
-        foreach(part; parts)
+        foreach (part; parts)
         {
-            foreach(item; part.evaluate(escopo))
+            foreach (item; part.evaluate(escopo))
             {
                 result ~= item.toString();
             }

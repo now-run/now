@@ -21,7 +21,7 @@ void loadBase64Commands(CommandsMap commands)
     # encoded-value
     ---
     +/
-    commands["base64.encode"] = function (string path, Input input, Output output)
+    commands["base64.encode"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
@@ -50,7 +50,7 @@ void loadBase64Commands(CommandsMap commands)
         }
         return ExitCode.Success;
     };
-    commands["base64.decode"] = function (string path, Input input, Output output)
+    commands["base64.decode"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
         {
