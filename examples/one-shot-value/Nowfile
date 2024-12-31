@@ -29,7 +29,7 @@ default {
 
 scope "static key" {
     range 5 | foreach i {
-        once key {one_shot}
+        once {one_shot}
             | >> {:: eq 1 | :: assert "GLOBAL_VALUE should not be changed."}
             | print "$i> "
     }
@@ -41,7 +41,7 @@ scope "dynamic keys" {
     # once per key!
 
     range 5 | foreach i {
-        once ($i % 2 == 0) {is_pair $i}
+        once {is_pair $i} ($i % 2 == 0)
             | list
             | >> {
                 :: first | as x
