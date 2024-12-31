@@ -46,6 +46,7 @@ static this()
         {
             input.escopo[varName.toString] = l.items[index];
         }
+        output.push(object);
         return ExitCode.Success;
     };
 
