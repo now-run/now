@@ -9,7 +9,7 @@ parameters {
     }
 }
 
-range 9 | foreach i {
+range 5 | foreach i {
     log "$id> $i"
     sleep 500
 }
@@ -20,20 +20,20 @@ return $id
 
 [commands/run]
 
-range 9 | foreach task_id {
+range 5 | transform task_id {
     count $task_id
 } | collect | as tasks
 
-log "run> sleeping"
-sleep 5000
+log "run> sleeping; tasks=" $tasks
+sleep 2500
 
 o $tasks | foreach task {
     log "Waiting for $task"
-    loop | {
+    loop -- (wait = 50) | {
         o $task
-        : wait
-        ! running {sleep 500 ; continue}
-        | log "$task> "
+        | :: wait
+             ! running {continue}
+        | log "$task>> "
         break
     }
 }

@@ -1,5 +1,7 @@
 module now.commands.iterators;
 
+import core.thread : Thread;
+import core.time : msecs;
 
 import now;
 import now.commands;
@@ -7,6 +9,7 @@ import now.commands;
 
 class Loop : Item
 {
+    long i = 0;
     this()
     {
         this.type = ObjectType.Range;
@@ -14,14 +17,35 @@ class Loop : Item
     }
     override string toString()
     {
-        return "loop";
+        return "<loop: i=" ~ i.to!string ~ ">";
     }
     override ExitCode next(Escopo escopo, Output output)
     {
         return ExitCode.Continue;
     }
 }
-
+class WaitLoop : Loop
+{
+    long wait = 0;
+    long i = 0;
+    this(long wait)
+    {
+        super();
+        this.wait = wait;
+    }
+    override ExitCode next(Escopo escopo, Output output)
+    {
+        if (i++ == 0)
+        {
+            return ExitCode.Continue;
+        }
+        else
+        {
+            Thread.sleep(wait.msecs);
+            return ExitCode.Continue;
+        }
+    }
+}
 
 // Ranges
 class IntegerRange : Item

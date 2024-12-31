@@ -30,7 +30,7 @@ class TaskRun : Item
     }
     override string toString()
     {
-        return "TaskRun for " ~ path;
+        return "<TaskRun for " ~ path ~ ">";
     }
 }
 

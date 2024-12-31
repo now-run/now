@@ -2,6 +2,28 @@ module now.commands.utils;
 
 import now;
 
+string makeKeyFromInputs(Input input)
+{
+    // Whatever is being sent as input, we'll
+    // turn into a usable key:
+    string key;
+
+    foreach (item; input.popAll)
+    {
+        key ~= item.toString;
+    }
+
+    if (key.length == 0)
+    {
+        key = input.documentLineNumber.to!string
+            ~ "."
+            ~ input.documentColNumber.to!string;
+    }
+
+    return key;
+}
+
+
 void iterateOverGenerators(
     Escopo escopo, Items generators, void delegate(Items) action
 )

@@ -14,7 +14,7 @@ static this()
         {
             auto ex = new StillRunning(
                 input.escopo,
-                "The task " ~ path ~ " is still running",
+                "The task " ~ t.toString ~ " is still running",
                 t,
             );
             ex.classe = "running";

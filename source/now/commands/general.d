@@ -769,10 +769,14 @@ static this()
     // --> set lista [list a b c d]
     builtinCommands[","] = builtinCommands["list"];
 
-    // set pair (a = b)
-    // -> set pair [= a b]
-    builtinCommands["="] = function(string path, Input input, Output output)
+    builtinCommands["pair"] = function(string path, Input input, Output output)
     {
+        /*
+        > pair 1 2
+        > o (key = value)
+        > set interval (0 to 50)
+        > set coordinates [pair 29.0 -70.0]
+        */
         auto key = input.pop!Item();
         auto value = input.pop!Item();
         Items rest = input.popAll();
@@ -788,8 +792,8 @@ static this()
         output.push(new Pair([key, value]));
         return ExitCode.Success;
     };
-    builtinCommands["to"] = builtinCommands["="];
-    builtinCommands["pair"] = builtinCommands["="];
+    builtinCommands["="] = builtinCommands["pair"];
+    builtinCommands["to"] = builtinCommands["pair"];
 
     builtinCommands["path"] = function(string name, Input input, Output output)
     {
@@ -1179,7 +1183,18 @@ static this()
     };
     builtinCommands["loop"] = function(string path, Input input, Output output)
     {
-        output.push(new Loop());
+        long wait = 0;
+        auto waitRef = ("wait" in input.kwargs);
+        if (waitRef is null)
+        {
+            output.push(new Loop());
+        }
+        else
+        {
+            auto item = *waitRef;
+            wait = item.toLong;
+            output.push(new WaitLoop(wait));
+        }
         return ExitCode.Success;
     };
     builtinCommands["filter"] = function(string path, Input input, Output output)
@@ -1574,16 +1589,17 @@ But what if only one of them returns Skip or Break???
     builtinCommands["once"] = function(string path, Input input, Output output)
     {
         /*
-        > once { count_and_print }
+        > once { count_and_print } key
         1
-        > once { count_and_print }
+        > once { count_and_print } key
         1
 
         count_and_print will be called only once!
         */
-        string givenKey = input.pop!string;
-        string key = "__once:" ~ givenKey;
         auto body = input.pop!SubProgram;
+
+        string key = "__once:" ~ makeKeyFromInputs(input);
+        log("once key is: ", key);
 
         auto escopo = input.escopo.addPathEntry("run");
         auto value = escopo.get(key, null);
@@ -1656,6 +1672,49 @@ But what if only one of them returns Skip or Break???
             false  // takeover (bool)
         ));
         return ExitCode.Success;
+    };
+
+    builtinCommands["cache"] = function(string path, Input input, Output output)
+    {
+        /*
+        > cache { count_and_print } key -- (ttl = 600)
+        1
+        > cache { count_and_print } key -- (ttl = 600)
+        1
+
+        count_and_print will be called only once!
+        */
+        auto body = input.pop!SubProgram;
+
+        string key = "__once:" ~ makeKeyFromInputs(input);
+        log("once key is: ", key);
+
+        auto escopo = input.escopo.addPathEntry("run");
+        auto value = escopo.get(key, null);
+
+        ExitCode exitCode;
+
+        if (value !is null)
+        {
+            output.push(value.evaluate(escopo));
+        }
+        else
+        {
+            auto items = input.popAll;
+            auto bodyScope = new Output();
+            exitCode = body.run(escopo, items, bodyScope);
+            if (exitCode == ExitCode.Return)
+            {
+                exitCode = ExitCode.Success;
+            }
+            auto returnedValues = bodyScope.items;
+            escopo[key] = returnedValues;
+            foreach (item; returnedValues)
+            {
+                output.push(item);
+            }
+        }
+        return exitCode;
     };
 
     // Others
