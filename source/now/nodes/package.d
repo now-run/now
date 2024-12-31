@@ -113,11 +113,16 @@ enum ExitCode
 struct Input
 {
     Escopo escopo;
+
     Items inputs;
     Args args;
     KwArgs kwargs;
+
     size_t stackPointer = 0;
     Items items;
+
+    size_t documentLineNumber;
+    size_t documentColNumber;
 
     this(Escopo escopo, Items inputs, Args args, KwArgs kwargs)
     {

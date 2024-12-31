@@ -118,6 +118,8 @@ class CommandCall
             arguments,
             keywordArguments
         );
+        input.documentColNumber = documentColNumber;
+        input.documentLineNumber = documentLineNumber;
 
         try
         {
