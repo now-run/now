@@ -28,6 +28,9 @@ while read msg;do
         response="{\"rpc\":{\"op\":\"return\"},\"result\":$response_result}"
         echo $response
         continue
+    elif [[ $procedure == "unhandled_error" ]];then
+        echo "Unhandled error!" >&2
+        exit 1
     fi
 
     response="{\"rpc\":{\"op\":\"return\"},\"result\":[$args,$kwargs]}"

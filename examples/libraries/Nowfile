@@ -36,3 +36,11 @@ print "Proceeding..."
 
 # The library is going to call a procedure from this document:
 test_lib test_calls 1 2 | :: eq 3 | :: assert
+
+[commands/ue]
+
+log "START"
+test_lib unhandled_error
+    ! * {log "error>>> $error"}
+test_lib test_calls 3 4 | :: eq 7 | :: assert
+log "FINISH"

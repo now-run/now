@@ -61,6 +61,14 @@ class Library : SystemCommand
         /*
         > http_server start arg1 arg2 arg3
         */
+
+        auto w = this.pid.tryWait();
+        if (w.terminated)
+        {
+            // spawn again?
+            // maybe we should count the retries... or not...?
+        }
+
         auto rpc_name = input.pop!string;
         JSONValue rpc_json = [ "op": "call" ];
         JSONValue json = [
