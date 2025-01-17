@@ -414,8 +414,9 @@ class Document : Dict {
 
         this.text = new Dict();
 
-        this.text["title"] = new String(this.title);
-        this.text["description"] = new String(this.description);
+        // this.text["title"] = new String(this.title);
+        // this.text["description"] = new String(this.description);
+        this.text[this.title] = new String(this.description);
 
         foreach (key, value; data)
         {
