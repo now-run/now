@@ -1505,44 +1505,21 @@ But what if only one of them returns Skip or Break???
     builtinCommands["run"] = function(string path, Input input, Output output)
     {
         /*
-        > run { print 123 }
+        > o 123 | run {o 456} | print
         123
 
-        > o 1 | run {as x ; o 1 : add $x} : eq 2 : assert
-
-        Specially useful in conjunction with `when`:
-        > set x 1
-        > run {
-              when ($x == 0) {zero}
-              when ($x == 1) {one}
-              default {other}
-          } | print
-        one
-        */
-        auto body = input.pop!SubProgram;
-        auto items = input.popAll;
-
-        auto escopo = input.escopo.addPathEntry("run");
-        auto exitCode = body.run(escopo, items, output);
-        if (exitCode == ExitCode.Return)
-        {
-            exitCode = ExitCode.Success;
-        }
-        return exitCode;
-    };
-    builtinCommands["aposto"] = function(string path, Input input, Output output)
-    {
-        /*
-        > o 123 | aside {o 456} | print
-        123
-
-        > o 123 | aside {return 456} | print
+        > o 123 | run {return 456} | print
         456
         */
         auto body = input.pop!SubProgram;
         auto items = input.popAll;
 
-        auto escopo = input.escopo.addPathEntry("aposto");
+        auto escopo = input.escopo.addPathEntry("run");
+        foreach (key, value; input.kwargs)
+        {
+            escopo[key] = value;
+        }
+
         auto bpOutput = new Output;
         auto exitCode = body.run(escopo, items, bpOutput);
         if (exitCode == ExitCode.Return)
@@ -1556,21 +1533,26 @@ But what if only one of them returns Skip or Break???
         }
         return exitCode;
     };
-    builtinCommands[">>"] = builtinCommands["aposto"];
+    builtinCommands[">>"] = builtinCommands["run"];
 
     builtinCommands["aside"] = function(string path, Input input, Output output)
     {
         /*
-        > o 123 | aposto {print "inner: "} | print "outer: "
+        > o 123 | aside {print "inner: "} | print "outer: "
         inner:
         outer: 123
 
-        The aposto won't receive any inputs.
+        The aside won't receive any inputs.
         */
         auto body = input.pop!SubProgram;
         auto items = input.popAll;
 
         auto escopo = input.escopo.addPathEntry("aside");
+        foreach (key, value; input.kwargs)
+        {
+            escopo[key] = value;
+        }
+
         auto aOutput = new Output;
         auto exitCode = body.run(escopo, aOutput);
         if (exitCode == ExitCode.Return)

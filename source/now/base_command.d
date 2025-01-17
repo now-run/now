@@ -146,8 +146,8 @@ class BaseCommand
 
             throw new InvalidArgumentsException(
                 input.escopo,
-                "Not enough arguments for " ~ name
-                ~ ". It should be at least " ~ parameters.order.length.to!string
+                "Not enough arguments for `" ~ name
+                ~ "`. It should be at least " ~ parameters.order.length.to!string
                 ~ " but only " ~ setParametersCount.to!string ~ " were found."
             );
         }
