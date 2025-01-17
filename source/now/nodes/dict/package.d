@@ -41,6 +41,10 @@ class Dict : Item
         );
         return s;
     }
+    override bool toBool()
+    {
+        return (values.length > 0);
+    }
     Pair[] asPairs()
     {
         Pair[] pairs;
