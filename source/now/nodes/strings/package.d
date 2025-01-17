@@ -27,6 +27,10 @@ class String : Item
     {
         return this.repr;
     }
+    override bool toBool()
+    {
+        return (repr.length > 0);
+    }
     override long toLong()
     {
         return repr.toLong;
