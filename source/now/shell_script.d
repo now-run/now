@@ -4,19 +4,43 @@ module now.shell_script;
 import now;
 
 
+enum Consumes
+{
+    text,
+    stdin,
+    file,
+}
+
+
 class ShellScript : SystemCommand
 {
     String body;
     string shellName;
     bool expandVariables = false;
+    Consumes consumes;
 
     this(string shellName, Dict shellInfo, string name, Dict info, Document document)
     {
+        log("ShellScript:", shellName);
+
         this.shellName = shellName;
 
         // It's going to have no "parameters", since
         // we are passing the SHELL definition:
         super(name, shellInfo, document);
+
+        log("ShellScript shellInfo:", shellInfo);
+        auto consumes = shellInfo.get("consumes", null);
+
+        if (consumes is null)
+        {
+            this.consumes = Consumes.text;
+        }
+        else
+        {
+            this.consumes = consumes.toString.to!Consumes;
+        }
+        log("       this.consumes:", this.consumes);
 
         // So we fix it now:
         this.parameters = info.getOrCreate!Dict("parameters");
@@ -58,6 +82,11 @@ class ShellScript : SystemCommand
     }
     override ExitCode doRun(string name, Input input, Output output)
     {
+        if (consumes == Consumes.stdin)
+        {
+            input.inputs = (cast(Item[])[this.body]) ~ input.inputs;
+            log("ShellScript inputs:", input.inputs);
+        }
         auto exitCode = super.doRun(name, input, output);
         /*
         What the SystemCommand do is to push

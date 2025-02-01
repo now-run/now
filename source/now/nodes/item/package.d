@@ -159,3 +159,39 @@ class ItemsRange : Item
             .join(" , ")) ~ ">";
     }
 }
+
+class ItemsRangesRange : Item
+{
+    Items ranges;
+    size_t index;
+
+    this(Items items)
+    {
+        foreach (item; items)
+        {
+            this.ranges ~= item.range();
+        }
+    }
+    override ExitCode next(Escopo escopo, Output output)
+    {
+        if (index >= ranges.length)
+        {
+            return ExitCode.Break;
+        }
+
+        auto range = ranges[index];
+        auto exitCode = range.next(escopo, output);
+        if (exitCode == ExitCode.Break)
+        {
+            index++;
+            exitCode = ExitCode.Continue;
+        }
+        return exitCode;
+    }
+    override string toString()
+    {
+        return "<ItemsRangesRange: " ~ to!string(this.ranges
+            .map!(x => to!string(x))
+            .join(" , ")) ~ ">";
+    }
+}

@@ -151,11 +151,9 @@ class SystemCommand : BaseCommand
         }
         else if (input.inputs.length > 1)
         {
-            throw new InvalidInputException(
-                input.escopo,
-                name ~ ": cannot handle multiple inputs",
-            );
+            inputStream = new ItemsRangesRange(input.inputs);
         }
+        log("SystemCommand.inputStream:", inputStream);
 
         /*
         command {
