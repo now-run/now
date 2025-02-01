@@ -18,6 +18,7 @@ class SystemCommand : BaseCommand
     string optionPrefix;
     string keyValueSeparator;
     bool takeOver;
+    bool takeOverOutput;
     Item workdir;
 
     this(string name, Dict info, Document document)
@@ -132,6 +133,7 @@ class SystemCommand : BaseCommand
         this.keyValueSeparator = info.get!string("key_value_separator", "=");
 
         this.takeOver = info.get!bool("take_over", false);
+        this.takeOverOutput = info.get!bool("take_over_output", false);
     }
 
     override ExitCode doRun(string name, Input input, Output output)
@@ -218,7 +220,7 @@ class SystemCommand : BaseCommand
         log(" -- inputStream: ", inputStream);
 
         output.push(new SystemProcess(
-            cmdline, inputStream, env, workdirStr, takeOver
+            cmdline, inputStream, env, workdirStr, takeOver, takeOverOutput
         ));
         return ExitCode.Success;
     }
@@ -292,7 +294,9 @@ class SystemProcess : Item
     std.process.Pid pid;
     Item inputStream;
     string[] cmdline;
+    string workdir;
     bool takeOver;
+    bool takeOverOutput;
     string[string] env;
     int returnCode = 0;
     bool _isRunning;
@@ -302,7 +306,8 @@ class SystemProcess : Item
         Item inputStream=null,
         string[string] env=null,
         string workdir=null,
-        bool takeOver=false
+        bool takeOver=false,
+        bool takeOverOutput=false
     )
     {
         log(": SystemProcess: ", cmdline);
@@ -315,6 +320,10 @@ class SystemProcess : Item
         this.inputStream = inputStream;
 
         this.cmdline = cmdline;
+        this.workdir = workdir;
+
+        this.takeOver = takeOver;
+        this.takeOverOutput = takeOverOutput;
 
         if (takeOver)
         {
@@ -327,10 +336,17 @@ class SystemProcess : Item
         }
         else
         {
-            Redirect redirect = Redirect.stdout;
+            Redirect redirect;
+
+            if (!this.takeOverOutput)
+            {
+                redirect |= Redirect.stdout;
+                log("redirect: stdout");
+            }
             if (inputStream !is null)
             {
                 redirect |= Redirect.stdin;
+                log("redirect: stdin");
             }
 
             pipes = pipeProcess(
@@ -413,10 +429,23 @@ class SystemProcess : Item
                 foreach (item; inputStreamOutput.items)
                 {
                     string s = item.toString();
+                    log("pipes.stdin.writeln:", s);
                     pipes.stdin.writeln(s);
                     pipes.stdin.flush();
                 }
                 continue;
+            }
+
+            if (takeOverOutput)
+            {
+                if (inputStream is null)
+                {
+                    return ExitCode.Continue;
+                }
+                else
+                {
+                    return ExitCode.Skip;
+                }
             }
 
             if (pipes.stdout.eof)
@@ -445,6 +474,7 @@ class SystemProcess : Item
             }
 
             line = pipes.stdout.readln();
+            log("pipes.stdout.readln <- ", line);
 
             if (line is null)
             {
