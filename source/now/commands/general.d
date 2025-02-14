@@ -422,16 +422,21 @@ static this()
         auto defaultKeyRef = ("default" in input.kwargs);
         string defaultKey;
 
+        if (stdin.eof)
+        {
+            return ExitCode.Break;
+        }
+
         if (defaultKeyRef is null)
         {
-            write(message);
+            stderr.write(message);
         }
         else
         {
             defaultKey = (*defaultKeyRef).toString;
-            write(message ~ "[" ~ defaultKey ~ "] ");
+            stderr.write(message ~ "[" ~ defaultKey ~ "] ");
         }
-        stdout.flush();
+        stderr.flush();
 
         Item[string] options;
 
@@ -447,6 +452,8 @@ static this()
         {
             if (stdin.eof)
             {
+                stderr.writeln("EOF");
+                stderr.flush();
                 return ExitCode.Break;
             }
             string content = stdin.readln.to!string.strip();
@@ -478,6 +485,8 @@ static this()
                 string key;
                 if (stdin.eof)
                 {
+                    stderr.writeln("EOF");
+                    stderr.flush();
                     return ExitCode.Break;
                 }
                 else {
