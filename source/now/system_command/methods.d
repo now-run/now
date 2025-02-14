@@ -87,6 +87,25 @@ static this()
         }
         return ExitCode.Success;
     };
+    systemProcessMethods["output"] = function(Item target, string path, Input input, Output output)
+    {
+        auto process = cast(SystemProcess)target;
+
+        auto nextOutput = new Output;
+        while (true)
+        {
+            auto exitCode = process.next(input.escopo, nextOutput);
+            if (exitCode != ExitCode.Continue)
+            {
+                break;
+            }
+        }
+
+        string outputString = nextOutput.items.map!(x => x.toString).join("\n");
+        output.push(outputString);
+        return ExitCode.Success;
+
+    };
     systemProcessMethods["kill"] = function(Item target, string path, Input input, Output output)
     {
         auto process = cast(SystemProcess)target;
