@@ -124,6 +124,16 @@ static this()
         auto subprogram = input.pop!SubProgram;
 
         auto escopo = input.escopo.addPathEntry("dict");
+
+        // Escopos will inherict .values, but if the
+        // dynamic array isn't initialized, then
+        // it's simply NULL, so each child will initialize
+        // it locally, etc.
+        // Solution: make sure it is initizalied here.
+        if (dict.orderedKeys.length == 0) {
+            dict.values = new Item[string];
+        }
+
         escopo.values = dict.values;
         escopo.needsReordering = true;
 
@@ -133,8 +143,13 @@ static this()
             exitCode = ExitCode.Success;
         }
 
-        dict.values = escopo.values;
-        dict.needsReordering = true;
+        log("dict.run: escopo.values:", escopo.values);
+        foreach (key, value; escopo.values)
+        {
+            dict[key] = value;
+        }
+
+        output.push(dict);
 
         return exitCode;
     };

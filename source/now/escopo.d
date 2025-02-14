@@ -27,6 +27,7 @@ class Escopo : Dict
             this.rootCommand = parent.rootCommand;
             this.document = parent.document;
         }
+
         log(":: Escopo created.");
     }
     this(Document document, string name, BaseCommand rootCommand=null)
