@@ -52,8 +52,6 @@ o $tpl
 o $rendered_template
     | :: split "\n"
     | :: length | as line_count
-
-o $line_count
     | :: eq 22
     | :: assert "Rendered template should have 22 lines, not $line_count ."
 

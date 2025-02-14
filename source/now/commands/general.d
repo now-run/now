@@ -445,7 +445,12 @@ static this()
 
         if (options.length == 0)
         {
+            if (stdin.eof)
+            {
+                return ExitCode.Break;
+            }
             string content = stdin.readln.to!string.strip();
+
             if (content.length == 0)
             {
                 if (defaultKey is null)
@@ -473,7 +478,7 @@ static this()
                 string key;
                 if (stdin.eof)
                 {
-                    return ExitCode.Skip;
+                    return ExitCode.Break;
                 }
                 else {
                     key = stdin.readln.to!string.strip;
