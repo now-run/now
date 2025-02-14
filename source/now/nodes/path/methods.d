@@ -92,6 +92,22 @@ static this()
         }
         return ExitCode.Success;
     };
+    pathMethods["prepend"] = function(Item object, string name, Input input, Output output)
+    {
+        auto path = cast(Path)object;
+        string content;
+        foreach (item; input.popAll)
+        {
+            content ~= item.toString;
+        }
+        content ~= path.path.read().to!string;
+        std.file.write(path.path, content);
+
+        // XXX: should we return content?
+        // output.push(content);
+
+        return ExitCode.Success;
+    };
 
     pathMethods["size"] = function(Item object, string name, Input input, Output output)
     {
