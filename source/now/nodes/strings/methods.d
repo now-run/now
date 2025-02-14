@@ -266,12 +266,15 @@ static this()
     stringMethods["find"] = function(Item object, string path, Input input, Output output)
     {
         /*
-        > "abc/def" : find "/"
+        > o "abc/def" | :: find "/"
         3
         */
-        auto needle = (cast(String)object).toString;
-        string haystack = input.pop!string;
-        output.push(haystack.indexOf(needle));
+        auto haystack = (cast(String)object).toString;
+        foreach (needleItem; input.popAll)
+        {
+            string needle = needleItem.toString;
+            output.push(haystack.indexOf(needle));
+        }
         return ExitCode.Success;
     };
     stringMethods["matches"] = function(Item object, string path, Input input, Output output)
