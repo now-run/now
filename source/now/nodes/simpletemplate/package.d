@@ -259,6 +259,7 @@ class TemplateInstance : Item
         string s;
 
         auto blockScope = escopo.addPathEntry(name);
+
         foreach (key, value; variables)
         {
             log("block:", name, ".escopo[", key, "]=", value);

@@ -56,7 +56,9 @@ static this()
     templateMethods["render"] = function(Item object, string name, Input input, Output output)
     {
         auto tpl = cast(TemplateInstance)object;
-        output.push(tpl.render(input.escopo));
+        output.push(
+            tpl.render(new Escopo(input.escopo.document, "template"))
+        );
         return ExitCode.Success;
     };
 }
