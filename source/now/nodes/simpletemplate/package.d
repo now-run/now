@@ -63,7 +63,7 @@ class TemplateParser : Parser
         string[] text;
         Block[] blocks;
 
-        debug{stderr.writeln("> consumeBlock ", name);}
+        log("> consumeBlock: ", name);
 
         while (!eof)
         {
@@ -97,7 +97,7 @@ class TemplateParser : Parser
                 }
                 if (isEnd)
                 {
-                    debug{stderr.writeln("BLOCK END");}
+                    log("-- block end");
                     break;
                 }
                 else
@@ -133,14 +133,16 @@ class Block : Item
     this(string text)
     {
         auto parser = new NowParser(text);
-        debug{stderr.writeln(" new Block, parsing: ", text);}
+        log(" new Block, parsing: ", text);
         this.text = parser.consumeString(cast(char)null);
+        log("  result: ", this.text);
     }
     this(string name, Block[] children)
     {
         this.name = name;
         this.children = children;
         this.text = null;
+        log(" new Expandable Block: ", name);
     }
 
     bool isText()
@@ -186,6 +188,7 @@ class TemplateInstance : Item
         this.methods = templateMethods;
 
         this.name = tpl.name;
+        log("new TemplateInstance:", tpl.name);
 
         if (tpl.extends is null || !expandParent)
         {
@@ -193,6 +196,7 @@ class TemplateInstance : Item
         }
         else if (expandParent)
         {
+            log(" it extends the template ", tpl.extends.name);
             this.tpl = tpl.extends;
         }
 
@@ -200,6 +204,7 @@ class TemplateInstance : Item
         {
             if (block.isExpandable)
             {
+                log("   the block ", block.name, " is expandable");
                 expandableBlocks[block.name] = block;
             }
         }
@@ -216,15 +221,19 @@ class TemplateInstance : Item
     {
         this.variables = variables;
         this(tpl, expandParent);
+        log(" variables:", variables);
     }
 
     bool emit(string blockName, Item[string] variables)
     {
+        log(" ", name, ".emit ", blockName, ": ", variables);
+
         // Try to emit directly:
         auto blockPtr = (blockName in expandableBlocks);
         if (blockPtr !is null)
         {
             auto expandableBlock = *blockPtr;
+            log("  is expandable!");
             emittedBlocks[blockName] ~= new TemplateInstance(
                 expandableBlock, variables
             );
@@ -232,8 +241,10 @@ class TemplateInstance : Item
         }
 
         // Try every child:
+        log("  not expandable.");
         foreach (emittedBlock; emittedBlocks.byValue)
         {
+            log("   emittedBlock: ", emittedBlock);
             if (emittedBlock[$-1].emit(blockName, variables))
             {
                 return true;
@@ -250,6 +261,7 @@ class TemplateInstance : Item
         auto blockScope = escopo.addPathEntry(name);
         foreach (key, value; variables)
         {
+            log("block:", name, ".escopo[", key, "]=", value);
             blockScope[key] = value;
         }
 
