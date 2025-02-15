@@ -129,8 +129,9 @@ class Document : Dict {
     void setNowPath(Dict environmentVariables)
     {
         log("- Setting nowPath");
-        auto parent = dirName(this.sourcePath.buildNormalizedPath);
-        this["script_dir"] = new Path(parent);
+        auto scriptDir = dirName(this.sourcePath.buildNormalizedPath);
+        this["script_dir"] = new Path(scriptDir);
+        auto localNowDir = buildPath(scriptDir, "now");
 
         auto nowPath = environmentVariables.getOr!string(
             "NOW_PATH",
@@ -139,9 +140,10 @@ class Document : Dict {
                 // Default:
                 // [script path, current path]
                 auto pwd = d.get!string("PWD");
-                return [parent, pwd].join(":");
+                return [scriptDir, localNowDir, pwd].join(":");
             }
         );
+        log("nowPath: ", nowPath);
         this.nowPath = nowPath.split(":");
     }
     void importPackages()

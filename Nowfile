@@ -1,5 +1,8 @@
 [Nowfile for the Now project]
 
+[packages]
+- "example/source/example.now"
+
 [constants/dub]
 name "now"
 description "Auxiliary tool for software projects in general"
@@ -142,3 +145,28 @@ description "Test the `exit` command running inside a procedure."
 
 quit
 error "this message should not be displayed."
+
+[commands/init]
+description "Download Now packages locally"
+
+scope "Update submodules" {
+    log "Updating submodules..."
+    syscmd git submodule update
+        . "--init"
+        . "--recursive"
+        . "--remote"
+        | {print}
+}
+
+scope "Download submodules if necessary" {
+    path "$script_dir/now/example"
+        | as target_dir
+        | :: exists
+        | :: else {
+            print "$target_dir does not exist"
+            syscmd git submodule add
+                . "git@github.com:now-run/example-package.git"
+                . $target_dir
+                | {print}
+        }
+}
