@@ -82,6 +82,7 @@ class String : Item
     {
         return new ItemsRange(
             cast(Items)(this.repr
+                .split("\n")
                 .map!(x => new String(x.to!string))
                 .array)
         );
