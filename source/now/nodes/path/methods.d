@@ -143,7 +143,14 @@ static this()
         auto path = cast(Path)object;
         try
         {
-            path.path.remove();
+            if (path.path.isDir)
+            {
+                path.path.rmdirRecurse;
+            }
+            else
+            {
+                path.path.remove;
+            }
         }
         catch (FileException)
         {
