@@ -22,6 +22,16 @@ license "MIT"
 }
 
 
+[Dockerfile]
+
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y git make gdc
+WORKDIR /opt/now
+CMD make standalone
+
+
 [on.error]
 
 log "The program terminated with some error."
@@ -169,4 +179,40 @@ scope "Download submodules if necessary" {
                 . $target_dir
                 | {print}
         }
+}
+
+[commands/build:standalone]
+description "Build Now as a standalone binary."
+parameters {
+    image_name {
+        type string
+        default "now-builder"
+    }
+    image_tag {
+        type string
+        default latest
+    }
+}
+
+o "${image_name}:${image_tag}" | as image
+
+scope "build the image for the builder" {
+    timer | __ {
+        o ($text . "Dockerfile" . body)
+            | >> {print}
+            | syscmd podman build - -t $image
+            | {print}
+    }
+    | :: seconds | as seconds
+    log "image build finished in $seconds seconds."
+}
+
+scope "build the binary" {
+    timer | __ {
+        syscmd podman run -v .:/opt/now $image
+        | {print}
+    }
+    | :: seconds | as seconds
+
+    log "binary build finished in $seconds seconds."
 }
