@@ -3,11 +3,11 @@
 Show how to use packages.
 
 [packages]
-- "procedures.now"
-- "libnow_hello.so"
+- "now/procedures.now"
+- "should/not/explode/just/warn"
 
 [commands/run]
 description "Run some procedures and commands from other packages."
 
-hello "Now-written packages"
-hellow "shared libraries world"
+log "Now-written packages"
+hello packages

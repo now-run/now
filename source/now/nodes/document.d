@@ -167,8 +167,9 @@ class Document : Dict {
             }
             if (!success)
             {
-                throw new Exception(
-                    "Could not load package " ~ filename ~ " ."
+                stderr.writeln(
+                    "Warning: could not load package "
+                    ~ filename ~ "."
                 );
             }
         }
