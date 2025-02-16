@@ -5,7 +5,6 @@ SOURCE_CODE = ${BASE_CODE} ${DIR}/commands/*.d cli/now/cli.d
 
 dist/now: ${SOURCE_CODE}
 	${CC} $^ \
-		--static \
 		--checkaction=halt \
 		-od=build --oq \
 		-O2 -of dist/now
