@@ -19,6 +19,7 @@ class SystemCommand : BaseCommand
     string keyValueSeparator;
     bool takeOver;
     bool takeOverOutput;
+    string returns;
     Item workdir;
 
     this(string name, Dict info, Document document)
@@ -40,6 +41,18 @@ class SystemCommand : BaseCommand
         this.workdir = info.get!Item("workdir", null);
 
         auto installMessage = info.get!String("install_message", null);
+
+        auto returnsItem = info.get("returns", null);
+        log("returnsItem:", returnsItem);
+        if (returnsItem !is null)
+        {
+            returns = returnsItem.toString;
+        }
+        else
+        {
+            returns = "process";
+        }
+        log("    returns:", returns);
 
         auto cmdItem = info.getOr(
             "command",
@@ -219,9 +232,34 @@ class SystemCommand : BaseCommand
 
         log(" -- inputStream: ", inputStream);
 
-        output.push(new SystemProcess(
+        auto process = new SystemProcess(
             cmdline, inputStream, env, workdirStr, takeOver, takeOverOutput
-        ));
+        );
+
+        if (returns is null)
+        {
+            output.push(process);
+        }
+        else
+        {
+            log("returns: ", returns, " / ", returns.length);
+            switch (returns)
+            {
+                case "string":
+                    output.push(process.getOutput(input.escopo));
+                    break;
+                case "process":
+                    output.push(process);
+                    break;
+                default:
+                    throw new InvalidArgumentsException(
+                        input.escopo,
+                        "Unknown return type for "
+                        ~ this.name ~ ": "
+                        ~ returns
+                    );
+            }
+        }
         return ExitCode.Success;
     }
 
@@ -493,5 +531,19 @@ class SystemProcess : Item
     void wait()
     {
         returnCode = pid.wait();
+    }
+    string getOutput(Escopo escopo)
+    {
+        auto nextOutput = new Output;
+        while (true)
+        {
+            auto exitCode = this.next(escopo, nextOutput);
+            if (exitCode != ExitCode.Continue)
+            {
+                break;
+            }
+        }
+
+        return nextOutput.items.map!(x => x.toString).join("\n");
     }
 }
