@@ -171,6 +171,7 @@ class SystemCommand : BaseCommand
         // input.escopo = whatever goes in `parameters`, basically.
         // also `args` and `inputs`.
         // (That is: it's the newly create scope, not the caller one.)
+        log("SystemCommand.input.escopo:", input.escopo);
         foreach (key, value; input.escopo)
         {
             /*
@@ -205,6 +206,7 @@ class SystemCommand : BaseCommand
             {
                 env[key] = value.toString;
             }
+            log("    env[", key, "] = ", env[key]);
         }
 
         // Evaluate workdir:
