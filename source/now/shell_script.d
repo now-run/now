@@ -21,7 +21,7 @@ class ShellScript : SystemCommand
 
     this(string shellName, Dict shellInfo, string name, Dict info, Document document)
     {
-        log("ShellScript:", shellName);
+        log("ShellScript: ", shellName);
 
         this.shellName = shellName;
 
@@ -29,7 +29,7 @@ class ShellScript : SystemCommand
         // we are passing the SHELL definition:
         super(name, shellInfo, document);
 
-        log("ShellScript shellInfo:", shellInfo);
+        log("ShellScript shellInfo: ", shellInfo);
         auto consumes = shellInfo.get("consumes", null);
 
         if (consumes is null)
@@ -40,10 +40,18 @@ class ShellScript : SystemCommand
         {
             this.consumes = consumes.toString.to!Consumes;
         }
-        log("       this.consumes:", this.consumes);
+        log("       this.consumes: ", this.consumes);
 
         // So we fix it now:
-        this.parameters = info.getOrCreate!Dict("parameters");
+        log("       this.parameters: ", this.parameters);
+        auto script_parameters = info.getOrCreate!Dict("parameters");
+        log("       script_parameters -> ", script_parameters);
+
+        foreach (key, value; script_parameters)
+        {
+            this.parameters[key] = value;
+        }
+        log("       this.parameters -> ", this.parameters);
 
         this.body = info.get!String("body", null);
         if (this.body is null)
