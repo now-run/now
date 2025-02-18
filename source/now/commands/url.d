@@ -26,6 +26,4 @@ void loadUrlCommands(CommandsMap commands)
         }
         return ExitCode.Success;
     };
-
-
 }

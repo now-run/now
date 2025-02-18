@@ -2,7 +2,7 @@ module now.nodes.document;
 
 import core.runtime;
 
-import std.algorithm.searching : endsWith, startsWith;
+import std.algorithm.searching : canFind, endsWith, startsWith;
 import std.file : exists, isFile, read;
 import std.path : buildNormalizedPath, buildPath, dirName;
 import std.parallelism : TaskPool;
@@ -41,6 +41,7 @@ class Document : Dict {
     SubProgram errorHandler;
 
     string[] nowPath;
+    string[] importedPackages;
 
     this(string title, string description, Dict metadata, Dict data)
     {
@@ -75,7 +76,7 @@ class Document : Dict {
 
         setLogLevel(environmentVariables);
 
-        importPackages();
+        importPackages(data);
         loadConfiguration(environmentVariables);
 
         loadConstants();
@@ -146,10 +147,10 @@ class Document : Dict {
         log("nowPath: ", nowPath);
         this.nowPath = nowPath.split(":");
     }
-    void importPackages()
+    void importPackages(Dict origin)
     {
         log("- Importing packages");
-        auto packages = data.getOrCreate!Dict("packages");
+        auto packages = origin.getOrCreate!Dict("packages");
         foreach (index, filenameItem; packages.values)
         {
             bool success = false;
@@ -584,9 +585,21 @@ class Document : Dict {
     // Packages
     void importPackage(string path)
     {
+        if (importedPackages.canFind(path))
+        {
+            return;
+        }
+
         if (path.endsWith(".now"))
         {
             return importNowLibrary(path);
+        }
+        else
+        {
+            stderr.writeln(
+                "Warning: unknown package format: "
+                ~ path ~ "."
+            );
         }
     }
 
@@ -611,6 +624,10 @@ class Document : Dict {
                 }
             );
         }
+        importedPackages ~= path;
+
+        // Import all packages from THIS library.data:
+        importPackages(library.data);
     }
     void dataMerge(string key, Item localValue, Item otherValue)
     {
