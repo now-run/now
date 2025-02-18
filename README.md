@@ -43,6 +43,13 @@ manner!
 
 ## Install
 
+### Using Brew
+
+```bash
+brew tap now-run/now  # Add the tap, first -- you only have to do it once.
+brew install now      # Install the package
+```
+
 ### Using dub
 
 To build Now, you must have `dub` installed.
