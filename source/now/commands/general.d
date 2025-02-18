@@ -1075,7 +1075,8 @@ static this()
                     processes stack and we
                     don't want that.
                     */
-                    return ExitCode.Success;
+                    // return ExitCode.Success;
+                    return ExitCode.Return;
                 }
             }
         }
@@ -1133,7 +1134,8 @@ static this()
                     Return propagates up into the
                     processes stack:
                     */
-                    return ExitCode.Success;
+                    // return ExitCode.Success;
+                    return ExitCode.Return;
                 }
             }
         }
@@ -1306,10 +1308,15 @@ countLoop:
         */
         auto name = input.pop!string();
 
+        // XXX: We're going to popAll, so
+        // we will fix the weird behavior
+        // of .inputs being kept...
+        input.inputs = [];
+
         auto newInput = Input(
             input.escopo,
             input.inputs,
-            input.args[1..$],
+            input.popAll,
             input.kwargs
         );
         return input.escopo.document.runProcedure(name, newInput, output);
