@@ -3,7 +3,7 @@ module now.nodes.document;
 import core.runtime;
 
 import std.algorithm.searching : canFind, endsWith, startsWith;
-import std.file : exists, isFile, read;
+import std.file : exists, getcwd, isFile, read;
 import std.path : buildNormalizedPath, buildPath, dirName;
 import std.parallelism : TaskPool;
 import std.string : toStringz;
@@ -140,8 +140,9 @@ class Document : Dict {
             {
                 // Default:
                 // [script path, current path]
-                auto pwd = d.get!string("PWD");
-                return [scriptDir, localNowDir, pwd].join(":");
+                auto cwd = getcwd();
+                this["cwd"] = new String(cwd);
+                return [scriptDir, localNowDir, cwd].join(":");
             }
         );
         log("nowPath: ", nowPath);
