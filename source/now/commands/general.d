@@ -5,7 +5,7 @@ import std.algorithm : canFind;
 import std.array;
 import std.datetime;
 import std.digest.md;
-import std.file : read;
+import std.file : chdir, getcwd, read;
 import std.random : uniform;
 import std.stdio;
 import std.string : strip, toLower;
@@ -1632,6 +1632,49 @@ But what if only one of them returns Skip or Break???
         return exitCode;
     };
 
+    builtinCommands["cache"] = function(string path, Input input, Output output)
+    {
+        /*
+        > cache { count_and_print } key -- (ttl = 600)
+        1
+        > cache { count_and_print } key -- (ttl = 600)
+        1
+
+        count_and_print will be called only once!
+        */
+        auto body = input.pop!SubProgram;
+
+        string key = "__once:" ~ makeKeyFromInputs(input);
+        log("once key is: ", key);
+
+        auto escopo = input.escopo.addPathEntry("run");
+        auto value = escopo.get(key, null);
+
+        ExitCode exitCode;
+
+        if (value !is null)
+        {
+            output.push(value.evaluate(escopo));
+        }
+        else
+        {
+            auto items = input.popAll;
+            auto bodyScope = new Output();
+            exitCode = body.run(escopo, items, bodyScope);
+            if (exitCode == ExitCode.Return)
+            {
+                exitCode = ExitCode.Success;
+            }
+            auto returnedValues = bodyScope.items;
+            escopo[key] = returnedValues;
+            foreach (item; returnedValues)
+            {
+                output.push(item);
+            }
+        }
+        return exitCode;
+    };
+
     // System commands
     builtinCommands["syscmd"] = function(string path, Input input, Output output)
     {
@@ -1676,47 +1719,35 @@ But what if only one of them returns Skip or Break???
         ));
         return ExitCode.Success;
     };
+    builtinCommands["cwd"] = function(string path, Input input, Output output)
+    {
+        auto cwd = getcwd();
+        output.push(cwd);
+        return ExitCode.Success;
+    };
 
-    builtinCommands["cache"] = function(string path, Input input, Output output)
+    builtinCommands["chdir"] = function(string path, Input input, Output output)
     {
         /*
-        > cache { count_and_print } key -- (ttl = 600)
-        1
-        > cache { count_and_print } key -- (ttl = 600)
-        1
-
-        count_and_print will be called only once!
+        > cwd | print
+        a/b
+        > o "c" | chdir {
+            > cwd | print
+            a/b/c
+        }
+        > cwd | print
+        a/b
         */
-        auto body = input.pop!SubProgram;
+        auto previous = getcwd();
+        auto subprogram = input.pop!SubProgram;
+        auto dir = input.pop!string;
 
-        string key = "__once:" ~ makeKeyFromInputs(input);
-        log("once key is: ", key);
+        // Change to new directory:
+        dir.chdir;
+        scope(exit) previous.chdir;
 
-        auto escopo = input.escopo.addPathEntry("run");
-        auto value = escopo.get(key, null);
+        auto exitCode = subprogram.run(input.escopo, output);
 
-        ExitCode exitCode;
-
-        if (value !is null)
-        {
-            output.push(value.evaluate(escopo));
-        }
-        else
-        {
-            auto items = input.popAll;
-            auto bodyScope = new Output();
-            exitCode = body.run(escopo, items, bodyScope);
-            if (exitCode == ExitCode.Return)
-            {
-                exitCode = ExitCode.Success;
-            }
-            auto returnedValues = bodyScope.items;
-            escopo[key] = returnedValues;
-            foreach (item; returnedValues)
-            {
-                output.push(item);
-            }
-        }
         return exitCode;
     };
 
