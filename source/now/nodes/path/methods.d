@@ -4,6 +4,7 @@ module now.nodes.path.methods;
 import std.datetime : SysTime;
 import std.file;
 import std.path;
+import std.string : stripRight;
 
 import now;
 
@@ -127,8 +128,8 @@ static this()
     pathMethods["copy"] = function(Item object, string name, Input input, Output output)
     {
         auto source = cast(Path)object;
-        auto target = input.pop!Path;
-        source.path.copy(target.path);
+        auto target = input.pop!string;
+        source.path.copy(target);
         return ExitCode.Success;
     };
     pathMethods["rename"] = function(Item object, string name, Input input, Output output)
@@ -163,7 +164,11 @@ static this()
     pathMethods["absolute"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(new Path(path.path.absolutePath));
+        output.push(new Path(
+            path.path
+                .absolutePath
+                .stripRight("/.")
+        ));
         return ExitCode.Success;
     };
     pathMethods["basename"] = function(Item object, string name, Input input, Output output)
