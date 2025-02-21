@@ -150,13 +150,14 @@ class Document : Dict {
     }
     void importPackages(Dict origin)
     {
-        log("- Importing packages");
+        log("- " ~ this.title ~ ": importPackages");
         auto packages = origin.getOrCreate!Dict("packages");
-        foreach (index, filenameItem; packages.values)
+        log("    packages: ", packages);
+        foreach (filenameItem; packages.asList.items)
         {
             bool success = false;
             string filename = filenameItem.toString();
-            log("-- ", index, ": ", filename);
+            log("-- ", filename);
             foreach (basedir; this.nowPath)
             {
                 auto path = buildPath([basedir, filename]);
@@ -586,8 +587,10 @@ class Document : Dict {
     // Packages
     void importPackage(string path)
     {
+        log("   " ~ this.title ~ ": importPackage " ~ path);
         if (importedPackages.canFind(path))
         {
+            log("    already imported!");
             return;
         }
 
@@ -606,6 +609,7 @@ class Document : Dict {
 
     void importNowLibrary(string path)
     {
+        log("    importNowLibrary: ", path);
         auto parser = new NowParser(path.read().to!string);
         auto library = parser.run();
         // Merge the library into the document:
@@ -628,6 +632,7 @@ class Document : Dict {
         importedPackages ~= path;
 
         // Import all packages from THIS library.data:
+        log(" importPackages from ", path, "...");
         importPackages(library.data);
     }
     void dataMerge(string key, Item localValue, Item otherValue)
