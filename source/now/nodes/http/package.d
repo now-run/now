@@ -79,9 +79,18 @@ class Http : Item
 
         http.method = method;
         try {
-            http.perform();
+            http.perform(ThrowOnError.yes);
         }
         catch (HTTPStatusException)
+        {
+            throw new HTTPException(
+                input.escopo,
+                http.statusLine.reason,
+                http.statusLine.code,
+            );
+        }
+        // XXX: weird, it should throw the error...
+        if (http.statusLine.code / 100 >= 4)
         {
             throw new HTTPException(
                 input.escopo,
