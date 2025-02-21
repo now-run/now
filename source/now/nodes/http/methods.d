@@ -7,6 +7,19 @@ import now;
 
 static this()
 {
+    httpMethods["path"] = function(Item object, string path, Input input, Output output)
+    {
+        /*
+        Changes the HTTP connection URL
+        > o $connection | :: path "livez"
+        */
+        auto connection = cast(Http)object;
+        auto p = input.pop!string;
+        // TODO: actually change the path!!!
+        connection.path = p;
+        output.push(connection);
+        return ExitCode.Success;
+    };
     httpMethods["get"] = function(Item object, string path, Input input, Output output)
     {
         /*
@@ -20,7 +33,7 @@ static this()
     httpMethods["post"] = function(Item object, string path, Input input, Output output)
     {
         /*
-        > o $connection : post "http://example.org"
+        > o $connection : post
         >     . (authorization = "bearer 4321")
         >     . [dict (username = "John.Doe") (password = "1324")]
         */
@@ -31,7 +44,7 @@ static this()
     httpMethods["put"] = function(Item object, string path, Input input, Output output)
     {
         /*
-        > o $connection : put "http://example.org"
+        > o $connection : put
         >     . authorization = "bearer 4321")
         >     . [dict (username = "John.Doe") (password = "1324")]
         */
@@ -42,7 +55,7 @@ static this()
     httpMethods["delete"] = function(Item object, string path, Input input, Output output)
     {
         /*
-        > o $connection : delete "http://example.org"
+        > o $connection : delete
         >     . authorization = "bearer 4321")
         >     . [dict (username = "John.Doe") (password = "1324")]
         */

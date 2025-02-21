@@ -13,6 +13,7 @@ MethodsMap httpResponseMethods;
 class Http : Item
 {
     string url;
+    string _path;
     HTTP http;
 
     this(String url)
@@ -21,15 +22,33 @@ class Http : Item
         this.typeName = "http";
         this.methods = httpMethods;
 
-        this.url = url.to!string;
+        this.url = url.toString;
         this.http = HTTP(this.url);
+        this._path = "";
+    }
+    this(String url, String path)
+    {
+        this(url);
+        this.path = path.toString;
+    }
+
+    @property
+    string path()
+    {
+        return this._path;
+    }
+    @property
+    void path(string p)
+    {
+        this._path = p;
+        this.http.url = this.url ~ "/" ~ this._path;
     }
 
     // ------------------
     // Conversions
     override string toString()
     {
-        string s = "http connection to " ~ this.url;
+        string s = "http connection to " ~ this.url ~ "/" ~ this.path;
         return s;
     }
 
@@ -38,6 +57,8 @@ class Http : Item
     {
         auto requestBody = getBody(input.popAll);
 
+        // Update the path:
+        http.url = this.url ~ "/" ~ this.path;
         http.contentLength = requestBody.length;
         http.onSend = (void[] data)
         {
@@ -128,7 +149,7 @@ class HttpResponse : Item
     // Conversions
     override string toString()
     {
-        string s = "http response to " ~ parent.url;
+        string s = "http response to " ~ parent.url ~ "/" ~ parent.path;
         return s;
     }
 }
