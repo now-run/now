@@ -11,7 +11,7 @@ import now;
 ExitCode glob(Item object, Input input, Output output, SpanMode mode)
 {
     auto directory = cast(Path)object;
-    auto pattern = input.pop!string();
+    auto pattern = input.pop!string;
 
     Path[] items = directory.path
         .dirEntries(pattern, mode)
@@ -28,25 +28,25 @@ static this()
     pathMethods["is.file"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(path.path.isFile());
+        output.push(path.path.isFile);
             return ExitCode.Success;
     };
     pathMethods["is.dir"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(path.path.isDir());
+        output.push(path.path.isDir);
             return ExitCode.Success;
     };
     pathMethods["is.symlink"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(path.path.isSymlink());
+        output.push(path.path.isSymlink);
             return ExitCode.Success;
     };
     pathMethods["exists"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(path.path.exists());
+        output.push(path.path.exists);
             return ExitCode.Success;
     };
 
@@ -77,7 +77,7 @@ static this()
         auto path = cast(Path)object;
         foreach (item; input.popAll)
         {
-            auto content = item.toString();
+            auto content = item.toString;
             std.file.write(path.path, content);
         }
         return ExitCode.Success;
@@ -87,7 +87,7 @@ static this()
         auto path = cast(Path)object;
         foreach (item; input.popAll)
         {
-            auto content = item.toString();
+            auto content = item.toString;
             path.path.append(content);
         }
         return ExitCode.Success;
@@ -100,7 +100,7 @@ static this()
         {
             content ~= item.toString;
         }
-        content ~= path.path.read().to!string;
+        content ~= path.path.read.to!string;
         std.file.write(path.path, content);
 
         // XXX: should we return content?
@@ -112,7 +112,7 @@ static this()
     pathMethods["size"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(path.path.getSize());
+        output.push(path.path.getSize);
         return ExitCode.Success;
     };
     pathMethods["time"] = function(Item object, string name, Input input, Output output)
@@ -120,21 +120,21 @@ static this()
         auto path = cast(Path)object;
         SysTime accessTime, modificationTime;
         path.path.getTimes(accessTime, modificationTime);
-        output.push(modificationTime.toUnixTime());
+        output.push(modificationTime.toUnixTime);
         return ExitCode.Success;
     };
 
     pathMethods["copy"] = function(Item object, string name, Input input, Output output)
     {
         auto source = cast(Path)object;
-        auto target = input.pop!Path();
+        auto target = input.pop!Path;
         source.path.copy(target.path);
         return ExitCode.Success;
     };
     pathMethods["rename"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        auto newName = input.pop!string();
+        auto newName = input.pop!string;
         path.path.rename(newName);
         return ExitCode.Success;
     };
@@ -163,32 +163,32 @@ static this()
     pathMethods["absolute"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(path.path.absolutePath());
+        output.push(new Path(path.path.absolutePath));
         return ExitCode.Success;
     };
     pathMethods["basename"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(path.path.baseName());
+        output.push(path.path.baseName);
         return ExitCode.Success;
     };
     pathMethods["dirname"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(path.path.dirName());
+        output.push(new Path(path.path.dirName));
         return ExitCode.Success;
     };
     pathMethods["extension"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        output.push(path.path.extension());
+        output.push(path.path.extension);
         return ExitCode.Success;
     };
     pathMethods["normalize"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
-        auto n = path.path.asNormalizedPath();
-        output.push(n.to!string);
+        auto n = path.path.asNormalizedPath;
+        output.push(new Path(n.to!string));
         return ExitCode.Success;
     };
 
@@ -214,7 +214,7 @@ static this()
         auto path = cast(Path)object;
         try
         {
-            path.path.mkdirRecurse();
+            path.path.mkdirRecurse;
         }
         catch (FileException)
         {
