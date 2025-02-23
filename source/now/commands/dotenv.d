@@ -65,4 +65,31 @@ void loadDotEnvCommands(CommandsMap commands)
 
         return ExitCode.Success;
     };
+    commands["dotenv.read"] = function(string path, Input input, Output output)
+    {
+        /*
+        > dotenv.read ".env.localdev"
+        dict (key_in_dotenv_file = value_in_dotenv_file)
+        */
+        Dict result;
+
+        if (input.items.length == 0)
+        {
+            input.items ~= new String(".env");
+        }
+
+        foreach (item; input.popAll)
+        {
+            string filepath = item.toString;
+            auto data = parseDotEnv(filepath);
+            foreach (key, value; data)
+            {
+                log("result[", key, "] = ", value);
+                result[key] = value;
+            }
+        }
+
+        output.push(result);
+        return ExitCode.Success;
+    };
 }
