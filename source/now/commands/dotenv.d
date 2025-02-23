@@ -71,7 +71,7 @@ void loadDotEnvCommands(CommandsMap commands)
         > dotenv.read ".env.localdev"
         dict (key_in_dotenv_file = value_in_dotenv_file)
         */
-        Dict result;
+        auto result = new Dict();
 
         if (input.items.length == 0)
         {
