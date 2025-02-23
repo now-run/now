@@ -18,6 +18,7 @@ import now.grammar;
 
 import now.commands.base64;
 import now.commands.csv;
+import now.commands.dotenv;
 import now.commands.http;
 import now.commands.iterators;
 import now.commands.ini;
@@ -1754,6 +1755,7 @@ But what if only one of them returns Skip or Break???
     // Others
     loadBase64Commands(builtinCommands);
     loadCsvCommands(builtinCommands);
+    loadDotEnvCommands(builtinCommands);
     loadIniCommands(builtinCommands);
     loadJsonCommands(builtinCommands);
     loadHttpCommands(builtinCommands);
