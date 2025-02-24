@@ -71,8 +71,12 @@ class IniParser : Parser
                 value = value.stripRight();
             }
             dict[key] = new String(value);
+            log("  ", key, "=", value);
             // Whatever comes next, we ignore:
-            consumeLine();
+            if (!eof)
+            {
+                consumeLine();
+            }
         }
         return dict;
     }
