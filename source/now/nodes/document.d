@@ -72,6 +72,7 @@ class Document : Dict {
     {
         log("- Initializing document");
         this["env"] = environmentVariables;
+        loadDocumentMetadata();
         setNowPath(environmentVariables);
 
         setLogLevel(environmentVariables);
@@ -147,6 +148,17 @@ class Document : Dict {
         );
         log("nowPath: ", nowPath);
         this.nowPath = nowPath.split(":");
+    }
+    void loadDocumentMetadata()
+    {
+        log("- Loading explicit metadata");
+
+        auto optionsDict = data.getOrCreate!Dict("document");
+        foreach (key, value; optionsDict)
+        {
+            log("-- option ", key, " = ", value);
+            this.metadata[key] = value;
+        }
     }
     void importPackages(Dict origin)
     {

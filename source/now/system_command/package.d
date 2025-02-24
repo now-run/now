@@ -121,20 +121,24 @@ class SystemCommand : BaseCommand
             }
             if (status != 0)
             {
-                stderr.writeln(
-                    "Warning: system_commands/" ~ name
-                    ~ ": `which` failed with code " ~ status.to!string
-                    ~ "; command line was: " ~ whichCmdLine.to!string,
-                );
-
-                if (installMessage !is null)
+                bool should_warn = document.metadata.get!Boolean("which_warnings", new Boolean(true)).toBool;
+                if (should_warn)
                 {
                     stderr.writeln(
-                        installMessage.toString,
+                        "Warning: system_commands/" ~ name
+                        ~ ": `which` failed with code " ~ status.to!string
+                        ~ "; command line was: " ~ whichCmdLine.to!string,
                     );
+
+                    if (installMessage !is null)
+                    {
+                        stderr.writeln(
+                            installMessage.toString,
+                        );
+                    }
+                    stderr.writeln();
                 }
 
-                stderr.writeln();
             }
         }
 
