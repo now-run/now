@@ -65,6 +65,7 @@ class IniParser : Parser
                 closer = consumeChar();
                 isEnclosed = true;
             }
+            log("  consume_string until [", closer.to!string, "]");
             auto value = consume_string(closer);
             if (!isEnclosed)
             {

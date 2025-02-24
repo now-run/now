@@ -6,13 +6,12 @@ import now.commands.ini : IniParser;
 import now;
 
 
-class DotEnvParser :IniParser
+class DotEnvParser : IniParser
 {
-    char defaultEol = '\n';
-
     this(string code)
     {
         super(code);
+        this.defaultEol = '\n';
     }
 
     override Dict run()
