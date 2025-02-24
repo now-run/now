@@ -62,6 +62,7 @@ void loadDotEnvCommands(CommandsMap commands)
         }
 
         document["env"] = env;
+        document.loadConfiguration(env, true);
 
         return ExitCode.Success;
     };

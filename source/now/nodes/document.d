@@ -192,7 +192,7 @@ class Document : Dict {
         }
         log("--- Packages imported.");
     }
-    void loadConfiguration(Dict environmentVariables)
+    void loadConfiguration(Dict environmentVariables, bool allow_overwrite=false)
     {
         log("- Loading configuration");
         /*
@@ -204,11 +204,11 @@ class Document : Dict {
         auto configuration = data.getOrCreate!Dict("configuration");
         foreach (configSectionName, configSection; configuration)
         {
-            if (this.get(configSectionName, null) !is null)
+            if (!allow_overwrite && this.get(configSectionName, null) !is null)
             {
                 throw new InvalidConfigurationException(
                     null,
-                    "Configuration section"
+                    "Configuration section "
                     ~ configSectionName
                     ~ " is repeated."
                 );
