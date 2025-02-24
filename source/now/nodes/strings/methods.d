@@ -451,7 +451,8 @@ static this()
         auto target = (cast(String)object).toString;
         foreach (item; input.popAll)
         {
-            output.push(item.toString() == target);
+            log("- neq ", target, " ", item, "?");
+            output.push(item.toString() != target);
         }
         return ExitCode.Success;
     };
