@@ -85,6 +85,7 @@ static this()
                 process
             );
         }
+        output.push(process);
         return ExitCode.Success;
     };
     systemProcessMethods["output"] = function(Item target, string path, Input input, Output output)
