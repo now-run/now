@@ -275,6 +275,7 @@ static this()
         {
             stdout.write(item);
         }
+        stdout.flush;
         return ExitCode.Success;
     };
 
