@@ -123,7 +123,7 @@ void loadHttpCommands(CommandsMap commands)
         char[] content;
         try
         {
-            content = get(address, http.http);
+            content = address.get(http.http);
         }
         catch (HTTPStatusException)
         {
@@ -148,7 +148,7 @@ void loadHttpCommands(CommandsMap commands)
         char[] content;
         try
         {
-            content = post(address, http.body, http.http);
+            content = address.post(http.body, http.http);
         }
         catch (HTTPStatusException)
         {
@@ -173,7 +173,7 @@ void loadHttpCommands(CommandsMap commands)
         char[] content;
         try
         {
-            content = put(address, http.body, http.http);
+            content = address.put(http.body, http.http);
         }
         catch (HTTPStatusException ex)
         {
@@ -199,7 +199,7 @@ void loadHttpCommands(CommandsMap commands)
         auto http = getHttp(input.popAll, input.kwargs);
         try
         {
-            del(address, http.http);
+            address.del(http.http);
         }
         catch (HTTPStatusException)
         {
