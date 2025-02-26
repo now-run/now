@@ -3,7 +3,8 @@ module now.nodes.strings.methods;
 import std.array;
 import std.conv : ConvException;
 import std.file : dirEntries, SpanMode;
-import std.regex : matchAll, matchFirst;
+import std.regex : ctRegex, matchAll, matchFirst;
+import std.regex : xplit = split;
 import std.string;
 import std.algorithm.mutation : strip, stripLeft, stripRight;
 
@@ -376,8 +377,8 @@ static this()
     stringMethods["camel_case"] = function(Item object, string path, Input input, Output output)
     {
         auto s = (cast(String)object).toString;
-        s = s.split("_")
-                .map!(x => x.capitalize)
+        s = s.xplit(ctRegex!(`[_\- ]+`, "g"))
+                .map!(x => x[0].to!string.capitalize ~ x[1..$])
                 .join("");
         output.push(s);
         return ExitCode.Success;
