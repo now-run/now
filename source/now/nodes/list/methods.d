@@ -81,6 +81,17 @@ static this()
         output.push(l.items[$ - 1]);
         return ExitCode.Success;
     };
+    listMethods["head"] = listMethods["first"];
+    listMethods["tail"] = function(Item object, string path, Input input, Output output)
+    {
+        auto l = cast(List)object;
+        log("tail for: ", l.items);
+        if (l.items.length > 0)
+        {
+            output.push(new List(l.items[1..$]));
+        }
+        return ExitCode.Success;
+    };
     listMethods["truncate"] = function(Item object, string path, Input input, Output output)
     {
         List l = cast(List)object;
