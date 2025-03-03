@@ -345,11 +345,21 @@ static this()
 
         if (format is null)
         {
-            foreach (item; input.popAll)
+            switch (level)
             {
-                stderr.write(item.toString);
+                case LogLevel.Warning:
+                    printColor(200, 150, 0, input.popAll, stderr);
+                    break;
+                case LogLevel.Error:
+                    printColor(255, 0, 0, input.popAll, stderr);
+                    break;
+                default:
+                    foreach (item; input.popAll)
+                    {
+                        stderr.write(item.toString);
+                    }
+                    stderr.writeln;
             }
-            stderr.writeln;
         }
         else
         {
@@ -368,15 +378,19 @@ static this()
                 }
                 // TODO: handle the exit code!
 
-                bool hasOutput = false;
-                foreach (x; logOutput.items)
+                switch (level)
                 {
-                    stderr.write(x);
-                    hasOutput = true;
-                }
-                if (hasOutput)
-                {
-                    stderr.writeln();
+                    case LogLevel.Warning:
+                        printColor(200, 150, 0, logOutput.items, stderr);
+                        break;
+                    case LogLevel.Error:
+                        printColor(255, 0, 0, logOutput.items, stderr);
+                        break;
+                    default:
+                        foreach (x; logOutput.items)
+                        {
+                            stderr.write(x);
+                        }
                 }
                 logOutput.items.length = 0;
             }
