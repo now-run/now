@@ -359,6 +359,9 @@ static this()
                 case LogLevel.Error:
                     printColor(255, 0, 0, input.popAll, stderr);
                     break;
+                case LogLevel.Debug:
+                    printColor(200, 200, 200, input.popAll, stderr);
+                    break;
                 default:
                     foreach (item; input.popAll)
                     {
@@ -394,6 +397,9 @@ static this()
                         break;
                     case LogLevel.Error:
                         printColor(255, 0, 0, logOutput.items, stderr);
+                        break;
+                    case LogLevel.Debug:
+                        printColor(200, 200, 200, logOutput.items, stderr);
                         break;
                     default:
                         foreach (x; logOutput.items)
