@@ -188,6 +188,35 @@ void loadHttpCommands(CommandsMap commands)
         output.push(content.to!string);
         return ExitCode.Success;
     };
+    commands["http.patch"] = function(string path, Input input, Output output)
+    {
+        /*
+        > http.patch "http://example.org/4321-5678-0987"
+        >     . authorization = "bearer 4321")
+        >     . [dict (password = "1324")]
+        */
+        string address = input.pop!string();
+        auto http = getHttp(input.popAll, input.kwargs);
+        char[] content;
+        try
+        {
+            content = address.patch(http.body, http.http);
+        }
+        catch (HTTPStatusException ex)
+        {
+            // XXX: maybe we should add the original exception
+            // to the new one...
+            log("HTTPStatusException: ", ex);
+            log(ex.message);
+            throw new HTTPException(
+                input.escopo,
+                http.http.statusLine.reason,
+                http.http.statusLine.code,
+            );
+        }
+        output.push(content.to!string);
+        return ExitCode.Success;
+    };
     commands["http.delete"] = function(string path, Input input, Output output)
     {
         /*

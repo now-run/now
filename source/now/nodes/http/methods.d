@@ -52,6 +52,26 @@ static this()
         output.push(connection.perform(HTTP.Method.put, input));
         return ExitCode.Success;
     };
+    httpMethods["patch"] = function(Item object, string path, Input input, Output output)
+    {
+        /*
+        > o $connection : patch
+        >     . authorization = "bearer 4321")
+        >     . [dict (password = "1324")]
+        */
+        auto connection = cast(Http)object;
+        try
+        {
+            output.push(connection.perform(HTTP.Method.patch, input));
+        }
+        catch (Exception ex)
+        {
+            log("HTTP Exception: ", ex);
+            log(ex.message);
+            throw ex;
+        }
+        return ExitCode.Success;
+    };
     httpMethods["delete"] = function(Item object, string path, Input input, Output output)
     {
         /*
