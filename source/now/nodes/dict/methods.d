@@ -131,7 +131,10 @@ static this()
         // it locally, etc.
         // Solution: make sure it is initizalied here.
         if (dict.orderedKeys.length == 0) {
-            dict.values = new Item[string];
+            // This fails on some systems:
+            // dict.values = new Item[string];
+            dict.values["___noop"] = new Boolean(false);
+            dict.values.remove("___noop");
         }
 
         escopo.values = dict.values;
