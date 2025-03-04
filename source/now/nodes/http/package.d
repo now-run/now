@@ -114,15 +114,18 @@ class Http : Item
                     auto key = pair.items[0].toString();
                     auto value = pair.items[1].toString();
                     http.addRequestHeader(key, value);
+                    log("http request header: ", key, ": ", value);
                     break;
                 case ObjectType.Dict:
                 case ObjectType.List:
                     http.addRequestHeader("Content-Type", "application/json");
                     body = ItemToJson(item).to!string();
+                    log("http request body (json): ", body);
                     break;
                 case ObjectType.String:
                     auto s = cast(String)item;
                     body = s.toString();
+                    log("http request body (txt): ", body);
                     break;
                 default:
                     // TODO: handle this properly inside each command...?
