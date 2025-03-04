@@ -301,6 +301,12 @@ static this()
         auto exitCode = ExitCode.Success;
         LogLevel level = LogLevel.Info;
 
+        bool newline = true;
+        if (auto newlineRef = ("newline" in input.kwargs))
+        {
+            newline = (*newlineRef).toBool;
+        }
+
         if (path.canFind('.'))
         {
             auto parts = path.split(".");
@@ -358,7 +364,10 @@ static this()
                     {
                         stderr.write(item.toString);
                     }
-                    stderr.writeln;
+                    if (newline)
+                    {
+                        stderr.writeln;
+                    }
             }
         }
         else
