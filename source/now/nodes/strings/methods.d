@@ -354,6 +354,29 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
+    stringMethods["kebab_case"] = function(Item object, string path, Input input, Output output)
+    {
+        import std.regex : ctRegex, replace;
+
+        auto s = (cast(String)object).toString;
+
+        static auto regexes = [
+            // SetURLParams -> Set-URL-Params
+            ctRegex!(`(.)([A-Z][a-z]+)`, "g"),
+            // AlfaBetaGama -> Alfa-Beta-Gama
+            ctRegex!(`([a-z0-9])([A-Z])`, "g"),
+        ];
+        foreach (re; regexes)
+        {
+            s = s.replace(re, `$1-$2`);
+        }
+        // a_b_c -> a-b-c
+        s = s.replace(ctRegex!(`[_ ]+`, "g"), `-`);
+        s = s.replace(ctRegex!(`-+`, "g"), `-`);
+
+        output.push(s.toLower);
+        return ExitCode.Success;
+    };
     stringMethods["snake_case"] = function(Item object, string path, Input input, Output output)
     {
         import std.regex : ctRegex, replace;
@@ -366,10 +389,15 @@ static this()
             // AlfaBetaGama -> Alfa_Beta_Gama
             ctRegex!(`([a-z0-9])([A-Z])`, "g"),
         ];
+
         foreach (re; regexes)
         {
             s = s.replace(re, `$1_$2`);
         }
+
+        // a-b-c -> a_b_c
+        s = s.replace(ctRegex!(`[- ]+`, "g"), `_`);
+        s = s.replace(ctRegex!(`_+`, "g"), `_`);
 
         output.push(s.toLower);
         return ExitCode.Success;
