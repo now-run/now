@@ -35,7 +35,10 @@ int main(string[] args)
     string documentPath = defaultFilepath;
     string[] documentArgs;
     string[] nowArgs;
+
     string programName = args[0];
+    envVars["program_path"] = new String(programName);
+    envVars["program_name"] = new String(programName.baseName);
 
     /*
     args[0] = now
@@ -112,9 +115,6 @@ int main(string[] args)
             return 3;
         }
     }
-
-    document["program_path"] = new String(programName);
-    document["program_name"] = new String(programName.baseName);
 
     // Don't forget to add these to the first switch/case!
     foreach (arg; nowArgs)

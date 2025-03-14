@@ -25,6 +25,7 @@ standalone: ${SOURCE_CODE}
 	git describe --tags $$( \
 		git rev-list --tags --max-count=1 \
 	))-$$(uname -m)-$$(uname -o | sed 's:/:-:g' | tr A-Z a-z)
+	strip dist/now-*
 
 clean:
 	-rm -f dist/now*
