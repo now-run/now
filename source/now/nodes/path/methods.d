@@ -26,29 +26,35 @@ ExitCode glob(Item object, Input input, Output output, SpanMode mode)
 static this()
 {
     // About whatever the path points to:
+    pathMethods["attributes"] = function(Item object, string name, Input input, Output output)
+    {
+        auto path = cast(Path)object;
+        output.push(path.path.getAttributes);
+        return ExitCode.Success;
+    };
     pathMethods["is.file"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.isFile);
-            return ExitCode.Success;
+        return ExitCode.Success;
     };
     pathMethods["is.dir"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.isDir);
-            return ExitCode.Success;
+        return ExitCode.Success;
     };
     pathMethods["is.symlink"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.isSymlink);
-            return ExitCode.Success;
+        return ExitCode.Success;
     };
     pathMethods["exists"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
         output.push(path.path.exists);
-            return ExitCode.Success;
+        return ExitCode.Success;
     };
 
     // Operations:
