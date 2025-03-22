@@ -1,5 +1,6 @@
 module now.exceptions;
 
+import core.stdc.stdlib : exit;
 
 import now.escopo;
 import now.nodes;
@@ -146,22 +147,33 @@ ExitCode errorPrinter(ExitCode delegate() f)
     }
     catch (NowException ex)
     {
-        stderr.writeln("c> ", ex.classe);
-        stderr.writeln("s> ", ex.escopo);
-        stderr.writeln("m> ", ex.msg);
-        if (ex.pipeline !is null)
+        if (ex.code == 0)
         {
-            stderr.writeln("p> ", ex.pipeline);
-            if (ex.pipeline.documentLineNumber)
+            if (ex.msg.length)
             {
-                stderr.writeln("l> ", ex.pipeline.documentLineNumber);
+                stderr.writeln(ex.msg);
             }
+            exit(0);
         }
-        if (ex.subject !is null)
+        else
         {
-            stderr.writeln("o> ", ex.subject);
+            stderr.writeln("c> ", ex.classe);
+            stderr.writeln("s> ", ex.escopo);
+            stderr.writeln("m> ", ex.msg);
+            if (ex.pipeline !is null)
+            {
+                stderr.writeln("p> ", ex.pipeline);
+                if (ex.pipeline.documentLineNumber)
+                {
+                    stderr.writeln("l> ", ex.pipeline.documentLineNumber);
+                }
+            }
+            if (ex.subject !is null)
+            {
+                stderr.writeln("o> ", ex.subject);
+            }
+            stderr.writeln("n> ", ex.code);
+            throw ex;
         }
-        stderr.writeln("n> ", ex.code);
-        throw ex;
     }
 }

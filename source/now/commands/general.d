@@ -666,22 +666,14 @@ static this()
     {
         // TODO: make it actually work and exit from anywhere.
         int code = cast(int)(input.pop!long(0));
-        auto message = input.pop!string("Process was stopped");
+        auto message = input.pop!string("");
 
-        if (code == 0)
-        {
-            // TODO: how to succesfully exit???
-            return ExitCode.Return;
-        }
-        else
-        {
-            throw new UserException(
-                input.escopo,
-                message,
-                code,
-                null
-            );
-        }
+        throw new UserException(
+            input.escopo,
+            message,
+            code,
+            null
+        );
     };
 
     // Names:
