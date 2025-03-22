@@ -82,19 +82,17 @@ class ShellScript : SystemCommand
         */
         auto escopo = input.escopo;
 
-        String script_body;
         if (expandVariables)
         {
             auto parser = new NowParser(this.body.toString());
             auto substString = parser.consumeString(cast(char)null);
-            script_body = cast(String)(substString.evaluate(escopo).front);
-        }
-        else
-        {
-            script_body = this.body;
+            this.body = cast(String)(substString.evaluate(escopo).front);
         }
 
-        escopo["script_body"] = body;
+        if (consumes == Consumes.text)
+        {
+            escopo["script_body"] = this.body;
+        }
         escopo["script_name"] = new String(this.name);
         escopo["script_call_name"] = new String(name);
         escopo["shell_name"] = new String(this.shellName);
