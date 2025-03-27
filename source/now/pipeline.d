@@ -66,9 +66,6 @@ forLoop:
             final switch(exitCode)
             {
                 // -----------------
-                // Proc execution:
-
-                // -----------------
                 // That is what a `return` command returns.
                 // Return should keep stopping SubPrograms
                 // until a procedure or a program stops.
@@ -89,6 +86,7 @@ forLoop:
                 proceed to the next command in
                 this pipeline, if present.
                 */
+                case ExitCode.Inject:
                 case ExitCode.Success:
                     break;  // break THE SWITCH and proceed in the loop
             }
@@ -96,6 +94,7 @@ forLoop:
         // Whatever is left in cmdOutput goes to output, now:
         output.push(cmdOutput.items);
 
+        log("- Pipeline -> ", exitCode);
         return exitCode;
     }
 }

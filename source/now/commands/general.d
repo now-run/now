@@ -205,6 +205,14 @@ static this()
         }
         return ExitCode.Success;
     };
+    builtinCommands["inject"] = function(string path, Input input, Output output)
+    {
+        foreach (item; input.popAll)
+        {
+            output.push(item);
+        }
+        return ExitCode.Inject;
+    };
     builtinCommands["return"] = function(string path, Input input, Output output)
     {
         foreach (item; input.popAll)
@@ -863,10 +871,10 @@ static this()
         So this construct can work:
 
         > list 1 2 3
-            | if $debug {o | as lista ; log $lista ; return $lista}
+            | if $debug {o | as lista ; log $lista ; inject $lista}
             | return
 
-        If the body doesn't Return, then the same input will
+        If the body doesn't Inject, then the same input will
         be used as output:
 
         list 1 2 3
@@ -880,14 +888,23 @@ static this()
         if (condition)
         {
             auto exitCode = thenBody.run(input.escopo, inputs, output);
-            switch (exitCode)
+            if (exitCode == ExitCode.Inject)
             {
-                case ExitCode.Return:
-                    return ExitCode.Success;
-
-                default:
-                    output.items = inputs;
-                    return exitCode;
+                log("if -> Inject -> Success");
+                log(output);
+                return ExitCode.Success;
+            }
+            else if (exitCode == ExitCode.Return)
+            {
+                log("if -> Return");
+                log(output);
+                return exitCode;
+            }
+            else
+            {
+                log("if -> ", exitCode);
+                output.items = inputs;
+                return exitCode;
             }
         }
         else
@@ -1082,6 +1099,9 @@ static this()
                     case ExitCode.Return:
                     case ExitCode.Success:
                         return exitCode;
+                    // TODO: check if this makes any sense:
+                    case ExitCode.Inject:
+                        return ExitCode.Success;
                 }
 
                 input.escopo[argName] = nextOutput.items;
@@ -1091,15 +1111,14 @@ static this()
                 {
                     break;
                 }
-                else if (exitCode == ExitCode.Return)
+                switch (exitCode)
                 {
-                    /*
-                    Return propagates up into the
-                    processes stack and we
-                    don't want that.
-                    */
-                    // return ExitCode.Success;
-                    return ExitCode.Return;
+                    case ExitCode.Return:
+                        return exitCode;
+                    case ExitCode.Inject:
+                        return ExitCode.Return;
+                    default:
+                        continue;
                 }
             }
         }
@@ -1141,6 +1160,9 @@ static this()
                     case ExitCode.Return:
                     case ExitCode.Success:
                         return exitCode;
+                    // TODO: check if this makes any sense:
+                    case ExitCode.Inject:
+                        return ExitCode.Success;
                 }
 
                 // use nextOutput as inputs for argBody:
@@ -1151,75 +1173,21 @@ static this()
                 {
                     break;
                 }
-                else if (exitCode == ExitCode.Return)
+                switch (exitCode)
                 {
-                    /*
-                    Return propagates up into the
-                    processes stack:
-                    */
-                    // return ExitCode.Success;
-                    return ExitCode.Return;
-                }
-            }
-        }
-
-        return ExitCode.Success;
-    };
-    builtinCommands["run.foreach"] = function(string path, Input input, Output output)
-    {
-        /*
-        > range 2 | run.foreach { print "+ " } | print
-        + 0
-        + 1
-        + 2
-        Range
-        */
-        auto argName = input.pop!string();
-        auto argBody = input.pop!SubProgram();
-
-        foreach (target; input.popAll)
-        {
-            Item range = target.range();
-
-            forLoop:
-            while (true)
-            {
-                auto nextOutput = new Output;
-                auto exitCode = range.next(input.escopo, nextOutput);
-                final switch (exitCode)
-                {
-                    case ExitCode.Break:
-                        break forLoop;
-                    case ExitCode.Skip:
-                        continue;
-                    case ExitCode.Continue:
-                        break;  // <-- break the switch, not the while.
                     case ExitCode.Return:
-                    case ExitCode.Success:
                         return exitCode;
-                }
-
-                input.escopo[argName] = nextOutput.items;
-                exitCode = argBody.run(input.escopo, output);
-
-                if (exitCode == ExitCode.Break)
-                {
-                    break;
-                }
-                else if (exitCode == ExitCode.Return)
-                {
-                    /*
-                    Return propagates up into the
-                    processes stack and we
-                    don't want that.
-                    */
-                    return ExitCode.Success;
+                    case ExitCode.Inject:
+                        return ExitCode.Success;
+                    default:
+                        continue;
                 }
             }
         }
 
         return ExitCode.Success;
     };
+
     builtinCommands["loop"] = function(string path, Input input, Output output)
     {
         long wait = 0;
@@ -1566,7 +1534,7 @@ But what if only one of them returns Skip or Break???
 
         auto bpOutput = new Output;
         auto exitCode = body.run(escopo, items, bpOutput);
-        if (exitCode == ExitCode.Return)
+        if (exitCode == ExitCode.Inject)
         {
             output.items = bpOutput.items;
             exitCode = ExitCode.Success;
@@ -1599,7 +1567,7 @@ But what if only one of them returns Skip or Break???
 
         auto aOutput = new Output;
         auto exitCode = body.run(escopo, aOutput);
-        if (exitCode == ExitCode.Return)
+        if (exitCode == ExitCode.Inject)
         {
             output.items = aOutput.items;
             exitCode = ExitCode.Success;

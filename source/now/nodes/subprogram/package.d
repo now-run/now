@@ -62,6 +62,7 @@ class SubProgram : Item
             final switch(exitCode)
             {
                 case ExitCode.Success:
+                case ExitCode.Inject:
                     // That is the expected result from Pipelines:
                     break;
 

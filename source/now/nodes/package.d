@@ -102,11 +102,12 @@ alias MethodsMap = Method[string];
 
 enum ExitCode
 {
-    Success,  // A command was executed with success
-    Return,  // returned without errors
-    Break,  // Break the current loop
+    Success,   // A command was executed with success
+    Return,    // returned without errors
+    Break,     // Break the current loop
     Continue,  // Continue to the next iteraction
-    Skip,  // Skip this iteration and call `next` again
+    Skip,      // Skip this iteration and call `next` again
+    Inject,    // Inject a value in the current pipeline
 }
 
 // XXX: it probably don't belong in here:

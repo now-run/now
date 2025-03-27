@@ -19,6 +19,39 @@ prompt "What is your name? "
         . (unknown = {
             as who
             print "You failed this simple test, ${who}..."
-            return "FAILED"
+            inject "FAILED"
         })
     | print "Favorite animal: "
+
+[commands/if]
+parameters {
+    what {
+        type string
+        default "teste"
+    }
+}
+
+o $what
+    | :: eq "teste"
+    | >> {:: then {
+        log "injecting 'ok'..."
+        inject "ok"
+    }}
+    | >> {:: else {
+        log "injecting 'nok'..."
+        inject "nok"
+    }}
+    | log "> "
+
+if ($what != "teste") {
+    log "injecting '!='..."
+    inject "!="
+}
+| log ">> "
+
+if ($what == "teste") {
+    log "EARLY END"
+    return "early end."
+}
+
+log "END"
