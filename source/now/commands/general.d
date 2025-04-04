@@ -1534,10 +1534,15 @@ But what if only one of them returns Skip or Break???
 
         auto bpOutput = new Output;
         auto exitCode = body.run(escopo, items, bpOutput);
+        log("run body exitCode is: ", exitCode);
         if (exitCode == ExitCode.Inject)
         {
             output.items = bpOutput.items;
             exitCode = ExitCode.Success;
+        }
+        else if (exitCode == ExitCode.Return)
+        {
+            output.items = bpOutput.items;
         }
         else
         {
@@ -1571,6 +1576,10 @@ But what if only one of them returns Skip or Break???
         {
             output.items = aOutput.items;
             exitCode = ExitCode.Success;
+        }
+        else if (exitCode == ExitCode.Return)
+        {
+            output.items = aOutput.items;
         }
         else
         {
