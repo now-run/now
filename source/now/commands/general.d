@@ -1604,7 +1604,7 @@ But what if only one of them returns Skip or Break???
         string key = "__once:" ~ makeKeyFromInputs(input);
         log("once key is: ", key);
 
-        auto escopo = input.escopo.addPathEntry("run");
+        auto escopo = input.escopo.addPathEntry("once");
         auto value = escopo.get(key, null);
 
         ExitCode exitCode;
@@ -1644,13 +1644,15 @@ But what if only one of them returns Skip or Break???
         */
         auto body = input.pop!SubProgram;
 
-        string key = "__once:" ~ makeKeyFromInputs(input);
-        log("once key is: ", key);
+        string key = "__cache:" ~ makeKeyFromInputs(input);
+        log("cache key is: ", key);
 
-        auto escopo = input.escopo.addPathEntry("run");
+        auto escopo = input.escopo.addPathEntry("cache");
         auto value = escopo.get(key, null);
 
         ExitCode exitCode;
+
+        // TODO: evaluate ttl!
 
         if (value !is null)
         {
