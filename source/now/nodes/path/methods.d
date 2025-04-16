@@ -135,7 +135,7 @@ static this()
     {
         auto source = cast(Path)object;
         auto target = input.pop!string;
-        source.path.copy(target);
+        source.path.copy(target, PreserveAttributes.yes);
         return ExitCode.Success;
     };
     pathMethods["rename"] = function(Item object, string name, Input input, Output output)
