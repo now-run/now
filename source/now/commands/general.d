@@ -1532,17 +1532,17 @@ But what if only one of them returns Skip or Break???
             escopo[key] = value;
         }
 
-        auto bpOutput = new Output;
-        auto exitCode = body.run(escopo, items, bpOutput);
+        auto bodyOutput = new Output;
+        auto exitCode = body.run(escopo, items, bodyOutput);
         log("run body exitCode is: ", exitCode);
         if (exitCode == ExitCode.Inject)
         {
-            output.items = bpOutput.items;
+            output.items = bodyOutput.items;
             exitCode = ExitCode.Success;
         }
         else if (exitCode == ExitCode.Return)
         {
-            output.items = bpOutput.items;
+            output.items = bodyOutput.items;
         }
         else
         {

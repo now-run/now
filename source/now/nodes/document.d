@@ -592,7 +592,9 @@ class Document : Dict {
 
         throw new ProcedureNotFoundException(
             input.escopo,
-            "Procedure not found: " ~ path
+            "Procedure not found: " ~ path,
+            -1,
+            new String(path)
         );
     }
 

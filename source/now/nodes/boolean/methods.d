@@ -71,13 +71,13 @@ static this()
     {
         /*
         o false
-            | :: then {print "it's true!"}
-            | :: else {print "it's actually false!"}
+            | >> {:: then {print "it's true!"}}
+            | >> {:: else {print "it's actually false!"}}
         */
         bool isConditionTrue = (cast(Boolean)object).toBool;
         auto thenBody = input.pop!SubProgram;
         auto elseBody = input.pop!SubProgram(null);
-        ExitCode exitCode;
+
         if (isConditionTrue)
         {
             return thenBody.run(input.escopo, output);
