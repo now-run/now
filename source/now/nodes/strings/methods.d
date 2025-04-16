@@ -299,32 +299,38 @@ static this()
     {
         /*
         # Returns the FIRST match
-        > "http://example.com" : match "^//.\+"
+        > "http://example.com" | :: match "^//.\+"
         //example.com
         */
         auto target = (cast(String)object).toString;
-        string expression = input.pop!string();
-        foreach (m; target.matchFirst(expression))
+
+        foreach (expression; input.popAll)
         {
-            output.push(m);
+            foreach (m; target.matchFirst(expression.toString))
+            {
+                output.push(m);
+            }
         }
         return ExitCode.Success;
     };
     stringMethods["contains"] = function(Item object, string path, Input input, Output output)
     {
         /*
-        > "http://example.com" : contains "^//.\+"
+        > "http://example.com" | :: contains "^//.\+"
         true
         */
         auto target = (cast(String)object).toString;
-        string expression = input.pop!string();
-        foreach (m; target.matchFirst(expression))
+
+        foreach (expression; input.popAll)
         {
-            output.push(true);
-            return ExitCode.Success;
+            foreach (m; target.matchFirst(expression.toString))
+            {
+                output.push(true);
+                break;
+            }
+            // else
+            output.push(false);
         }
-        // else
-        output.push(false);
         return ExitCode.Success;
     };
     stringMethods["replace"] = function(Item object, string path, Input input, Output output)
