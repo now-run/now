@@ -83,6 +83,7 @@ class BaseCommand
             auto defaultValue = parameterDict.get("default", null);
             if (defaultValue !is null)
             {
+                defaultValue.properties["_default"] = new Boolean(true);
                 newScope[parameterName] = defaultValue;
                 log("-- from default values: newScope[", parameterName, "] = ", defaultValue);
                 namedParametersAlreadySet ~= parameterName;
@@ -94,6 +95,7 @@ class BaseCommand
         log("- Named arguments");
         foreach (key, value; input.kwargs)
         {
+            value.properties["_default"] = new Boolean(false);
             newScope[key] = value;
             log("-- from kwargs: newScope[", key, "] = ", value);
             if (!namedParametersAlreadySet.canFind(key))
@@ -118,6 +120,11 @@ class BaseCommand
         size_t lastIndex = -1;
         foreach (index, argument; input.args.take(parameters.order.length))
         {
+            auto defaultRef = ("_default" in argument.properties);
+            if (defaultRef is null)
+            {
+                argument.properties["_default"] = new Boolean(false);
+            }
             auto key = parameters.order[index];
             newScope[key] = argument;
             log("-- from args: newScope[", key, "] = ", argument);
@@ -133,6 +140,11 @@ class BaseCommand
             // lastIndex = 1
             // nextIndex should be 2
             // nextIndex = lastIndex (1) + index (0) + 1
+            auto defaultRef = ("_default" in argument.properties);
+            if (defaultRef is null)
+            {
+                argument.properties["_default"] = new Boolean(false);
+            }
             auto key = parameters.order[lastIndex + index + 1];
             newScope[key] = argument;
             log("-- from inputs: newScope[", key, "] = ", argument);
