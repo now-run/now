@@ -1408,19 +1408,28 @@ But what if only one of them returns Skip or Break???
     builtinCommands["prop"] = function(string path, Input input, Output output)
     {
         string key = input.pop!string;
-        auto target = input.pop!Item;
 
-        Item* p = (key in target.properties);
-        if (p is null)
+        auto defaultItemRef = ("default" in input.kwargs);
+
+        foreach (target; input.popAll)
         {
-            throw new NotFoundException(
-                input.escopo,
-                "property not found: " ~ key,
-                target,
-                -1
-            );
+            Item* p = (key in target.properties);
+            if (p is null)
+            {
+                if (defaultItemRef !is null) {
+                    p = defaultItemRef;
+                }
+                else {
+                    throw new NotFoundException(
+                        input.escopo,
+                        "property not found: " ~ key,
+                        target,
+                        -1
+                    );
+                }
+            }
+            output.push(*p);
         }
-        output.push(*p);
         return ExitCode.Success;
     };
 
