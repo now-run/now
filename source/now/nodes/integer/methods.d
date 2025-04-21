@@ -77,4 +77,7 @@ static this()
     mixin(CreateComparisonOperator!("lt", "<"));
     mixin(CreateComparisonOperator!("gte", ">="));
     mixin(CreateComparisonOperator!("lte", "<="));
+    mixin(CreateOperator!("and", "&"));
+    mixin(CreateOperator!("or", "|"));
+    mixin(CreateOperator!("xor", "^"));
 }
