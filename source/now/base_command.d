@@ -14,6 +14,7 @@ class BaseCommand
 
     string name;
     Dict parameters;
+    List[string] dependsOn;
     Dict info;
 
     this(string name, Dict info)
@@ -22,8 +23,8 @@ class BaseCommand
         this.parameters = info.getOrCreate!Dict("parameters");
         this.info = info;
 
-        // event handlers:
         this.loadEventHandlers(info);
+        this.loadDependsOn(info);
     }
     void loadEventHandlers(Dict info)
     {
@@ -34,6 +35,22 @@ class BaseCommand
             parser.line = this.info.documentLineNumber;
             this.eventHandlers[k] = parser.consumeSubProgram();
         });
+    }
+    void loadDependsOn(Dict info)
+    {
+        /*
+        depends_on {
+            pkg:installed {
+                - git
+                - make
+            }
+        }
+        */
+        auto depends_on = info.getOrCreate!Dict("depends_on");
+        foreach (name, args; depends_on)
+        {
+            this.dependsOn[name] = cast(List)args;
+        }
     }
 
     override string toString()
@@ -60,6 +77,20 @@ class BaseCommand
     {
         log("- run: ", this, " / ", input);
         // input: Escopo escopo, Items inputs, Args args, KwArgs kwargs
+
+        // state!
+        // TODO: evaluate each item after parameters evaluation
+        // so user can reference them in the depends_on declaration.
+        // Like this:
+        // depends_on {
+        //     directory {
+        //         - $basedir
+        //     }
+        // }
+        foreach (stateName, stateArgs; this.dependsOn)
+        {
+            input.escopo.document.states[stateName].run(stateArgs);
+        }
 
         // Procedures are always top-level:
         Escopo newScope;

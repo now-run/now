@@ -69,6 +69,7 @@ Item JsonToItem(JSONValue v)
         default:
             if (v.isNull())
             {
+                // XXX: should an Name("null") be used instead???
                 return new String("<NULL>");
             }
             else

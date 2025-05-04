@@ -1,0 +1,40 @@
+[State Management Example]
+
+[states/file/check]
+
+log "file/check: " $args
+
+o $args
+    | {
+        path
+        | >> {log "path to check: "}
+        | :: exists
+        | :: else {return false}
+    }
+
+return true
+
+[states/file/action]
+
+log "file/action: " $args
+
+o $args
+    | {
+        path
+        | >> {log "path to be created: "}
+        | :: write [unixtime | to.string]
+    }
+
+[commands/run]
+depends_on {
+    file {
+        - "the-file"
+    }
+}
+
+path "the-file"
+    | :: exists
+    | >> {:: then {print "success"}}
+    | :: else {
+        error "The expected file wasn't created."
+    }

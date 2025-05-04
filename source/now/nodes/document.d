@@ -17,6 +17,7 @@ import now.escopo;
 import now.grammar;
 import now.procedure;
 import now.shell_script;
+import now.state;
 import now.system_command;
 import now.task;
 import now.user_defined_type;
@@ -39,6 +40,7 @@ class Document : Dict {
     Library[string] libraries;
     SubProgram[string] logFormats;
     SubProgram errorHandler;
+    State[string] states;
 
     string[] nowPath;
     string[] importedPackages;
@@ -83,9 +85,10 @@ class Document : Dict {
         loadConstants();
         loadTemplates();
         loadShells();
+        loadStates();
         loadTasks();
         loadProcedures();
-        loadDocumentCommands();
+        loadCommands();
         loadSystemCommands();
         loadText();
         loadLibraries();
@@ -357,6 +360,32 @@ class Document : Dict {
             }
         }
     }
+    void loadStates()
+    {
+        log("- Loading states");
+
+        /*
+        [states/system_package/check]
+        [states/system_package/action]
+
+        Both work just with $args, no `parameters` since
+        we can only send a list of names/strings.
+        */
+
+        auto states = data.getOrCreate!Dict("states");
+        foreach (name, infoItem; states.values)
+        {
+            // example: "system_package"
+            log("-- ", name);
+            auto info = cast(Dict)infoItem;
+            auto check = cast(Dict)info["check"];
+            log("check:", check);
+            auto action = cast(Dict)info["action"];
+            log("action:", action);
+
+            this.states[name] = new State(this, name, check, action);
+        }
+    }
     void loadTasks()
     {
         log("- Loading tasks");
@@ -393,7 +422,7 @@ class Document : Dict {
             this.procedures[name] = new Procedure(name, info);
         }
     }
-    void loadDocumentCommands()
+    void loadCommands()
     {
         log("- Loading commands");
 

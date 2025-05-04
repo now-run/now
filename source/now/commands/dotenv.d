@@ -92,4 +92,27 @@ void loadDotEnvCommands(CommandsMap commands)
         output.push(result);
         return ExitCode.Success;
     };
+    commands["dotenv.decode"] = function(string path, Input input, Output output)
+    {
+        /*
+        > dotenv.read "a = b"
+        dict (a = b)
+        */
+        auto result = new Dict();
+
+        foreach (item; input.popAll)
+        {
+            auto s = item.toString;
+            auto parser = new DotEnvParser(s);
+            auto data = parser.run();
+            foreach (key, value; data)
+            {
+                log("result[", key, "] = ", value);
+                result[key] = value;
+            }
+        }
+
+        output.push(result);
+        return ExitCode.Success;
+    };
 }
