@@ -406,9 +406,9 @@ class SystemProcess : Item
     override string toString()
     {
         auto s = this.cmdline.join(" ");
-        if (s.length > 256)
+        if (s.length > 512)
         {
-            s = s[0..256] ~ " ...";
+            s = s[0..512] ~ " ...";
         }
 
         return "<SystemProcess: " ~ s ~ ">";

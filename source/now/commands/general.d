@@ -881,9 +881,38 @@ static this()
             | if $debug {o | as lista ; log $lista}
             | return
         */
-        auto condition = input.pop!bool;
+        bool condition;
+        auto conditionBody = input.pop!Item;
         auto thenBody = input.pop!SubProgram;
         auto inputs = input.popAll;
+
+        if (conditionBody.type == ObjectType.SubProgram)
+        {
+            auto subprogram = cast(SubProgram)conditionBody;
+
+            auto conditionOutput = new Output();
+            auto exitCode = subprogram.run(input.escopo, inputs, conditionOutput);
+            if (conditionOutput.items.length == 0)
+            {
+                condition = false;
+            }
+            else
+            {
+                condition = true;
+                foreach (item; conditionOutput.items)
+                {
+                    if (!item.toBool)
+                    {
+                        condition = false;
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            condition = conditionBody.toBool;
+        }
 
         if (condition)
         {

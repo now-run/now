@@ -78,20 +78,6 @@ class BaseCommand
         log("- run: ", this, " / ", input);
         // input: Escopo escopo, Items inputs, Args args, KwArgs kwargs
 
-        // state!
-        // TODO: evaluate each item after parameters evaluation
-        // so user can reference them in the depends_on declaration.
-        // Like this:
-        // depends_on {
-        //     directory {
-        //         - $basedir
-        //     }
-        // }
-        foreach (stateName, stateArgs; this.dependsOn)
-        {
-            input.escopo.document.states[stateName].run(stateArgs);
-        }
-
         // Procedures are always top-level:
         Escopo newScope;
         if (keepScope)
@@ -210,6 +196,20 @@ class BaseCommand
 
         // Since we're not going to use the old scope anymore:
         input.escopo = newScope;
+
+        // state!
+        // TODO: evaluate each item after parameters evaluation
+        // so user can reference them in the depends_on declaration.
+        // Like this:
+        // depends_on {
+        //     directory {
+        //         - $basedir
+        //     }
+        // }
+        foreach (stateName, stateArgs; this.dependsOn)
+        {
+            input.escopo.document.states[stateName].run(stateArgs);
+        }
 
         // -------------------------
         // Finally, RUN!

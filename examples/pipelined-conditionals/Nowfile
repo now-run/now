@@ -1,0 +1,10 @@
+[Pipelined Conditionals Example]
+
+[commands/run]
+
+set x 123
+
+o $x | if {:: eq 123} {
+    discard
+    print ok
+}
