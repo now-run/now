@@ -23,9 +23,19 @@ standalone: ${SOURCE_CODE}
 		-frelease -O3 \
 		-static-libphobos \
 		-o dist/now-$$( \
-	git describe --tags $$( \
-		git rev-list --tags --max-count=1 \
-	))-$$(uname -m)-$$(uname -o | sed 's:/:-:g' | tr A-Z a-z)
+			git describe --tags $$( \
+				git rev-list --tags --max-count=1 \
+			))-$$(uname -m)-$$(uname -o | sed 's:/:-:g' | tr A-Z a-z)
+	strip dist/now-*
+
+macos-standalone: ${SOURCE_CODE}
+	${CC} $^ \
+		--checkaction=halt \
+		-od=build --oq \
+		-O3 -of dist/now-$$( \
+			git describe --tags $$( \
+				git rev-list --tags --max-count=1 \
+			))-$$(uname -m)-$$(uname -o | sed 's:/:-:g' | tr A-Z a-z)
 	strip dist/now-*
 
 clean:
