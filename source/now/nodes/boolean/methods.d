@@ -31,7 +31,7 @@ static this()
     mixin(CreateComparisonOperator!("eq", "=="));
     mixin(CreateComparisonOperator!("neq", "!="));
 
-    booleanMethods["||"] = function(Item object, string path, Input input, Output output)
+    booleanMethods["or"] = function(Item object, string path, Input input, Output output)
     {
         if (object.toBool)
         {
@@ -49,7 +49,8 @@ static this()
         output.push(false);
         return ExitCode.Success;
     };
-    booleanMethods["&&"] = function(Item object, string path, Input input, Output output)
+    booleanMethods["||"] = booleanMethods["or"];
+    booleanMethods["and"] = function(Item object, string path, Input input, Output output)
     {
         if (!object.toBool)
         {
@@ -67,6 +68,14 @@ static this()
         output.push(true);
         return ExitCode.Success;
     };
+    booleanMethods["&&"] = booleanMethods["and"];
+
+    booleanMethods["not"] = function(Item object, string path, Input input, Output output)
+    {
+        output.push(!(object.toBool));
+        return ExitCode.Success;
+    };
+
     booleanMethods["then"] = function(Item object, string path, Input input, Output output)
     {
         /*
