@@ -32,6 +32,14 @@ static this()
         output.push(path.path.getAttributes);
         return ExitCode.Success;
     };
+    pathMethods["is.executable"] = function(Item object, string name, Input input, Output output)
+    {
+        auto path = cast(Path)object;
+        // XXX: is it correct? Can't find `S_IXUSR` anywhere...
+        output.push((path.path.getAttributes & 0x01) == 1);
+        return ExitCode.Success;
+    };
+
     pathMethods["is.file"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
