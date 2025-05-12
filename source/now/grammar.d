@@ -3,6 +3,8 @@ module now.grammar;
 
 import core.exception : AssertError;
 import std.algorithm : among, canFind;
+import std.algorithm.mutation : reverse;
+import std.conv : octal;
 import std.math : pow;
 import std.string : rightJustify;
 
@@ -1153,6 +1155,20 @@ class NowParser : Parser
         {
             // XXX: should we handle FormatException, here?
             auto result = new Integer(s.toLong);
+            result.documentLineNumber = line;
+            result.documentColNumber = col;
+            return result;
+        }
+        else if (s.length > 2 && s[0..2] == "0o")
+        {
+            long x = 0;
+            foreach (c; s[2..$])
+            {
+                auto digit = c.to!string.to!int;
+                x <<= 3;
+                x |= digit;
+            }
+            auto result = new Integer(x);
             result.documentLineNumber = line;
             result.documentColNumber = col;
             return result;
