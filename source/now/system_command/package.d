@@ -20,6 +20,7 @@ class SystemCommand : BaseCommand
     bool takeOver;
     bool takeOverOutput;
     string returns;
+    bool isolateEnv;
     Item workdir;
 
     this(string name, Dict info, Document document)
@@ -151,6 +152,7 @@ class SystemCommand : BaseCommand
 
         this.takeOver = info.get!bool("take_over", false);
         this.takeOverOutput = info.get!bool("take_over_output", false);
+        this.isolateEnv = info.get!bool("isolate_env", false);
     }
 
     override ExitCode doRun(string name, Input input, Output output)
@@ -237,7 +239,7 @@ class SystemCommand : BaseCommand
         log(" -- inputStream: ", inputStream);
 
         auto process = new SystemProcess(
-            cmdline, inputStream, env, workdirStr, takeOver, takeOverOutput
+            cmdline, inputStream, env, workdirStr, takeOver, takeOverOutput, isolateEnv
         );
 
         if (returns is null)
@@ -339,6 +341,7 @@ class SystemProcess : Item
     string workdir;
     bool takeOver;
     bool takeOverOutput;
+    bool isolateEnv;
     string[string] env;
     int returnCode = 0;
     bool _isRunning;
@@ -349,7 +352,8 @@ class SystemProcess : Item
         string[string] env=null,
         string workdir=null,
         bool takeOver=false,
-        bool takeOverOutput=false
+        bool takeOverOutput=false,
+        bool isolateEnv=false,
     )
     {
         log(": SystemProcess: ", cmdline);
@@ -367,12 +371,18 @@ class SystemProcess : Item
         this.takeOver = takeOver;
         this.takeOverOutput = takeOverOutput;
 
+        auto config = Config();
+        if (isolateEnv)
+        {
+            config = Config.newEnv;
+        }
+
         if (takeOver)
         {
             this.pid = spawnProcess(
                 cmdline,
                 env,
-                Config(),
+                config,
                 workdir
             );
         }
@@ -395,7 +405,7 @@ class SystemProcess : Item
                 cmdline,
                 redirect,
                 env,
-                Config(),
+                config,
                 workdir
             );
 

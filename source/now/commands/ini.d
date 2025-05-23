@@ -1,6 +1,6 @@
 module now.commands.ini;
 
-import std.string : strip, stripRight;
+import std.string : split, strip, stripRight;
 
 import now;
 import now.commands;
@@ -10,6 +10,7 @@ import now.parser;
 class IniParser : Parser
 {
     char defaultEol = ';';
+    char keySplitter = cast(char)null;
 
     this(string code)
     {
@@ -49,13 +50,17 @@ class IniParser : Parser
         while (!eof && currentChar != '[')
         {
             string key;
-            while (!eof && currentChar != '=')
+            while (!eof && !currentChar.among('=', '['))
             {
                 key ~= consumeChar();
             }
             if (eof) break;
             log("ini.key=", key);
             key = key.strip();
+            if (key.length == 0)
+            {
+                continue;
+            }
             consumeChar();  // '='
             consumeWhitespaces();
             auto closer = this.defaultEol;
@@ -71,7 +76,16 @@ class IniParser : Parser
             {
                 value = value.stripRight();
             }
-            dict[key] = new String(value);
+
+            if (keySplitter)
+            {
+                auto parts = key.split(keySplitter);
+                dict[parts] = new String(value);
+            }
+            else
+            {
+                dict[key] = new String(value);
+            }
             log("  ", key, "=", value);
             // Whatever comes next, we ignore:
             if (!eof)
@@ -96,6 +110,10 @@ void loadIniCommands(CommandsMap commands)
             auto closer = cast(String)(*closerRef);
             parser.defaultEol = closer.toString[0];
             log("IniParser.defaultEol:", parser.defaultEol);
+        }
+        if (auto keySplitRef = ("key_split" in input.kwargs))
+        {
+            parser.keySplitter = (cast(String)(*keySplitRef)).toString[0];
         }
 
         output.push(parser.run());
