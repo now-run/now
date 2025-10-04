@@ -11,11 +11,11 @@ set progress {print.sameline "\r $counter " ; set counter ($counter + 1)}
 scope "Sleep 5" {
     range 10 | foreach i {
         sleep (300 + $i)
-    } ~progress $progress
+    }
+    ~progress $progress
     error blebs
     print "shouldn't reach this point!"
 }
 ~init {print.sameline "\r 0 " ; set counter 1}
-~progress $progress
 ~finish {print "\rfinish: $counter"}
 ! * {print "Handled: $error"}
