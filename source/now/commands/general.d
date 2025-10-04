@@ -605,6 +605,14 @@ static this()
         output.push(cast(long)t);
         return ExitCode.Success;
     };
+    builtinCommands["isotime.decode"] = function(string path, Input input, Output output)
+    {
+        /*
+        o "2027-12-25 12:34:56.300" | isotime.decode
+        9999999999  # unixtime
+        */
+        return ExitCode.Success;
+    };
 
     builtinCommands["timer"] = function(string path, Input input, Output output)
     {
@@ -1094,6 +1102,18 @@ static this()
         auto range = new IntegerRange(start, limit, step);
 
         output.push(range);
+        return ExitCode.Success;
+    };
+    builtinCommands["take"] = function(string path, Input input, Output output)
+    {
+        /*
+        > range 100000 | take 3 | {print}
+        0
+        1
+        2
+        */
+        auto n = input.pop!long();
+        output.push(new TakeRange(n, input.popAll));
         return ExitCode.Success;
     };
 

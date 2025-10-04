@@ -101,6 +101,60 @@ class IntegerRange : Item
     }
 }
 
+class TakeRange : Item
+{
+    long n = 0;
+    long current = 0;
+    long rangeIndex = 0;
+    Items ranges;
+
+    this(long n, Items ranges)
+    {
+        this.n = n;
+        this.ranges = ranges.map!(x => x.range()).array;
+        this.type = ObjectType.Range;
+        this.typeName = "take_range";
+    }
+
+    override string toString()
+    {
+        // TODO: show the type of this.range too.
+        return
+            "range.take("
+            ~ to!string(n)
+            ~ ")";
+    }
+
+    override ExitCode next(Escopo escopo, Output output)
+    {
+        current++;
+        if (current > n)
+        {
+            return ExitCode.Break;
+        }
+
+        auto range = ranges[rangeIndex];
+        auto exitCode = range.next(escopo, output);
+        if (exitCode == ExitCode.Break)
+        {
+            rangeIndex++;
+            if (rangeIndex >= ranges.length)
+            {
+                return ExitCode.Break;
+            }
+            else
+            {
+                return ExitCode.Skip;
+            }
+        }
+        else
+        {
+            return exitCode;
+        }
+    }
+}
+
+
 
 // Iterators for "transform":
 class Transformer : Item

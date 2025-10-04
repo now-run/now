@@ -51,11 +51,52 @@ class SubProgram : Item
 
         log("- SubProgram.run: ", inputs, output);
 
+        // init
+        SubProgram init;
+        Output initOutput;
+        if (auto initRef = ("init" in properties))
+        {
+            init = cast(SubProgram)((*initRef).evaluate(escopo).front);
+            initOutput = new Output();
+            auto initExitCode = init.run(escopo, initOutput);
+            // TODO: what to do with initExitCode?
+        }
+
+        // progress
+        SubProgram progress;
+        Output progressOutput;
+        if (auto progressRef = ("progress" in properties))
+        {
+            progress = cast(SubProgram)((*progressRef).evaluate(escopo).front);
+            progressOutput = new Output();
+        }
+
+        // finish
+        scope(exit) {
+            SubProgram finish;
+            Output finishOutput;
+            if (auto finishRef = ("finish" in properties))
+            {
+                finish = cast(SubProgram)((*finishRef).evaluate(escopo).front);
+                finishOutput = new Output();
+                auto finishExitCode = finish.run(escopo, finishOutput);
+                // XXX: should the exit code be handled?
+            }
+        }
+
         foreach (pipeline; pipelines)
         {
+            // Helper for progress bars, etc:
+            if (progress !is null)
+            {
+                auto progressExitCode = progress.run(escopo, progressOutput);
+                // XXX: should the exit code be handled?
+            }
+
             // No output will be shared:
             output.items.length = 0;
             exitCode = pipeline.run(escopo, inputs, output);
+
             // We can't share `inputs` with the next pipelines!
             inputs = [];
 

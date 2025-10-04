@@ -182,17 +182,18 @@ class BaseCommand
         }
 
         // Unused arguments go to the $args variable (List)
+        Items args;
         if (input.args.length > parameters.order.length)
         {
-            newScope["args"] = new List(input.args[parameters.order.length..$]);
+            args = input.args[parameters.order.length..$];
         }
-        else
-        {
-            newScope["args"] = new List([]);
-        }
+        newScope["pure_args"] = new List(args);
 
         // Inputs go to the $inputs variable (List)
         newScope["inputs"] = new List(input.inputs);
+        // ... and are used as $args just the same...
+        // args ~= input.inputs;
+        newScope["args"] = new List(args);
 
         // Since we're not going to use the old scope anymore:
         input.escopo = newScope;

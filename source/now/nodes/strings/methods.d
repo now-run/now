@@ -323,13 +323,13 @@ static this()
 
         foreach (expression; input.popAll)
         {
+            auto answer = false;
             foreach (m; target.matchFirst(expression.toString))
             {
-                output.push(true);
+                answer = true;
                 break;
             }
-            // else
-            output.push(false);
+            output.push(answer);
         }
         return ExitCode.Success;
     };
@@ -492,6 +492,42 @@ static this()
         return ExitCode.Success;
     };
     stringMethods["!="] = stringMethods["neq"];
+    stringMethods["gt"] = function(Item object, string path, Input input, Output output)
+    {
+        auto target = (cast(String)object).toString;
+        foreach (item; input.popAll)
+        {
+            output.push(cmp!"a > b"(item.toString(), target) == 1);
+        }
+        return ExitCode.Success;
+    };
+    stringMethods["gte"] = function(Item object, string path, Input input, Output output)
+    {
+        auto target = (cast(String)object).toString;
+        foreach (item; input.popAll)
+        {
+            output.push(cmp!"a > b"(item.toString(), target) != -1);
+        }
+        return ExitCode.Success;
+    };
+    stringMethods["lt"] = function(Item object, string path, Input input, Output output)
+    {
+        auto target = (cast(String)object).toString;
+        foreach (item; input.popAll)
+        {
+            output.push(cmp!"a < b"(item.toString(), target) == 1);
+        }
+        return ExitCode.Success;
+    };
+    stringMethods["lte"] = function(Item object, string path, Input input, Output output)
+    {
+        auto target = (cast(String)object).toString;
+        foreach (item; input.popAll)
+        {
+            output.push(cmp!"a < b"(item.toString(), target) != -1);
+        }
+        return ExitCode.Success;
+    };
 
     stringMethods["to.bytes"] = function(Item object, string path, Input input, Output output)
     {

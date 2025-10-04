@@ -72,7 +72,6 @@ class NowParser : Parser
         log("% description=", description);
         auto metadata = metadataSection;
         log("% metadata=", metadata);
-        // TESTE:
         auto x = cast(Dict)metadata;
         log("% x=", x);
         auto document = new Document(title, description, cast(Dict)metadata);
@@ -511,20 +510,11 @@ class NowParser : Parser
                 if (currentChar == '.')
                 {
                     consumeChar();
-                    // consumeSpace();
                 }
-                else if (currentChar == EVENT_HANDLER)
+                else if (currentChar.among(EVENT_HANDLER, PROPERTY_TOKEN))
                 {
-                    // Go back one char, back to the SPACE.
+                    // Go back one char, back to the SPACE/EOL.
                     index --;
-                    // XXX:
-                    /*
-                       This won't work:
-                       cmd a b c
-                       ! error_x { handler }
-                       There must be at least one SPACE before
-                       a continuation-style error handler.
-                    */
                 }
                 else
                 {
@@ -532,41 +522,47 @@ class NowParser : Parser
                 }
             }
 
-            if (currentChar == SPACE)
+            if (currentChar.among(SPACE, EOL))
             {
-                consumeSpace();
+                consumeWhitespaces();
 
                 // Properties:
-                if (currentChar == PROPERTY_TOKEN)
+                bool hasProperties = false;
+                while (currentChar == PROPERTY_TOKEN)
                 {
-                    do {
-                        log("PROPERTY!");
-                        log(consumeChar());
-                        auto key = consumeAtom();
-                        consumeSpace();
-                        auto value = consumeItem();
-                        log("~~~ ", key, " = ", value);
-                        consumeWhitespaces();
+                    hasProperties = true;
+                    log("PROPERTY!");
+                    log(consumeChar());
+                    auto key = consumeAtom();
+                    consumeSpace();
+                    auto value = consumeItem();
+                    log("~~~ ", key, " = ", value);
+                    consumeWhitespaces();
 
-                        if (arg !is null)
-                        {
-                            arg.properties[key.toString] = value;
-                        }
-                    } while (currentChar == PROPERTY_TOKEN);
-                    break;
+                    if (arg !is null)
+                    {
+                        arg.properties[key.toString] = value;
+                    }
                 }
-                else if (currentChar.among!(
-                    '}', ']', ')', '>',
-                    PIPE
-                ))
-                {
-                    break;
-                }
-                else if (currentChar == EVENT_HANDLER)
+
+                if (currentChar == EVENT_HANDLER)
                 {
                     log("Event handlers found");
                     eventHandlers = consumeEventHandlers();
                     log("- eventHandlers:", eventHandlers);
+                    break;
+                }
+
+                if (hasProperties)
+                {
+                    break;
+                }
+
+                if (currentChar.among!(
+                    '}', ']', ')', '>',
+                    PIPE
+                ))
+                {
                     break;
                 }
                 else if (currentChar == SEMICOLON)
