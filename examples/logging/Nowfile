@@ -1,0 +1,13 @@
+[Logging Example]
+
+Shows how setting `LOG_LEVEL` environment variable
+affects the logging output of a document.
+
+[commands/run]
+
+print "LOG_LEVEL is $log_level"
+log.debug "This is debug"
+log "`log` is info"
+log.info "This is also info"
+log.warning "This is a WARNING!"
+log.error "And this is an error."
