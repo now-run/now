@@ -1,7 +1,7 @@
 module now.nodes.list.methods;
 
 
-import std.algorithm : map, sort;
+import std.algorithm : among, map, sort;
 import std.algorithm.searching : canFind;
 import std.conv : toChars;
 import std.range : chunks;
@@ -188,10 +188,16 @@ static this()
         {
             Item item;
             Escopo escopo;
+            string method;
             this(Escopo escopo, Item item)
+            {
+                this(escopo, item, "<");
+            }
+            this(Escopo escopo, Item item, string method)
             {
                 this.escopo = escopo;
                 this.item = item;
+                this.method = method;
             }
 
             override int opCmp(Object o)
@@ -205,7 +211,7 @@ static this()
                     null,
                 );
                 auto xoutput = new Output;
-                auto exitCode = item.runMethod("<", xinput, xoutput);
+                auto exitCode = item.runMethod(method, xinput, xoutput);
                 if (xoutput.pop.toBool)
                 {
                     return -1;
@@ -218,7 +224,26 @@ static this()
         }
 
         List list = cast(List)object;
-        Comparator[] comparators = list.items.map!(x => new Comparator(input.escopo, x)).array;
+
+        string method = "<";
+        if (input.items.length)
+        {
+            auto item = input.pop!Item;
+            if (item.type.among!(ObjectType.Name, ObjectType.String))
+            {
+                method = item.toString;
+            }
+            else
+            {
+                throw new InvalidArgumentsException(
+                    input.escopo,
+                    "Sort by this type of object not implemented.",
+                    -1
+                );
+            }
+        }
+
+        Comparator[] comparators = list.items.map!(x => new Comparator(input.escopo, x, method)).array;
         Items sorted = comparators.sort.map!(x => x.item).array;
         output.push(new List(sorted));
         return ExitCode.Success;

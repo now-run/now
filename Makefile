@@ -1,5 +1,4 @@
-# CC = ldc2
-CC = /Users/cleber/code/third-parties/ldc2/ldc2-20d22b1e-osx-arm64/bin/ldc2
+CC = ldc2
 DIR = source/now
 BASE_CODE = ${DIR}/*.d ${DIR}/system_command/*.d ${DIR}/task/*.d ${DIR}/nodes/*.d ${DIR}/nodes/*/*.d
 SOURCE_CODE = ${BASE_CODE} ${DIR}/commands/*.d cli/now/cli.d
