@@ -12,6 +12,7 @@ import std.stdio;
 import std.string;
 
 import now;
+import now.httpserver;
 import now.env_vars;
 import now.commands;
 
@@ -60,11 +61,12 @@ int main(string[] args)
                     break;
 
                 // Commands to be called laters goes here.
-                case "repl":
                 case "cmd":
-                case "lp":
-                case "watch":
                 case "dump":
+                case "http":
+                case "lp":
+                case "repl":
+                case "watch":
                     nowArgs ~= keyword;
                     break;
 
@@ -121,14 +123,16 @@ int main(string[] args)
     {
         final switch (arg)
         {
-            case "repl":
-                return repl(document, documentArgs, nowArgs);
             case "cmd":
                 return cmd(document, documentArgs);
-            case "lp":
-                return lineProcessor(document, documentArgs);
             case "dump":
                 return dump(document, documentArgs);
+            case "http":
+                return httpServer(document, documentArgs);
+            case "lp":
+                return lineProcessor(document, documentArgs);
+            case "repl":
+                return repl(document, documentArgs, nowArgs);
             case "watch":
                 return watch(document, documentArgs);
         }

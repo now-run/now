@@ -14,7 +14,7 @@ source_files {
         pattern "*.d"
     }
     - {
-        directory "cli/now"
+        directory "cli"
         pattern "*.d"
     }
 }
@@ -30,7 +30,7 @@ source_files {
         pattern "*.d"
     }
     - {
-        directory "cli/now"
+        directory "cli"
         pattern "*.d"
     }
 }
@@ -83,7 +83,7 @@ command {
     - $files
     - $extra
     - "-I=source"
-    - "-I=cli/source"
+    - "-I=cli"
     - "--checkaction=halt"
     - "-od=build"
     - "-O$optimization"
@@ -119,7 +119,7 @@ command {
     - $file
     - $extra
     - "-I=source"
-    - "-I=cli/source"
+    - "-I=cli"
     - "-O$optimization"
     - "-of"
     - $output_filepath

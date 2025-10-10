@@ -1,0 +1,25 @@
+[HTTP Server]
+
+[procedures/http:init]
+
+log "http:init $args"
+
+[procedures/http:normal:get]
+
+log "verb: $verb"
+log "path: $path"
+log "query_parameters: $query_parameters"
+log "headers: $headers"
+log "body: $body"
+
+return "blz!"
+    . (status_code = 201) (status_message = "Created")
+    . ("Cache-Control" = "max-age=60")
+
+
+[procedures/http:json:get]
+
+
+return
+    . ("Cache-Control" = "max-age=60")
+    . [dict (alfa = 1)]

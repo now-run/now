@@ -598,18 +598,18 @@ class Document : Dict {
             return null;
         }
     }
-    ExitCode runProcedure(string path, Input input, Output output)
+    ExitCode runProcedure(string path, Input input, Output output, bool keepScope = false)
     {
         if (auto procPtr = (path in this.procedures))
         {
             auto proc = *procPtr;
-            return proc.run(path, input, output);
+            return proc.run(path, input, output, keepScope);
         }
 
         if (auto taskPtr = (path in this.tasks))
         {
             auto task = cast(Task)(*taskPtr);
-            return task.run(path, input, output);
+            return task.run(path, input, output, keepScope);
         }
 
         if (auto cmdPtr = (path in builtinCommands))
