@@ -7,6 +7,7 @@ import std.array : array, join, split;
 import std.conv : to;
 import std.datetime : dur;
 import std.file : exists, read;
+import std.path : buildPath;
 import std.stdio : stderr, writefln;
 import std.range : front, popFront;
 import std.socket : InternetAddress, Socket, SocketException, SocketSet, TcpSocket;
@@ -17,10 +18,17 @@ import now.cli;
 import now.env_vars;
 import now.json;
 
+const auto DEFAULT_PORT = 5000;
+const auto DEFAULT_STATIC_DIR = "./static";
+const auto DEFAULT_STATIC_PATH = "/static/";
 const auto MAX_CONNECTIONS = 1024;
 const auto SELECT_TIMEOUT = 50;
 const auto RECEIVE_BUFFER_SIZE = 256;
 const auto MAX_REQUEST_SIZE = 1024 * 1024;
+
+
+string static_files_dir;
+string static_files_path;
 
 alias strings = string[];
 
@@ -272,11 +280,11 @@ class Client : Fiber
         // Serve static files
         // Do not force the user to implement it, it's usually unsafe.
         // Also: serve "text" directly from the Nowfile.
-        stderr.writefln("verb=%s; path=%s", verb, path);
-        if (verb == "get" && path.startsWith("/static/"))
+        log("verb=%s; path=%s", verb, path);
+        if (verb == "get" && path.startsWith(static_files_path))
         {
-            auto relativePath = path[("/static/".length)..$];
-            stderr.writeln("relativePath=", relativePath);
+            auto relativePath = path[(static_files_path.length)..$];
+            log("static file relative path: ", relativePath);
             if (relativePath.canFind("../"))
             {
                 socket.send("HTTP/1.1 400 Bad Request\r\n");
@@ -284,8 +292,7 @@ class Client : Fiber
                 socket.send("Invalid static file path.\r\n");
                 return;
             }
-            // TODO: make the static files folder configurable!
-            string filePath = "./static/" ~ relativePath; 
+            string filePath = buildPath(static_files_dir, relativePath); 
             if (!filePath.exists)
             {
                 socket.send("HTTP/1.1 404 Not Found\r\n");
@@ -494,13 +501,13 @@ int httpServer(Document document, string[] documentArgs)
 
     string commandName = "http:init";
 
-    ushort port = 5000;
-
     // ------------------------------
     // Organize the command line arguments:
     Args args;
     KwArgs kwargs;
-    kwargs["port"] = new Integer(port);
+    kwargs["port"] = new Integer(DEFAULT_PORT);
+    kwargs["static_files_dir"] = new String(DEFAULT_STATIC_DIR);
+    kwargs["static_files_path"] = new String(DEFAULT_STATIC_PATH);
     foreach (arg; documentArgs)
     {
         if (arg.startsWith("--"))
@@ -516,7 +523,10 @@ int httpServer(Document document, string[] documentArgs)
             args ~= new String(arg);
         }
     }
-    port = cast(ushort) kwargs["port"].toLong;
+    ushort port = cast(ushort) kwargs["port"].toLong;
+    static_files_dir = kwargs["static_files_dir"].toString;
+    static_files_path = kwargs["static_files_path"].toString;
+
     log("  + args: ", args);
     log("  + kwargs: ", kwargs);
     log("  + port: ", port);
@@ -621,7 +631,7 @@ int serverLoop(Document document, ushort port)
     listener.listen(32);
     log("Listening on port ", port);
 
-    // Room for listener.
+    // + 1 == room for listener
     auto socketSet = new SocketSet(MAX_CONNECTIONS + 1);
     Client[] clients;
 
@@ -711,16 +721,13 @@ int serverLoop(Document document, ushort port)
 
         // Clean up clients list
         bool cleanedUp = false;
-        foreach (index, client; clients)
+        foreach (index, client; clients.filter!(x => x.state == Fiber.State.TERM).array)
         {
-            if (client.state == Fiber.State.TERM)
-            {
-                log("Removing client ", index);
-                client.socket.close();
-                clients = clients.remove(index);
-                log("Client removed: ", index);
-                cleanedUp = true;
-            }
+            log("Removing client ", index);
+            client.socket.close();
+            clients = clients.remove(index);
+            log("Client removed: ", index);
+            cleanedUp = true;
         }
         if (cleanedUp)
         {
