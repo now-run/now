@@ -6,6 +6,7 @@ import std.algorithm.searching : canFind, findSplit, startsWith;
 import std.array : array, join, split;
 import std.conv : to;
 import std.datetime : dur;
+import std.file : exists, read;
 import std.stdio : stderr, writefln;
 import std.range : front, popFront;
 import std.socket : InternetAddress, Socket, SocketException, SocketSet, TcpSocket;
@@ -32,7 +33,7 @@ class Client : Fiber
     {
         this.document = document;
         this.socket = socket;
-        log(
+        stderr.writeln(
             "New client: ",
             socket.remoteAddress().toString()
         );
@@ -219,7 +220,6 @@ class Client : Fiber
         }
         log("body:\n", body);
         log("-----\n");
-        Fiber.yield();
 
         // ----------------------------
         // Read the rest of the body if necessary
@@ -265,6 +265,38 @@ class Client : Fiber
                     break;
                 }
             }
+        }
+        Fiber.yield();
+
+        // ----------------------------
+        // Serve static files
+        // Do not force the user to implement it, it's usually unsafe.
+        // Also: serve "text" directly from the Nowfile.
+        stderr.writefln("verb=%s; path=%s", verb, path);
+        if (verb == "get" && path.startsWith("/static/"))
+        {
+            auto relativePath = path[("/static/".length)..$];
+            stderr.writeln("relativePath=", relativePath);
+            if (relativePath.canFind("../"))
+            {
+                socket.send("HTTP/1.1 400 Bad Request\r\n");
+                socket.send("\r\n");
+                socket.send("Invalid static file path.\r\n");
+                return;
+            }
+            // TODO: make the static files folder configurable!
+            string filePath = "./static/" ~ relativePath; 
+            if (!filePath.exists)
+            {
+                socket.send("HTTP/1.1 404 Not Found\r\n");
+                socket.send("\r\n");
+                socket.send("Static file not found.\r\n");
+                return;
+            }
+            socket.send("HTTP/1.1 200 Ok\r\n");
+            socket.send("\r\n");
+            socket.send(filePath.read());
+            return;
         }
 
         // ----------------------------
@@ -324,6 +356,8 @@ class Client : Fiber
         ExitCode exitCode;
         auto output = new Output;
 
+        Fiber.yield();
+
         try
         {
             exitCode = errorPrinter({
@@ -350,6 +384,8 @@ class Client : Fiber
             socket.send(errorString);
             return;
         }
+
+        Fiber.yield();
 
         // ----------------------------
         // Send the response to the socket.
@@ -439,9 +475,7 @@ class Client : Fiber
             socket.send("\r\n");
         }
         socket.send("\r\n");
-        Fiber.yield();
         socket.send(responseBody);
-        Fiber.yield();
 
         log("\tProcessed.");
     }
@@ -667,7 +701,7 @@ int serverLoop(Document document, ushort port)
 
         // --------------------------
         // Process messages
-        foreach (i; 0..5)
+        foreach (i; 0..7)
         {
             foreach (client; clients.filter!(x => x.state != Fiber.State.TERM))
             {

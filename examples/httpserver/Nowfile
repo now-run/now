@@ -23,3 +23,11 @@ return "blz!"
 return
     . ("Cache-Control" = "max-age=60")
     . [dict (alfa = 1)]
+
+[Static File: text.md]
+"Cache-Control" "max-age=600"
+
+# An example file
+
+With some random text just to be
+used as an example, of course.
