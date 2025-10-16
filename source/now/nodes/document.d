@@ -310,10 +310,13 @@ class Document : Dict {
         foreach (templateName, infoItem; templates.values)
         {
             log("-- templateName: ", templateName);
-            auto templateInfo = cast(Dict)infoItem;
-            templates[templateName] = parseTemplate(
-                templateName, templateInfo, templates
-            );
+            if (infoItem.type == ObjectType.Dict)
+            {
+                auto templateInfo = cast(Dict)infoItem;
+                templates[templateName] = parseTemplate(
+                    templateName, templateInfo, templates
+                );
+            }
         }
     }
     void loadShells()

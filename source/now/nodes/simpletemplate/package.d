@@ -33,9 +33,23 @@ Block parseTemplate(string name, Dict info, Dict templates)
     info.on(
         "extends",
         delegate (item) {
+            log("parseTemplate: ", name);
             string parentName = item.toString();
-            auto parentBlock = cast(Block)(templates[parentName]);
-            tpl.extends = parentBlock;
+            auto parent = templates[parentName];
+            log(" parentName: ", parentName);
+            log(" parent type: ", parent.type);
+            if (parent.type == ObjectType.Dict)
+            {
+                auto parentBlock = parseTemplate(
+                    parentName, cast(Dict)parent, templates
+                );
+                templates[parentName] = parentBlock;
+                tpl.extends = parentBlock;
+            }
+            else
+            {
+                tpl.extends = cast(Block)parent;
+            }
         }, delegate () { }
     );
     return tpl;
