@@ -389,6 +389,23 @@ class Document : Dict {
             this.states[name] = new State(this, name, check, action);
         }
     }
+    void initTaskPool(ulong workers=0)
+    {
+        if (this.taskPool !is null)
+        {
+            return;
+        }
+
+        if (workers)
+        {
+            this.taskPool = new TaskPool(workers);
+        }
+        else
+        {
+            this.taskPool = new TaskPool();
+        }
+        this.taskPool.isDaemon = true;
+    }
     void loadTasks()
     {
         log("- Loading tasks");
@@ -398,11 +415,7 @@ class Document : Dict {
         auto tasks = data.getOrCreate!Dict("tasks");
         if (tasks.length > 0)
         {
-            // XXX: maybe allow user to configure it???
-            // Maybe not?
-            // Probably not.
-            this.taskPool = new TaskPool();
-            this.taskPool.isDaemon = true;
+            this.initTaskPool();
         }
         foreach (name, infoItem; tasks.values)
         {
@@ -562,7 +575,7 @@ class Document : Dict {
             // XXX: is it correct to save procedures and
             // syscmds in the same place???
             auto library = new Library(name, info, this);
-            library.spawn(this);
+            library.spawn();
             this.libraries[name] = library;
             this.procedures[name] = library;
         }

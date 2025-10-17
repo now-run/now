@@ -21,11 +21,13 @@ class SystemCommand : BaseCommand
     bool takeOverOutput;
     string returns;
     bool isolateEnv;
+    Document document;
     Item workdir;
 
     this(string name, Dict info, Document document)
     {
         super(name, info);
+        this.document = document;
 
         /*
         [system_commands/list-dir]

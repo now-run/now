@@ -12,13 +12,25 @@ class Library : SystemCommand
 {
     ProcessPipes pipes;
     std.process.Pid pid;
+    string respawn;
 
     this(string name, Dict info, Document document)
     {
         super(name, info, document);
+
+        info.on(
+            "respawn",
+            delegate (item) {
+                this.respawn = item.toString;
+            },
+            delegate () {
+                this.respawn = "on_error";
+            }
+        );
+        log("Library ", name, ": respawn=", respawn);
     }
 
-    void spawn(Document document)
+    void spawn()
     {
         /*
         command {
@@ -28,7 +40,7 @@ class Library : SystemCommand
         }
         We must evaluate that before running.
         */
-        auto escopo = new Escopo(document, this.name);
+        auto escopo = new Escopo(this.document, this.name);
         auto cmdline = getCommandLine(escopo);
 
         // set each variable on this Escopo as
@@ -62,11 +74,40 @@ class Library : SystemCommand
         > http_server start arg1 arg2 arg3
         */
 
-        auto w = this.pid.tryWait();
-        if (w.terminated)
+        int counter = 0;
+        while (true)
         {
-            // spawn again?
-            // maybe we should count the retries... or not...?
+            counter++;
+            auto w = this.pid.tryWait();
+
+            if (!w.terminated)
+            {
+                break;
+            }
+            else if (counter >= 10)
+            {
+                // do nothing
+            }
+            else if (this.respawn == "always")
+            {
+                this.spawn();
+                continue;
+            }
+            else if (this.respawn == "on_error")
+            {
+                if (w.status != 0)
+                {
+                    this.spawn();
+                    continue;
+                }
+            }
+
+            // default
+            throw new SystemProcessException(
+                input.escopo,
+                "Error while executing library " ~ this.toString(),
+                w.status
+            );
         }
 
         auto rpc_name = input.pop!string;
@@ -87,7 +128,6 @@ class Library : SystemCommand
             auto response_json = parseJSON(response);
             auto rpc = response_json["rpc"];
             auto op = rpc["op"].str;
-            // TODO: extend handling of various operations.
             /*
                - return: returns a value
                - error: throws an error
