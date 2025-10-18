@@ -1,6 +1,5 @@
 module now.nodes.path.methods;
 
-
 import std.datetime : SysTime;
 import std.file;
 import std.path;

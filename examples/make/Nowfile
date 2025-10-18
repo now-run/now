@@ -4,6 +4,17 @@ An example of implementing a Makefile-like document, but
 using the source files md5 hashes instead of modification
 timestamps.
 
+[constants/targets/sqlite]
+description "sqlite object file"
+output_filepath "dist/sqlite.o"
+source_files {
+    - {
+        directory "sqlite3"
+        pattern "*.c"
+    }
+}
+debug false
+command gcc_obj
 
 [constants/targets/release]
 description "now binary, release"
@@ -16,6 +27,14 @@ source_files {
     - {
         directory "cli"
         pattern "*.d"
+    }
+    - {
+        directory "sqlite3"
+        pattern "*.d"
+    }
+    - {
+        directory "dist"
+        pattern "sqlite.o"
     }
 }
 debug false
@@ -122,6 +141,37 @@ command {
     - "-I=cli"
     - "-O$optimization"
     - "-of"
+    - $output_filepath
+}
+
+[system_commands/gcc_obj]
+parameters {
+    file {
+        type path
+    }
+    output_filepath {
+        type string
+    }
+    optimization {
+        type int
+        min 0
+        max 3
+        default 2
+    }
+    extra {
+        type list
+        default {}
+    }
+}
+key_value_separator ""
+option_prefix "-"
+command {
+    - gcc
+    - -c
+    - $file
+    - $extra
+    - "-O$optimization"
+    - "-o"
     - $output_filepath
 }
 

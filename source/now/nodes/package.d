@@ -32,6 +32,8 @@ public import now.nodes.simpletemplate;
 public import now.nodes.tcp;
 public import now.nodes.timer;
 
+public import now.nodes.sqlite3;
+
 public import now.nodes.error;
 
 // Document execution
@@ -80,6 +82,8 @@ enum ObjectType
     TaskRun,
 
     Timer,
+    Sqlite3,
+    Sqlite3Query,
 }
 enum LogLevel
 {
@@ -240,3 +244,7 @@ class Output
         items ~= new Boolean(thing);
     }
 }
+
+// A global null for general use.
+// (Bad idea?)
+Name none;

@@ -28,3 +28,5 @@ import now.system_command.methods;
 
 import now.nodes.tcp.methods;
 import now.nodes.timer.methods;
+
+import now.nodes.sqlite3.methods;

@@ -3,11 +3,14 @@ DIR = source/now
 BASE_CODE = ${DIR}/*.d ${DIR}/system_command/*.d ${DIR}/task/*.d ${DIR}/nodes/*.d ${DIR}/nodes/*/*.d
 SOURCE_CODE = ${BASE_CODE} ${DIR}/commands/*.d cli/now/*.d
 
-dist/now: ${SOURCE_CODE}
+dist/sqlite3.o: sqlite/sqlite3.c sqlite/sqlite3.h
+	gcc -c sqlite/sqlite3.c -fPIC -o $@
+
+dist/now: ${SOURCE_CODE} dist/sqlite3.o sqlite/package.d
 	${CC} $^ \
 		--checkaction=halt \
 		-od=build --oq \
-		-O2 -of dist/now
+		-O2 -of $@
 
 release: dist/now
 	strip $^
@@ -15,7 +18,7 @@ release: dist/now
 
 dist/now.debug: ${SOURCE_CODE}
 	${CC} --d-debug $^ \
-		-O1 -of dist/now.debug
+		-O1 -of $@
 
 standalone: ${SOURCE_CODE}
 	gdc $^ \

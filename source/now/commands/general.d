@@ -1811,6 +1811,14 @@ But what if only one of them returns Skip or Break???
         return exitCode;
     };
 
+    // sqlite3
+    builtinCommands["sqlite3"] = function(string name, Input input, Output output)
+    {
+        auto path = input.pop!string;
+        output.push(new Sqlite3(path));
+        return ExitCode.Success;
+    };
+
     // Others
     loadBase64Commands(builtinCommands);
     loadCsvCommands(builtinCommands);
