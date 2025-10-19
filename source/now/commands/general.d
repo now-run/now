@@ -1481,6 +1481,32 @@ But what if only one of them returns Skip or Break???
         }
         return ExitCode.Success;
     };
+    builtinCommands["setprop"] = function(string path, Input input, Output output)
+    {
+        /*
+        return [o false | setprop (reason = "invalid token") (status = $status)]
+        */
+        string key = input.pop!string;
+        Item item = input.inputs.front;
+
+        foreach (pairItem; input.args)
+        {
+            if (pairItem.type != ObjectType.Pair)
+            {
+                throw new InvalidArgumentsException(
+                    input.escopo,
+                    path
+                    ~ " expects only Pairs as arguments."
+                );
+            }
+            auto pair = cast(Pair)pairItem;
+            item.properties[pair.key.toString] = pair.value;
+        }
+
+        output.push(item);
+
+        return ExitCode.Success;
+    };
 
     // OPERATORS
     /*

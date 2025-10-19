@@ -14,7 +14,7 @@ class BaseCommand
 
     string name;
     Dict parameters;
-    List[string] dependsOn;
+    Items[string] dependsOn;
     Dict info;
 
     this(string name, Dict info)
@@ -49,7 +49,15 @@ class BaseCommand
         auto depends_on = info.getOrCreate!Dict("depends_on");
         foreach (name, args; depends_on)
         {
-            this.dependsOn[name] = cast(List)args;
+            auto l = cast(List)args;
+            if (l is null)
+            {
+                this.dependsOn[name] = [];
+            }
+            else
+            {
+                this.dependsOn[name] = l.items;
+            }
         }
     }
 
@@ -209,7 +217,14 @@ class BaseCommand
         // }
         foreach (stateName, stateArgs; this.dependsOn)
         {
-            input.escopo.document.states[stateName].run(stateArgs);
+            Items evaluatedArgs;
+            foreach (stateArg; stateArgs)
+            {
+                evaluatedArgs ~= stateArg.evaluate(newScope);
+            }
+            input.escopo.document.states[stateName].run(
+                new List(evaluatedArgs), newScope
+            );
         }
 
         // -------------------------

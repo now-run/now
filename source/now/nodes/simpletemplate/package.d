@@ -29,11 +29,12 @@ MethodsMap templateMethods;
 
 Block parseTemplate(string name, Dict info, Dict templates)
 {
+    log("parseTemplate: ", name);
     auto tpl = parseTemplate(name, info["body"].toString());
+    log("parsed! ");
     info.on(
         "extends",
         delegate (item) {
-            log("parseTemplate: ", name);
             string parentName = item.toString();
             auto parent = templates[parentName];
             log(" parentName: ", parentName);
@@ -50,7 +51,9 @@ Block parseTemplate(string name, Dict info, Dict templates)
             {
                 tpl.extends = cast(Block)parent;
             }
-        }, delegate () { }
+        }, delegate () {
+            log("  this template doesn't extend any other.");
+        }
     );
     return tpl;
 }

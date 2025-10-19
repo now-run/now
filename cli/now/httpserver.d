@@ -12,6 +12,7 @@ import std.stdio : stderr, writefln;
 import std.range : front, popFront;
 import std.socket : InternetAddress, Socket, SocketException, SocketSet, TcpSocket;
 import std.string : replace, toLower;
+import std.uri : decode;
 
 import now;
 import now.cli;
@@ -142,6 +143,7 @@ class Client : Fiber
         // ----------------------------
         // Process headers
         strings[string] headers;
+        string[string] cookies;
         string body;
         foreach (part; parts)
         {
@@ -158,7 +160,21 @@ class Client : Fiber
 
                 auto key = split[0].toLower.replace("-", "_");
                 auto value = split[2];
-                headers[key] ~= value;
+
+                if (key == "cookie")
+                {
+                    // can come in many parts: a=b; c=d; e=f
+                    auto cookieParts = value.split("; ");
+                    foreach (cpart; cookieParts)
+                    {
+                        auto s = cpart.split("=");
+                        cookies[s[0]] = s[1..$].join("=");
+                    }
+                }
+                else
+                {
+                    headers[key] ~= value;
+                }
             }
         }
 
@@ -198,7 +214,10 @@ class Client : Fiber
                 }
                 else
                 {
-                    queryParams[pairParts[0]] = pairParts[1..$].join("=");
+                    queryParams[pairParts[0]] = pairParts[1..$]
+                        .join("=")
+                        .replace("%40", "@")  // so weird...
+                        .decode;
                 }
             }
         }
@@ -349,7 +368,32 @@ class Client : Fiber
         }
         escopo["headers"] = headersDict;
 
+        auto cookiesDict = new Dict();
+        foreach (key, value; cookies)
+        {
+            cookiesDict[key] = new String(value);
+        }
+        escopo["cookies"] = cookiesDict;
+
+        // content_type = application/x-www-form-urlencoded
+        // body: field1=value1&field2=value2
         escopo["body"] = new String(body);
+        if (headers.get("content_type", [""])[0] == "application/x-www-form-urlencoded")
+        {
+            auto dataDict = new Dict();
+            auto pairs = body.split("&");
+            foreach (pair; pairs)
+            {
+                auto x = pair.split("=");
+                dataDict[x[0]] = new String(
+                    x[1..$]
+                    .join("=")
+                    .replace("%40", "@")  // so weird...
+                    .decode
+                );
+            }
+            escopo["data"] = dataDict;
+        }
 
         Args args;
         KwArgs kwargs;

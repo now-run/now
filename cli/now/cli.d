@@ -108,7 +108,7 @@ int main(string[] args)
         }
         catch (Exception ex)
         {
-            stderr.writeln("Error while loading document:");
+            stderr.writeln("Error while loading document ", documentPath, ":");
             stderr.writeln(ex);
             return 2;
         }
