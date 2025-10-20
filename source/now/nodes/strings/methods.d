@@ -3,8 +3,7 @@ module now.nodes.strings.methods;
 import std.array;
 import std.conv : ConvException;
 import std.file : dirEntries, SpanMode;
-import std.regex : ctRegex, matchAll, matchFirst;
-import std.regex : xplit = split;
+import std.regex : ctRegex, matchAll, matchFirst, xplit = split, regexReplace = replace;
 import std.string;
 import std.algorithm.mutation : strip, stripLeft, stripRight;
 
@@ -360,10 +359,44 @@ static this()
         output.push(s);
         return ExitCode.Success;
     };
+
+    stringMethods["slug"] = function(Item object, string path, Input input, Output output)
+    {
+        /*
+        o "a?bc/dEf^g" | :: slug
+        > a-bc-def-g
+        */
+        auto s = (cast(String)object).toString;
+        auto result = s.toLower.regexReplace(ctRegex!(`[^a-z\d]+`, "g"), "-");
+        output.push(result);
+
+        return ExitCode.Success;
+    };
+
+    stringMethods["validate_email"] = function(Item object, string path, Input input, Output output)
+    {
+        /*
+        o "x@x" | :: validate_email
+        > true
+        */
+        auto s = (cast(String)object).toString;
+        if (s.split("@").length != 2)
+        {
+            output.push(false);
+        }
+        else
+        {
+            auto result = s.matchFirst(ctRegex!(`.+@[^@]+$`));
+            output.push(cast(bool)result);
+        }
+
+        return ExitCode.Success;
+    };
+
+
+
     stringMethods["kebab_case"] = function(Item object, string path, Input input, Output output)
     {
-        import std.regex : ctRegex, replace;
-
         auto s = (cast(String)object).toString;
 
         static auto regexes = [
@@ -374,19 +407,17 @@ static this()
         ];
         foreach (re; regexes)
         {
-            s = s.replace(re, `$1-$2`);
+            s = s.regexReplace(re, `$1-$2`);
         }
         // a_b_c -> a-b-c
-        s = s.replace(ctRegex!(`[_ ]+`, "g"), `-`);
-        s = s.replace(ctRegex!(`-+`, "g"), `-`);
+        s = s.regexReplace(ctRegex!(`[_ ]+`, "g"), `-`);
+        s = s.regexReplace(ctRegex!(`-+`, "g"), `-`);
 
         output.push(s.toLower);
         return ExitCode.Success;
     };
     stringMethods["snake_case"] = function(Item object, string path, Input input, Output output)
     {
-        import std.regex : ctRegex, replace;
-
         auto s = (cast(String)object).toString;
 
         static auto regexes = [
@@ -398,12 +429,12 @@ static this()
 
         foreach (re; regexes)
         {
-            s = s.replace(re, `$1_$2`);
+            s = s.regexReplace(re, `$1_$2`);
         }
 
         // a-b-c -> a_b_c
-        s = s.replace(ctRegex!(`[- ]+`, "g"), `_`);
-        s = s.replace(ctRegex!(`_+`, "g"), `_`);
+        s = s.regexReplace(ctRegex!(`[- ]+`, "g"), `_`);
+        s = s.regexReplace(ctRegex!(`_+`, "g"), `_`);
 
         output.push(s.toLower);
         return ExitCode.Success;

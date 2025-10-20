@@ -15,6 +15,7 @@ class BaseCommand
     string name;
     Dict parameters;
     Items[string] dependsOn;
+    string[] dependsOnOrder;
     Dict info;
 
     this(string name, Dict info)
@@ -58,6 +59,7 @@ class BaseCommand
             {
                 this.dependsOn[name] = l.items;
             }
+            this.dependsOnOrder ~= name;
         }
     }
 
@@ -215,8 +217,10 @@ class BaseCommand
         //         - $basedir
         //     }
         // }
-        foreach (stateName, stateArgs; this.dependsOn)
+        // foreach (stateName, stateArgs; this.dependsOn)
+        foreach (stateName; this.dependsOnOrder)
         {
+            Items stateArgs = this.dependsOn[stateName];
             Items evaluatedArgs;
             foreach (stateArg; stateArgs)
             {
