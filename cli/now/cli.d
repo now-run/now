@@ -220,7 +220,7 @@ int runDocument(Document document, string commandName, string[] commandArgs)
     */
     foreach (arg; commandArgs[1..$])
     {
-        if (arg.startsWith("--"))
+        if (arg.length > 2 && arg.startsWith("--"))
         {
             // alfa-beta=1=2=3 -> alfa_beta = "1=2=3"
             auto pair = arg[2..$].split("=");

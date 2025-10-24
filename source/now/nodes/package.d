@@ -135,6 +135,10 @@ struct Input
         // the correct type declaration for "Items items"!
         this.items = chain(args, inputs).array;
     }
+    void reset()
+    {
+        stackPointer = 0;
+    }
     string toString()
     {
         return "Input: "
@@ -151,7 +155,7 @@ struct Input
             {
                 throw new EmptyException(
                     escopo,
-                    "Can't pop from empty Input"
+                    "Can't pop from empty Input; stackPointer=" ~ stackPointer.to!string
                 );
             }
             else

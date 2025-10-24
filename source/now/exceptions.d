@@ -157,23 +157,28 @@ ExitCode errorPrinter(ExitCode delegate() f)
         }
         else
         {
-            stderr.writeln("c> ", ex.classe);
-            stderr.writeln("s> ", ex.escopo);
-            stderr.writeln("m> ", ex.msg);
-            if (ex.pipeline !is null)
-            {
-                stderr.writeln("p> ", ex.pipeline);
-                if (ex.pipeline.documentLineNumber)
-                {
-                    stderr.writeln("l> ", ex.pipeline.documentLineNumber);
-                }
-            }
-            if (ex.subject !is null)
-            {
-                stderr.writeln("o> ", ex.subject);
-            }
-            stderr.writeln("n> ", ex.code);
+            printException(ex);
             throw ex;
         }
     }
+}
+
+void printException(NowException ex)
+{
+    stderr.writeln("c> ", ex.classe);
+    stderr.writeln("s> ", ex.escopo);
+    stderr.writeln("m> ", ex.msg);
+    if (ex.pipeline !is null)
+    {
+        stderr.writeln("p> ", ex.pipeline);
+        if (ex.pipeline.documentLineNumber)
+        {
+            stderr.writeln("l> ", ex.pipeline.documentLineNumber);
+        }
+    }
+    if (ex.subject !is null)
+    {
+        stderr.writeln("o> ", ex.subject);
+    }
+    stderr.writeln("n> ", ex.code);
 }

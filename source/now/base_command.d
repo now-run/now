@@ -208,27 +208,22 @@ class BaseCommand
         // Since we're not going to use the old scope anymore:
         input.escopo = newScope;
 
-        // state!
-        // TODO: evaluate each item after parameters evaluation
-        // so user can reference them in the depends_on declaration.
-        // Like this:
-        // depends_on {
-        //     directory {
-        //         - $basedir
-        //     }
-        // }
-        // foreach (stateName, stateArgs; this.dependsOn)
+        // state checks!
         foreach (stateName; this.dependsOnOrder)
         {
-            Items stateArgs = this.dependsOn[stateName];
-            Items evaluatedArgs;
-            foreach (stateArg; stateArgs)
-            {
-                evaluatedArgs ~= stateArg.evaluate(newScope);
-            }
-            input.escopo.document.states[stateName].run(
-                new List(evaluatedArgs), newScope
+            auto state = input.escopo.document.states[stateName];
+            auto stateArgs = this.dependsOn[stateName];
+            auto stateOutput = new Output();
+            auto stateExitCode = state.run(
+                stateArgs, newScope, stateOutput
             );
+            // A state action can override the return of
+            // the "decorated" procedure:
+            if (stateExitCode != ExitCode.Success)
+            {
+                output.items = stateOutput.items;
+                return stateExitCode;
+            }
         }
 
         // -------------------------

@@ -35,20 +35,29 @@ class State
         log("state response: ", response);
         return response.toBool;
     }
-    ExitCode act(List args, Escopo escopo)
+    ExitCode act(List args, Escopo escopo, Output output)
     {
-        auto output = new Output();
-        // auto escopo = new Escopo(document, "state action");
         escopo["state_args"] = args;
         auto exitCode = this.actionProgram.run(escopo, output);
         log("state.", name, ".act.exitCode:", exitCode);
         return exitCode;
     }
-    void run(List args, Escopo escopo)
+    ExitCode run(Items args, Escopo escopo, Output output)
     {
-        if (this.check(args, escopo) == false)
+        Items evaluatedArgsItems;
+        foreach (stateArg; args)
         {
-            this.act(args, escopo);
+            evaluatedArgsItems ~= stateArg.evaluate(escopo);
+        }
+
+        auto evaluatedArgs = new List(evaluatedArgsItems);
+        if (this.check(evaluatedArgs, escopo) == false)
+        {
+            return this.act(evaluatedArgs, escopo, output);
+        }
+        else
+        {
+            return ExitCode.Success;
         }
     }
 }

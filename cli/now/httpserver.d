@@ -325,15 +325,31 @@ class Client : Fiber
             return;
         }
 
+        //
+        auto escopo = new Escopo(document, path);
+
         // ----------------------------
         // Get the response from Now
-        string commandName = "http"
-            ~ path.replace("/", ":")
-            ~ ":" ~ verb;
-        string altCommandName = "http"
-            ~ path.replace("/", ":");
-
-        auto escopo = new Escopo(document, path);
+        // XXX: will we allow for "/users/:id/friends"?
+        // Or force users to go with "/users/friends?id=x"
+        // Solution: "id is always the last part".
+        // So, if the route isn't found, try trimmimg the last part.
+        // (And delivering the ID as `$id`?
+        auto pathParts = path.split("/");
+        string[] commandNames = [
+            path.replace("/", ":") ~ ":" ~ verb,
+            path.replace("/", ":"),
+        ];
+        stderr.writeln("pathParts: ", pathParts);
+        if (pathParts.length >= 3)
+        {
+            auto lastPart = pathParts.back;
+            pathParts.popBack;
+            auto pathMinusTail = pathParts.join(":");
+            commandNames ~= pathMinusTail ~ ":" ~ verb;
+            commandNames ~= pathMinusTail;
+            escopo["object_id"] = new String(lastPart);
+        }
 
         escopo["verb"] = new String(verb);
 
@@ -409,32 +425,50 @@ class Client : Fiber
 
         Fiber.yield();
 
-        try
+        NowException exception = null;
+        foreach (commandName; commandNames)
         {
-            exitCode = errorPrinter({
-                try
-                {
-                    return document.runProcedure(commandName, input, output, true);
-                }
-                catch (ProcedureNotFoundException)
-                {
-                    // TODO: log the failed name
-                    return document.runProcedure(altCommandName, input, output, true);
-                }
-            });
+            auto name = "http" ~ commandName;
+            stderr.writeln("trying: ", name);
+
+            input.reset;
+
+            try
+            {
+                exitCode = document.runProcedure(name, input, output, true);
+                stderr.writeln(" -> ", exitCode);
+            }
+            catch (ProcedureNotFoundException ex)
+            {
+                stderr.writeln(" not found");
+                exception = ex;
+                printException(exception);
+                continue;
+            }
+            catch (NowException ex)
+            {
+                stderr.writeln(" ", ex);
+                exception = ex;
+                printException(exception);
+                break;
+            }
+
+            // If didn't break before, it's a success.
+            exception = null;
+            break;
         }
-        catch (NowException ex)
+        if (exception !is null)
         {
-            auto error = ex.toError;
+            auto error = exception.toError;
             auto errorString = error.toString();
-            stderr.writeln(errorString);
-            // return error.code;
 
             socket.send("HTTP/1.1 500 Server Error\r\n");
             socket.send("\r\n");
             socket.send(errorString);
             return;
         }
+
+        // TODO: could we use the exitCode to something???
 
         Fiber.yield();
 
