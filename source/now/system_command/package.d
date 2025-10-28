@@ -346,7 +346,7 @@ class SystemProcess : Item
     bool isolateEnv;
     string[string] env;
     int returnCode = 0;
-    bool _isRunning;
+    bool _isRunning = true;
 
     this(
         string[] cmdline,

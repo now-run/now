@@ -294,11 +294,21 @@ class Document : Dict {
                 catch (NotFoundException ex)
                 {
                     currentSection = new Dict();
-                    this[sectionName] = cast(Dict)section;
-                    continue;
+                    this[sectionName] = sectionDict;
                 }
-                // else:
-                currentSection.update(cast(Dict)section);
+                currentSection.update(sectionDict);
+
+                /*
+                [constants/server]
+                url = blebs
+
+                > o $server_url
+                */
+                foreach (key, value; sectionDict)
+                {
+                    auto completeKey = sectionName ~ "_" ~ key;
+                    this[completeKey] = value;
+                }
             }
         }
     }

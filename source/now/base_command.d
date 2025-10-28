@@ -100,6 +100,7 @@ class BaseCommand
         }
 
         auto setParametersCount = 0;
+        auto parametersSetWithDefaultValues = 0;
         string[] namedParametersAlreadySet;
 
         // Set every default value in the parameters:
@@ -115,6 +116,7 @@ class BaseCommand
                 log("-- from default values: newScope[", parameterName, "] = ", defaultValue);
                 namedParametersAlreadySet ~= parameterName;
                 setParametersCount++;
+                parametersSetWithDefaultValues++;
             }
         }
 
@@ -160,7 +162,9 @@ class BaseCommand
         }
 
         auto remainingParameters = parameters.order.length - setParametersCount;
-        foreach (index, argument; input.inputs.take(remainingParameters))
+        log("- Positional arguments, from inputs");
+        log("-- remaining parameters to be set: ", remainingParameters);
+        foreach (index, argument; input.inputs.take(remainingParameters + parametersSetWithDefaultValues))
         {
             // parameters.length = 4
             // arguments = 2

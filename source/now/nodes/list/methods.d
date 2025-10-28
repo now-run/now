@@ -20,13 +20,22 @@ static this()
         */
         List l = cast(List)object;
 
-        // start:
-        long i = input.pop!long();
+        auto i = input.pop!long();
         if (i < 0)
         {
             i = l.items.length + i;
         }
         size_t index = cast(size_t)i;
+
+        if (index >= l.items.length)
+        {
+            throw new InvalidArgumentsException(
+                input.escopo,
+                "Unreachable index",
+                -1,
+                l
+            );
+        }
 
         output.push(l.items[index]);
         return ExitCode.Success;

@@ -115,7 +115,12 @@ static this()
     dictMethods["pairs"] = function(Item object, string path, Input input, Output output)
     {
         auto dict = cast(Dict)object;
-        output.push(cast(Items)(dict.asPairs));
+        // It would make sense to return a Sequence, but the reality is
+        // that `foreach`, `collect` and others won't work, since
+        // each Pair is actually a List, so
+        // dict (a = b) (c = d) | :: pairs | collect
+        // > (a , b , c , d)
+        output.push(new List(cast(Items)(dict.asPairs)));
         return ExitCode.Success;
     };
     dictMethods["run"] = function(Item object, string path, Input input, Output output)
