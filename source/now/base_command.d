@@ -206,7 +206,7 @@ class BaseCommand
         // Inputs go to the $inputs variable (List)
         newScope["inputs"] = new List(input.inputs);
         // ... and are used as $args just the same...
-        // args ~= input.inputs;
+        args ~= input.inputs;
         newScope["args"] = new List(args);
 
         // Since we're not going to use the old scope anymore:

@@ -1,5 +1,7 @@
 module now.system_command.methods;
 
+import core.sys.posix.signal : SIGKILL;
+import std.process : kill;
 
 import now;
 import now.system_command;
@@ -97,10 +99,10 @@ static this()
     systemProcessMethods["kill"] = function(Item target, string path, Input input, Output output)
     {
         auto process = cast(SystemProcess)target;
-
-        throw new NotImplementedException(
-            input.escopo,
-            "Not implemented yet"
-        );
+        process.pid.kill(SIGKILL);
+        process.wait;
+        process.isRunning; //  mark _isRunning as false!
+        output.push(process.returnCode);
+        return ExitCode.Success;
     };
 }

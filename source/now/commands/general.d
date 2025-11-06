@@ -684,7 +684,7 @@ static this()
         int code = cast(int)(input.pop!long(0));
         auto message = input.pop!string("");
 
-        throw new UserException(
+        throw new ExitException(
             input.escopo,
             message,
             code,

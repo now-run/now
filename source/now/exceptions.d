@@ -51,6 +51,7 @@ mixin(customNowException!"AssertionError");
 mixin(customNowException!"DException");
 mixin(customNowException!"DError");
 mixin(customNowException!"EmptyException");
+mixin(customNowException!"ExitException");
 mixin(customNowException!"HTTPException");
 mixin(customNowException!"IncompleteInputException");
 mixin(customNowException!"InvalidArgumentsException");

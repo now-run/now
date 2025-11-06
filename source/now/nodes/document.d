@@ -234,10 +234,12 @@ class Document : Dict {
                 if (envValuePtr !is null)
                 {
                     finalValue = *envValuePtr;
+                    finalValue.properties["_default"] = new Boolean(false);
                 }
                 else if (infoItem.type != ObjectType.Dict)
                 {
                     finalValue = infoItem;
+                    finalValue.properties["_default"] = new Boolean(true);
                 }
                 else
                 {
@@ -247,6 +249,7 @@ class Document : Dict {
                     {
                         // (http . port) = 5000
                         finalValue = *valuePtr;
+                        finalValue.properties["_default"] = new Boolean(true);
                     }
                     else
                     {

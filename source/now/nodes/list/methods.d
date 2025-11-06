@@ -31,7 +31,7 @@ static this()
         {
             throw new InvalidArgumentsException(
                 input.escopo,
-                "Unreachable index",
+                "Unreachable index: " ~ index.to!string,
                 -1,
                 l
             );
