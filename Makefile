@@ -17,14 +17,24 @@ dist/now.debug: ${SOURCE_CODE}
 	${CC} --d-debug $^ \
 		-O1 -of dist/now.debug
 
-standalone: ${SOURCE_CODE}
+gnu-standalone: ${SOURCE_CODE}
 	gdc $^ \
 		-frelease -O3 \
 		-static-libphobos \
 		-o dist/now-$$( \
 			git describe --tags $$( \
 				git rev-list --tags --max-count=1 \
-			))-$$(uname -m)-$$(uname -o | sed 's:/:-:g' | tr A-Z a-z)
+			))-$$(uname -m)-glibc-linux
+	strip dist/now-*
+
+musl-standalone: ${SOURCE_CODE}
+	gdc $^ \
+		-frelease -O3 \
+		-static-libphobos \
+		-o dist/now-$$( \
+			git describe --tags $$( \
+				git rev-list --tags --max-count=1 \
+			))-$$(uname -m)-musl-linux
 	strip dist/now-*
 
 macos-standalone: ${SOURCE_CODE}
@@ -39,3 +49,9 @@ macos-standalone: ${SOURCE_CODE}
 
 clean:
 	-rm -f dist/now*
+
+alpine:
+	podman run --rm -v $$PWD:/opt/now -it alpine sh -c 'apk add make gcc-gdc git && cd /opt/now && make musl-standalone'
+
+ubuntu:
+	podman run --rm -v $$PWD:/opt/now -it ubuntu:24.04 bash -c 'apt-get update && apt-get upgrade -y && apt-get install -y gdc make git && cd /opt/now && make gnu-standalone'
