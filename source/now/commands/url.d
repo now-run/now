@@ -22,7 +22,7 @@ void loadUrlCommands(CommandsMap commands)
         foreach (item; input.popAll)
         {
             auto s = item.toString();
-            output.push(s.decode());
+            output.push(s.decodeComponent());
         }
         return ExitCode.Success;
     };
