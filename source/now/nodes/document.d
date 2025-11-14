@@ -5,7 +5,7 @@ import core.runtime;
 import std.algorithm.searching : canFind, endsWith, startsWith;
 import std.file : exists, getcwd, isFile, read;
 import std.path : buildNormalizedPath, buildPath, dirName;
-import std.parallelism : TaskPool;
+import std.parallelism : TaskPool, totalCPUs;
 import std.string : toStringz;
 import std.uni : toLower, toUpper;
 
@@ -412,6 +412,10 @@ class Document : Dict {
         if (workers)
         {
             this.taskPool = new TaskPool(workers);
+        }
+        else if (totalCPUs == 1)
+        {
+            this.taskPool = new TaskPool(1);
         }
         else
         {

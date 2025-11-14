@@ -68,7 +68,7 @@ class Client : Fiber
         char[RECEIVE_BUFFER_SIZE] buf;
         char[] request;
 
-        auto remoteAddress = socket.remoteAddress();
+        auto remoteAddress = socket.remoteAddress.toString;
 
         while (buf.length < MAX_REQUEST_SIZE)
         {
@@ -114,7 +114,7 @@ class Client : Fiber
                     // if the connection closed due to an error, remoteAddress() could fail
                     log(
                         "Connection closed: ",
-                        socket.remoteAddress().toString()
+                        remoteAddress
                     );
                 }
                 catch (SocketException)
@@ -282,7 +282,7 @@ class Client : Fiber
                         // if the connection closed due to an error, remoteAddress() could fail
                         log(
                             "Connection closed: ",
-                            socket.remoteAddress().toString()
+                            remoteAddress
                         );
                     }
                     catch (SocketException)
