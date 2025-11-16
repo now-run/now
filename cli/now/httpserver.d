@@ -9,6 +9,7 @@ import std.datetime : dur;
 import std.file : exists, read;
 import std.path : buildPath;
 import std.stdio : stderr, writefln;
+import std.string : stripRight;
 import std.range : front, popFront;
 import std.socket : InternetAddress, Socket, SocketException, SocketSet, TcpSocket;
 import std.string : replace, toLower;
@@ -43,8 +44,9 @@ class Client : Fiber
         this.document = document;
         this.socket = socket;
         stderr.writeln(
-            "New client: ",
-            socket.remoteAddress().toString()
+            "---------- New client: ",
+            socket.remoteAddress().toString(),
+            " ----------"
         );
         super(&safe_run);
     }
@@ -236,6 +238,7 @@ class Client : Fiber
         log(verb, " ", path, " ", protocol);
 
         long contentLength = body.length;
+        bool isChunked = false;
         foreach (key, values; headers)
         {
             log("h: ", key, "=", values);
@@ -244,6 +247,10 @@ class Client : Fiber
             {
                 contentLength = values[0].to!long;
             }
+            else if (key == "transfer_encoding") {
+                // (transfer_encoding = chunked) (expect = 100-continue)
+                isChunked = (values[0] == "chunked");
+            }
         }
         log("body:\n", body);
         log("-----\n");
@@ -251,7 +258,64 @@ class Client : Fiber
         // ----------------------------
         // Read the rest of the body if necessary
         // TODO: consider that the body could be both binary or Unicode...
-        if (body.length < contentLength)
+        if (isChunked) {
+            /*
+            3\r\n
+            xyz\r\n
+            4\r\n
+            abcd\r\n
+            0\r\n
+            \r\n
+            */
+            log("DATA IS CHUNKED!");
+            foreach (i; 0..1000)
+            {
+                //Fiber.yield();
+                auto datLength = socket.receive(buf[]);
+
+                if (datLength == Socket.ERROR)
+                {
+                    log("Connection error.");
+                    return;
+                }
+                else if (datLength != 0)
+                {
+                    log("> chunk=", buf[0..datLength]);
+                    /*
+                    chunk=a\r\n
+                    123456789a\r\n
+                    */
+                    auto chunkParts = buf[0..datLength].to!string.split("\n");
+                    auto sizeString = chunkParts[0].stripRight("\r");
+                    auto rest = chunkParts[1..$].join("\n").stripRight("\r\n");
+                    log(">> size=", sizeString, "; rest=", rest, ";;");
+                    body ~= rest;
+
+                    if (sizeString == "0")
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        // if the connection closed due to an error, remoteAddress() could fail
+                        log(
+                            "Connection closed: ",
+                            remoteAddress
+                        );
+                    }
+                    catch (SocketException)
+                    {
+                        log("Connection closed.");
+                    }
+                    break;
+                }
+            }
+            log(">> chunked body=", body);
+        }
+        else if (body.length < contentLength)
         {
             log(
                 "Body length (",
@@ -340,7 +404,7 @@ class Client : Fiber
             path.replace("/", ":") ~ ":" ~ verb,
             path.replace("/", ":"),
         ];
-        stderr.writeln("pathParts: ", pathParts);
+        log("pathParts: ", pathParts);
         if (pathParts.length >= 3)
         {
             auto lastPart = pathParts.back;
@@ -429,27 +493,27 @@ class Client : Fiber
         foreach (commandName; commandNames)
         {
             auto name = "http" ~ commandName;
-            stderr.writeln("trying: ", name);
+            log("trying: ", name);
 
             input.reset;
 
             try
             {
                 exitCode = document.runProcedure(name, input, output, true);
-                stderr.writeln(" -> ", exitCode);
+                // stderr.writeln(" -> ", exitCode);
             }
             catch (ProcedureNotFoundException ex)
             {
                 stderr.writeln(" not found");
                 exception = ex;
-                printException(exception);
+                // printException(exception);
                 continue;
             }
             catch (NowException ex)
             {
                 stderr.writeln(" ", ex);
                 exception = ex;
-                printException(exception);
+                // printException(exception);
                 break;
             }
 
@@ -459,6 +523,8 @@ class Client : Fiber
         }
         if (exception !is null)
         {
+            printException(exception);
+
             auto error = exception.toError;
             auto errorString = error.toString();
 
