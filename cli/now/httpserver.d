@@ -77,7 +77,6 @@ class Client : Fiber
         char[] request;
 
         auto remoteAddress = socket.remoteAddress.toString;
-        auto remoteIP = remoteAddress.split(':')[0];
 
         while (buf.length < MAX_REQUEST_SIZE)
         {
@@ -135,31 +134,6 @@ class Client : Fiber
             }
         }
         Fiber.yield();
-
-        log("blockedIPs=", blockedIPs);
-
-        auto untilRef = (remoteIP in blockedIPs);
-        if (untilRef !is null) {
-            long until = *untilRef;
-
-            SysTime today = Clock.currTime();
-            long now = today.toUnixTime!long();
-
-            auto diff = until - now;
-
-            if (diff > 0)
-            {
-                socket.send("HTTP/1.1 429 Too Many Requests\r\n");
-                socket.send("\r\n");
-                socket.send("Retry-After: " ~ diff.to!string ~ "\r\n");
-                return;
-            }
-            else
-            {
-                stderr.writeln("Unblocked: ", remoteIP);
-                blockedIPs.remove(remoteIP);
-            }
-        }
 
         auto data = (cast(string) request);
         log(
@@ -271,6 +245,7 @@ class Client : Fiber
 
         long contentLength = body.length;
         bool isChunked = false;
+        auto remoteIP = remoteAddress.split(':')[0];
         foreach (key, values; headers)
         {
             log("h: ", key, "=", values);
@@ -283,9 +258,41 @@ class Client : Fiber
                 // (transfer_encoding = chunked) (expect = 100-continue)
                 isChunked = (values[0] == "chunked");
             }
+            else if (key == "x_real_ip")
+            {
+                remoteIP = values[0];
+            }
         }
         log("body:\n", body);
         log("-----\n");
+        stderr.writeln("remoteIP=", remoteIP);
+
+        log("blockedIPs=", blockedIPs);
+
+        auto untilRef = (remoteIP in blockedIPs);
+        if (untilRef !is null) {
+            long until = *untilRef;
+
+            SysTime today = Clock.currTime();
+            long now = today.toUnixTime!long();
+
+            auto diff = until - now;
+
+            if (diff > 0)
+            {
+                socket.send("HTTP/1.1 429 Too Many Requests\r\n");
+                socket.send("\r\n");
+                socket.send("Retry-After: " ~ diff.to!string ~ "\r\n");
+                return;
+            }
+            else
+            {
+                stderr.writeln("Unblocked: ", remoteIP);
+                blockedIPs.remove(remoteIP);
+            }
+        }
+
+
 
         // ----------------------------
         // Read the rest of the body if necessary
