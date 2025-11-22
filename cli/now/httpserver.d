@@ -544,7 +544,7 @@ class Client : Fiber
             }
             catch (ProcedureNotFoundException ex)
             {
-                stderr.writeln(" not found");
+                // stderr.writeln(" not found");
                 exception = ex;
                 errorCode = 404;
                 // printException(exception);
@@ -571,6 +571,7 @@ class Client : Fiber
 
             if (errorCode == 404)
             {
+                stderr.writeln("Not found: ", path);
                 socket.send("HTTP/1.1 404 Not Found\r\n");
 
                 foreach (part; path.split('/')[1..$])
@@ -594,6 +595,10 @@ class Client : Fiber
             }
             else
             {
+                stderr.writeln(
+                    "Server error: ", path, " / ",
+                    errorCode.to!string, " ", errorString
+                );
                 socket.send("HTTP/1.1 " ~ errorCode.to!string ~ " Server Error\r\n");
             }
             socket.send("\r\n");
