@@ -1308,6 +1308,35 @@ countLoop:
         }
         return ExitCode.Success;
     };
+    builtinCommands["every"] = function(string path, Input input, Output output)
+    {
+        auto interval = input.pop!Integer;
+        auto subprogram = input.pop!SubProgram;
+
+        auto n = (input.documentLineNumber * 1000) + input.documentColNumber;
+        string key = ":" ~ n.to!string ~ ":every:count";
+        long count = 0;
+        if (auto countItem = (key in interval.properties))
+        {
+            count = countItem.toLong;
+        }
+        else
+        {
+            interval.properties[key] = new Integer(0);
+        }
+        count ++;
+
+        auto exitCode = ExitCode.Success;
+
+        if (count == interval.toLong)
+        {
+            count = 0;
+            exitCode = subprogram.run(input.escopo, input.popAll, output);
+        }
+        interval.properties[key] = new Integer(count);
+
+        return exitCode;
+    };
 
     builtinCommands["try"] = function(string path, Input input, Output output)
     {

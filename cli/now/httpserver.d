@@ -1,16 +1,17 @@
 module now.httpserver;
 
 import core.thread : Fiber;
-import std.algorithm : filter, remove;
+import std.algorithm : among, filter, remove;
 import std.algorithm.searching : canFind, findSplit, startsWith;
 import std.array : array, join, split;
 import std.conv : to;
-import std.datetime : dur;
+import std.datetime;
 import std.file : exists, read;
 import std.path : buildPath;
 import std.stdio : stderr, writefln;
 import std.string : stripRight;
 import std.range : front, popFront;
+import std.regex : matchFirst;
 import std.socket : InternetAddress, Socket, SocketException, SocketSet, TcpSocket;
 import std.string : replace, toLower;
 import std.uri : decode;
@@ -20,19 +21,24 @@ import now.cli;
 import now.env_vars;
 import now.json;
 
+const auto DEFAULT_IP_BLOCK_TIME = "300";
 const auto DEFAULT_PORT = 5000;
 const auto DEFAULT_STATIC_DIR = "./static";
 const auto DEFAULT_STATIC_PATH = "/static/";
+const auto DEFAULT_FORBIDDEN_WORDS = "wp-admin,.+\\.php,cgi-bin";
 const auto MAX_CONNECTIONS = 1024;
 const auto SELECT_TIMEOUT = 50;
 const auto RECEIVE_BUFFER_SIZE = 256;
 const auto MAX_REQUEST_SIZE = 1024 * 1024;
 
 
+alias strings = string[];
+
 string static_files_dir;
 string static_files_path;
-
-alias strings = string[];
+strings forbiddenWords;
+long[string] blockedIPs;
+long ipBlockTime;
 
 class Client : Fiber
 {
@@ -71,6 +77,7 @@ class Client : Fiber
         char[] request;
 
         auto remoteAddress = socket.remoteAddress.toString;
+        auto remoteIP = remoteAddress.split(':')[0];
 
         while (buf.length < MAX_REQUEST_SIZE)
         {
@@ -128,6 +135,31 @@ class Client : Fiber
             }
         }
         Fiber.yield();
+
+        log("blockedIPs=", blockedIPs);
+
+        auto untilRef = (remoteIP in blockedIPs);
+        if (untilRef !is null) {
+            long until = *untilRef;
+
+            SysTime today = Clock.currTime();
+            long now = today.toUnixTime!long();
+
+            auto diff = until - now;
+
+            if (diff > 0)
+            {
+                socket.send("HTTP/1.1 429 Too Many Requests\r\n");
+                socket.send("\r\n");
+                socket.send("Retry-After: " ~ diff.to!string ~ "\r\n");
+                return;
+            }
+            else
+            {
+                stderr.writeln("Unblocked: ", remoteIP);
+                blockedIPs.remove(remoteIP);
+            }
+        }
 
         auto data = (cast(string) request);
         log(
@@ -490,6 +522,7 @@ class Client : Fiber
         Fiber.yield();
 
         NowException exception = null;
+        long errorCode = 500;
         foreach (commandName; commandNames)
         {
             auto name = "http" ~ commandName;
@@ -506,6 +539,7 @@ class Client : Fiber
             {
                 stderr.writeln(" not found");
                 exception = ex;
+                errorCode = 404;
                 // printException(exception);
                 continue;
             }
@@ -528,7 +562,33 @@ class Client : Fiber
             auto error = exception.toError;
             auto errorString = error.toString();
 
-            socket.send("HTTP/1.1 500 Server Error\r\n");
+            if (errorCode == 404)
+            {
+                socket.send("HTTP/1.1 404 Not Found\r\n");
+
+                foreach (part; path.split('/')[1..$])
+                {
+                    foreach (word; forbiddenWords)
+                    {
+                        if (part.matchFirst("^" ~ word ~ "$"))
+                        {
+                            SysTime today = Clock.currTime();
+                            long now = today.toUnixTime!long();
+                            blockedIPs[remoteIP] = now + ipBlockTime;
+                            stderr.writeln(
+                                "BLOCKED ", remoteIP,
+                                " because '", part, "'/'", word,
+                                "' until ", now + ipBlockTime
+                            );
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                socket.send("HTTP/1.1 " ~ errorCode.to!string ~ " Server Error\r\n");
+            }
             socket.send("\r\n");
             socket.send(errorString);
             return;
@@ -652,6 +712,8 @@ int httpServer(Document document, string[] documentArgs)
     kwargs["port"] = new Integer(DEFAULT_PORT);
     kwargs["static_files_dir"] = new String(DEFAULT_STATIC_DIR);
     kwargs["static_files_path"] = new String(DEFAULT_STATIC_PATH);
+    kwargs["forbidden_words"] = new String(DEFAULT_FORBIDDEN_WORDS);
+    kwargs["ip_block_time"] = new String(DEFAULT_IP_BLOCK_TIME);
     foreach (arg; documentArgs)
     {
         if (arg.startsWith("--"))
@@ -670,6 +732,8 @@ int httpServer(Document document, string[] documentArgs)
     ushort port = cast(ushort) kwargs["port"].toLong;
     static_files_dir = kwargs["static_files_dir"].toString;
     static_files_path = kwargs["static_files_path"].toString;
+    forbiddenWords = kwargs["forbidden_words"].toString.split(",").array;
+    ipBlockTime = kwargs["ip_block_time"].toLong;
 
     log("  + args: ", args);
     log("  + kwargs: ", kwargs);

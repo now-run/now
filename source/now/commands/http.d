@@ -152,6 +152,7 @@ void loadHttpCommands(CommandsMap commands)
         }
         catch (HTTPStatusException)
         {
+            log("http.post content=", content);
             throw new HTTPException(
                 input.escopo,
                 http.http.statusLine.reason,
