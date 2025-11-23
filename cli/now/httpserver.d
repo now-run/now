@@ -281,8 +281,8 @@ class Client : Fiber
             if (diff > 0)
             {
                 socket.send("HTTP/1.1 429 Too Many Requests\r\n");
-                socket.send("\r\n");
                 socket.send("Retry-After: " ~ diff.to!string ~ "\r\n");
+                socket.send("\r\n");
                 return;
             }
             else
