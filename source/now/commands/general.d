@@ -1146,6 +1146,8 @@ static this()
                     case ExitCode.Continue:
                         break;  // <-- break the switch, not the while.
                     case ExitCode.Return:
+                        output.push(nextOutput.items);
+                        goto case;
                     case ExitCode.Success:
                         return exitCode;
                     // TODO: check if this makes any sense:
@@ -1207,6 +1209,8 @@ static this()
                     case ExitCode.Continue:
                         break;  // <-- break the switch, not the while.
                     case ExitCode.Return:
+                        output.push(nextOutput.items);
+                        goto case;
                     case ExitCode.Success:
                         return exitCode;
                     // TODO: check if this makes any sense:
