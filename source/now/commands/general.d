@@ -1236,6 +1236,33 @@ static this()
 
         return ExitCode.Success;
     };
+    builtinCommands["on.skip"] = function(string path, Input input, Output output)
+    {
+        /*
+        > path /tmp/x | :: tail | on.skip {print "skip!"} | {print ">"}
+        2
+        4
+        6
+        8
+        10
+        */
+        auto body = input.pop!SubProgram();
+        auto targets = input.popAll();
+        if (targets.length == 0)
+        {
+            auto msg = "no target";
+            throw new SyntaxErrorException(
+                input.escopo,
+                msg
+            );
+        }
+
+        auto iterator = new OnSkip(
+            targets, body, input.escopo
+        );
+        output.push(iterator);
+        return ExitCode.Success;
+    };
 
     builtinCommands["loop"] = function(string path, Input input, Output output)
     {

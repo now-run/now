@@ -303,3 +303,83 @@ class Filter : Transformer
         return ExitCode.Skip;
     }
 }
+
+class OnSkip : Transformer
+{
+    ExitCode lastExitCode;
+
+    this(Items targets, SubProgram body, Escopo escopo)
+    {
+        super(targets, null, body, escopo);
+        this.typeName = "on.skip";
+    }
+
+    override Output executeNextTarget(Escopo escopo, Output output)
+    {
+        if (targetIndex >= targets.length)
+        {
+            return null;
+        }
+
+        auto target = targets[targetIndex];
+
+        auto nextOutput = new Output;
+        lastExitCode = target.next(escopo, nextOutput);
+
+        switch (lastExitCode)
+        {
+            // XXX: we keep calling this method recursively...
+            case ExitCode.Break:
+                targetIndex++;
+                return executeNextTarget(escopo, output);
+            case ExitCode.Skip:
+                break;
+            case ExitCode.Continue:
+                break;
+            default:
+                throw new IteratorException(
+                    escopo,
+                    to!string(target)
+                    ~ ".next returned "
+                    ~ to!string(lastExitCode)
+                );
+        }
+
+        return nextOutput;
+    }
+
+    override ExitCode next(Escopo escopo, Output output)
+    {
+        auto nextOutput = executeNextTarget(escopo, output);
+        if (nextOutput is null)
+        {
+            return ExitCode.Break;
+        }
+
+        auto items = nextOutput.items;
+        if (lastExitCode != ExitCode.Skip)
+        {
+            output.push(items);
+            return lastExitCode;
+        }
+
+        auto onSkipOutput = new Output;
+        auto execExitCode = body.run(escopo, items, onSkipOutput);
+        log("-- OnSkip.body.exitCode: ", execExitCode, " <- ", onSkipOutput.items);
+
+        // TODO: handle execExitCode?
+        switch (execExitCode)
+        {
+            case ExitCode.Success:
+                return ExitCode.Skip;
+            case ExitCode.Inject:
+                output.push(onSkipOutput.items);
+                return ExitCode.Continue;
+            case ExitCode.Return:
+                output.push(onSkipOutput.items);
+                return ExitCode.Return;
+            default:
+                return execExitCode;
+        }
+    }
+}

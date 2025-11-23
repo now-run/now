@@ -87,6 +87,12 @@ static this()
         output.push(new PathFileRange(path));
         return ExitCode.Success;
     };
+    pathMethods["tail"] = function(Item object, string name, Input input, Output output)
+    {
+        auto path = cast(Path)object;
+        output.push(new PathFileRange(path, false));
+        return ExitCode.Success;
+    };
     pathMethods["write"] = function(Item object, string name, Input input, Output output)
     {
         auto path = cast(Path)object;
