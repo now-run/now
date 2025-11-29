@@ -39,12 +39,13 @@ template htmls
 
 list "/home" "/opt"
     | foreach directory {
-        o $tpl | :: emit "body"
         list a b c d
             | foreach file {
                 o $tpl | :: emit "file"
             }
+        o $tpl | :: emit "body"
     }
+
 o $tpl
     | :: render
     | as rendered_template

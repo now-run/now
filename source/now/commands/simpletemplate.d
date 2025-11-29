@@ -9,7 +9,7 @@ void loadTemplateCommands(CommandsMap commands)
     {
         string name = input.pop!string;
         auto templates = input.escopo.document.data.getOrCreate!Dict("templates");
-        auto tpl = templates.get!Block(name, null);
+        auto tpl = templates.get!ExpandableBlock(name, null);
         if (tpl is null) {
             throw new NotFoundException(
                 input.escopo,

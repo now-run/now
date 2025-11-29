@@ -45,11 +45,11 @@ Block parseTemplate(string name, Dict info, Dict templates)
                     parentName, cast(Dict)parent, templates
                 );
                 templates[parentName] = parentBlock;
-                tpl.extends = parentBlock;
+                (cast (ExpandableBlock)tpl).extends = cast(ExpandableBlock)parentBlock;
             }
             else
             {
-                tpl.extends = cast(Block)parent;
+                (cast (ExpandableBlock)tpl).extends = cast(ExpandableBlock)parent;
             }
         }, delegate () {
             log("  this template doesn't extend any other.");
@@ -91,7 +91,7 @@ class TemplateParser : Parser
             {
                 if (text.length)
                 {
-                    blocks ~= new Block(text.join());
+                    blocks ~= new TextBlock(text.join());
                     text.length = 0;
                 }
 
@@ -130,22 +130,27 @@ class TemplateParser : Parser
         }
         if (text.length)
         {
-            blocks ~= new Block(text.join());
+            blocks ~= new TextBlock(text.join());
             text.length = 0;
         }
-        return new Block(name, blocks);
+        return new ExpandableBlock(name, blocks);
     }
 }
 
 class Block : Item
 {
-    // For expandable blocks:
-    string name;
-    Block[] children;
-    // For text blocks:
+    bool isText()
+    {
+        return false;
+    }
+    bool isExpandable()
+    {
+        return false;
+    }
+}
+class TextBlock : Block
+{
     String text;
-
-    Block extends;
 
     this(string text)
     {
@@ -154,35 +159,49 @@ class Block : Item
         this.text = parser.consumeString(cast(char)null);
         log("  result: ", this.text);
     }
-    this(string name, Block[] children)
-    {
-        this.name = name;
-        this.children = children;
-        this.text = null;
-        log(" new Expandable Block: ", name);
-    }
 
-    bool isText()
+    override bool isText()
     {
-        return (text !is null);
+        return true;
     }
-    bool isExpandable()
+    override bool isExpandable()
     {
-        return (text is null);
+        return false;
     }
 
     override string toString()
     {
-        if (isText)
-        {
-            return text.toString();
-        }
-        else
-        {
-            return children.map!(x => x.toString()).join("\n");
-        }
+        return text.toString();
     }
 }
+class ExpandableBlock : Block
+{
+    ExpandableBlock extends;
+    string name;
+    Block[] children;
+
+    this(string name, Block[] children)
+    {
+        this.name = name;
+        this.children = children;
+        log(" new Expandable Block: ", name);
+    }
+
+    override bool isText()
+    {
+        return false;
+    }
+    override bool isExpandable()
+    {
+        return true;
+    }
+
+    override string toString()
+    {
+        return children.map!(x => x.toString()).join("\n");
+    }
+}
+
 
 
 alias TemplateInstances = TemplateInstance[];
@@ -191,14 +210,16 @@ alias Template = Block;
 class TemplateInstance : Item
 {
     string name;
-    Block tpl;
+    ExpandableBlock tpl;
+    bool finished = false;
 
     Item[string] variables;
 
     TemplateInstances[string] emittedBlocks;
-    Block[string] expandableBlocks;
+    TemplateInstance[string] notEmittedBlocks;
+    ExpandableBlock[string] expandableBlocks;
 
-    this(Block tpl, bool expandParent=true)
+    this(ExpandableBlock tpl, bool expandParent=true)
     {
         this.type = ObjectType.Template;
         this.typeName = "template";
@@ -221,29 +242,63 @@ class TemplateInstance : Item
         {
             if (block.isExpandable)
             {
-                log("   the block ", block.name, " is expandable");
-                expandableBlocks[block.name] = block;
+                auto b = cast(ExpandableBlock)block;
+                log("   the block ", b.name, " is expandable");
+                expandableBlocks[b.name] = b;
             }
         }
-
-        if (tpl.extends !is null && expandParent)
+        foreach (block; this.tpl.children)
+        {
+            if (block.isExpandable)
+            {
+                auto b = cast(ExpandableBlock)block;
+                log("   the block ", b.name, " is expandable");
+                expandableBlocks[b.name] = b;
+            }
+        }
+        if (this.tpl != tpl)
         {
             foreach (block; tpl.children)
             {
-                expandableBlocks[block.name] = block;
+                if (block.isExpandable)
+                {
+                    auto b = cast(ExpandableBlock)block;
+                    log("   > the block ", b.name, " is expandable");
+                    expandableBlocks[b.name] = b;
+                }
             }
         }
+        log(">>> TemplateInstance created <<<");
     }
-    this(Block tpl, Item[string] variables, bool expandParent=true)
+    this(ExpandableBlock tpl, Item[string] variables, bool expandParent=true)
     {
         this.variables = variables;
         this(tpl, expandParent);
-        log(" variables:", variables);
+        // log(" variables:", variables);
     }
 
     bool emit(string blockName, Item[string] variables)
     {
-        log(" ", name, ".emit ", blockName, ": ", variables);
+        log(" ", name, ".emit ", blockName);
+
+        if (finished)
+        {
+            log("REFUSED. This block is finished.");
+            return false;
+        }
+
+        // Were we in the middle of emitting a block?
+        auto instancePtr = (blockName in notEmittedBlocks);
+        if (instancePtr !is null)
+        {
+            auto instance = *instancePtr;
+            log("   notEmitted instance: ", instance);
+            instance.variables = variables;
+            instance.finished = true;
+            emittedBlocks[blockName] ~= instance;
+            notEmittedBlocks.remove(blockName);
+            return true;
+        }
 
         // Try to emit directly:
         auto blockPtr = (blockName in expandableBlocks);
@@ -257,13 +312,38 @@ class TemplateInstance : Item
             return true;
         }
 
-        // Try every child:
+        // Try every emitted child:
         log("  not expandable.");
         foreach (emittedBlock; emittedBlocks.byValue)
         {
             log("   emittedBlock: ", emittedBlock);
             if (emittedBlock[$-1].emit(blockName, variables))
             {
+                log("emitted!");
+                return true;
+            }
+        }
+
+        // Try every not-emitted-yet child:
+        foreach (instance; notEmittedBlocks)
+        {
+            log("   notEmittedBlock: ", instance);
+            if (instance.emit(blockName, variables))
+            {
+                log("emitted!");
+                return true;
+            }
+        }
+
+        // Try every other possible block:
+        foreach (block; expandableBlocks)
+        {
+            log("   expandableBlock: ", block);
+            auto t = new TemplateInstance(block, false);
+            notEmittedBlocks[block.name] = t;
+            if (t.emit(blockName, variables))
+            {
+                log("emitted!");
                 return true;
             }
         }
@@ -287,14 +367,16 @@ class TemplateInstance : Item
         {
             if (block.isText)
             {
-                foreach (item; block.text.evaluate(blockScope))
+                auto b = cast(TextBlock)block;
+                foreach (item; b.text.evaluate(blockScope))
                 {
                     s ~= item.toString();
                 }
             }
             else
             {
-                auto blockName = block.name;
+                auto b = cast(ExpandableBlock)block;
+                auto blockName = b.name;
                 auto blockPtr = (blockName in emittedBlocks);
                 if (blockPtr !is null)
                 {
