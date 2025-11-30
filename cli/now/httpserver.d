@@ -12,7 +12,7 @@ import std.stdio : stderr, writefln;
 import std.string : stripRight;
 import std.range : front, popFront;
 import std.regex : matchFirst;
-import std.socket : InternetAddress, Socket, SocketException, SocketSet, TcpSocket;
+import std.socket : InternetAddress, Socket, SocketException, SocketOption, SocketOptionLevel, SocketSet, TcpSocket;
 import std.string : replace, toLower;
 import std.uri : decode;
 
@@ -844,6 +844,7 @@ int httpServer(Document document, string[] documentArgs)
 int serverLoop(Document document, ushort port)
 {
     auto listener = new TcpSocket();
+    listener.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, true);
     assert(listener.isAlive);
     listener.blocking = false;
     listener.bind(new InternetAddress(port));
