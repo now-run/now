@@ -127,11 +127,13 @@ static this()
     dictMethods["normalize_keys"] = function(Item object, string path, Input input, Output output)
     {
         auto dict = cast(Dict)object;
+        auto newDict = new Dict();
         foreach (key, value; dict)
         {
             auto newKey = key.snakeCase;
-            dict[newKey] = value;
+            newDict[newKey] = value;
         }
+        output.push(newDict);
         return ExitCode.Success;
     };
     dictMethods["run"] = function(Item object, string path, Input input, Output output)

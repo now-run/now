@@ -6,10 +6,16 @@ dict
     . ("Alfa" = 1)
     . ("Beta" = 2)
     . ("CamelCase" = 3)
-    | as d
     | :: normalize_keys
+    | as d
 
 o $d
 | >> {:: get alfa | :: eq 1 | :: assert "alfa should be 1"}
 | >> {:: get beta | :: eq 2 | :: assert "beta should be 2"}
 | >> {:: get camel_case | :: eq 3 | :: assert "camel_case should be 3"}
+| >> {
+    :: get "CamelCase"
+    ! * {inject none}
+    | :: eq none
+    | :: assert "CamelCase should not actually return any value"
+}
