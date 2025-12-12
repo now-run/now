@@ -1,6 +1,30 @@
 module now.commands.utils;
 
+import std.regex : ctRegex, matchAll, matchFirst, xplit = split, regexReplace = replace;
+import std.string;
+
 import now;
+
+string snakeCase(string s)
+{
+    static auto regexes = [
+        // SetURLParams -> Set_URL_Params
+        ctRegex!(`(.)([A-Z][a-z]+)`, "g"),
+        // AlfaBetaGama -> Alfa_Beta_Gama
+        ctRegex!(`([a-z0-9])([A-Z])`, "g"),
+    ];
+
+    foreach (re; regexes)
+    {
+        s = s.regexReplace(re, `$1_$2`);
+    }
+
+    // a-b-c -> a_b_c
+    s = s.regexReplace(ctRegex!(`[- ]+`, "g"), `_`);
+    s = s.regexReplace(ctRegex!(`_+`, "g"), `_`);
+
+    return s.toLower;
+}
 
 string makeKeyFromInputs(Input input)
 {

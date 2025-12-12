@@ -9,6 +9,7 @@ import std.algorithm.mutation : strip, stripLeft, stripRight;
 
 import now;
 import now.conv;
+import now.commands.utils : snakeCase;
 
 
 static this()
@@ -419,24 +420,7 @@ static this()
     stringMethods["snake_case"] = function(Item object, string path, Input input, Output output)
     {
         auto s = (cast(String)object).toString;
-
-        static auto regexes = [
-            // SetURLParams -> Set_URL_Params
-            ctRegex!(`(.)([A-Z][a-z]+)`, "g"),
-            // AlfaBetaGama -> Alfa_Beta_Gama
-            ctRegex!(`([a-z0-9])([A-Z])`, "g"),
-        ];
-
-        foreach (re; regexes)
-        {
-            s = s.regexReplace(re, `$1_$2`);
-        }
-
-        // a-b-c -> a_b_c
-        s = s.regexReplace(ctRegex!(`[- ]+`, "g"), `_`);
-        s = s.regexReplace(ctRegex!(`_+`, "g"), `_`);
-
-        output.push(s.toLower);
+        output.push(s.snakeCase);
         return ExitCode.Success;
     };
     stringMethods["camel_case"] = function(Item object, string path, Input input, Output output)

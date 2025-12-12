@@ -2,6 +2,7 @@ module now.nodes.dict.methods;
 
 
 import now;
+import now.commands.utils : snakeCase;
 
 
 static this()
@@ -121,6 +122,16 @@ static this()
         // dict (a = b) (c = d) | :: pairs | collect
         // > (a , b , c , d)
         output.push(new List(cast(Items)(dict.asPairs)));
+        return ExitCode.Success;
+    };
+    dictMethods["normalize_keys"] = function(Item object, string path, Input input, Output output)
+    {
+        auto dict = cast(Dict)object;
+        foreach (key, value; dict)
+        {
+            auto newKey = key.snakeCase;
+            dict[newKey] = value;
+        }
         return ExitCode.Success;
     };
     dictMethods["run"] = function(Item object, string path, Input input, Output output)
