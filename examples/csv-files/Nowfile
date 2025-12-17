@@ -8,18 +8,34 @@ path "test.csv" | :: read | csv.decode
     | as lista
     | >> {log}
     | >> {
+        o | {
+            log.debug "entry> "
+        }
+    }
+    | >> {
         o
         | :: length
-        | :: eq 6
-        | :: assert "lista length should be 6"
+        | as length
+        | :: eq 7
+        | :: assert "lista length should be 7, not ${length}."
     }
     | >> {
         o
         | :: get 0
         | as first
         | :: length
+        | as length
         | :: eq 5
-        | :: assert "first length should be 5"
+        | :: assert "first length should be 5, not ${length}."
+    }
+    | >> {
+        o
+        | :: last
+        | as last
+        | :: length
+        | as length
+        | :: eq 5
+        | :: assert "last entry length should be 5, not ${length}: ${last}."
     }
     | __ {log "------------"}
     | csv.encode

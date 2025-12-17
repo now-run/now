@@ -115,8 +115,9 @@ void loadCsvCommands(CommandsMap commands)
 
                     if (value.canFind("\""))
                     {
-                        // TODO: create/use a proper escaping function
-                        value = value.replace("\"", "\\\"");
+                        // XXX: using two adjacent double-quotes is the ...correct... way
+                        // of escaping double quotes...
+                        value = value.replace("\"", "\"\"");
                     }
                     items ~= "\"" ~ value ~ "\"";
                 }
