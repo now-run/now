@@ -127,7 +127,7 @@ class BaseCommand
             value.properties["_default"] = new Boolean(false);
             newScope[key] = value;
             log("-- from kwargs: newScope[", key, "] = ", value);
-            if (!namedParametersAlreadySet.canFind(key))
+            if (((key in parameters.values) !is null) && !namedParametersAlreadySet.canFind(key))
             {
                 namedParametersAlreadySet ~= key;
                 setParametersCount++;
