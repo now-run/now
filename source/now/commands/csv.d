@@ -43,9 +43,26 @@ class CsvParser : Parser
                 opener = consumeChar();
                 isEnclosed = true;
             }
-            auto item = consumeString(opener, true);
-            items ~= item;
-            if (isEnclosed) consumeChar();
+            auto item = consume_string(opener, true);
+
+            // handle,the,"something in ""double quotes"" situation"
+            if (isEnclosed)
+            {
+                consumeChar;
+                while (!eof && currentChar == opener)
+                {
+                    // "abc""def""ghi"
+                    //      ^
+                    item ~= consumeChar;
+                    item ~= consume_string(opener, true);
+
+                    if (currentChar == opener)
+                    {
+                        consumeChar;
+                    }
+                }
+            }
+            items ~= new String(item);
             if (currentChar == separator) consumeChar();
         }
         if (!eof) consumeChar();
