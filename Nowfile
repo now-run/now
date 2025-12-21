@@ -81,8 +81,18 @@ command {
 }
 
 [procedures/quit]
+parameters {
+    code {
+        type integer
+        default 0
+    }
+}
 
-exit 0
+exit $code
+
+[procedures/just_skip]
+
+skip
 
 [commands/make]
 description "Compiles Now"

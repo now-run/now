@@ -11,6 +11,14 @@ command {
     }
 }
 
+[libraries/sum_lib]
+command {
+    - now
+    - :lib
+    - :f
+    - sum.now
+}
+
 [procedures/sum]
 parameters {
     a {
@@ -21,21 +29,24 @@ parameters {
     }
 }
 
-print "sum:"
-print "$a $b"
+log "procedures/sum $a $b"
 return ([to.integer $a] + [to.integer $b])
 
 [commands/run]
 description "Call some procedures from external library."
 
-test_lib start 1 (2 = 3) [dict (4 = 5) (6 = 7)] [list 8 9 10] | print "response:"
+test_lib start 1 (2 = 3) [dict (4 = 5) (6 = 7)] [list 8 9 10] | log "response:"
 test_lib err
-    ! self_inflicted_error { print "Error (as expected): $error" }
+    ! "self inflicted error" {log "Error (as expected): $error"}
+    ! * {log "Uncaught error: [${error}]"}
 
-print "Proceeding..."
+log "Proceeding..."
 
-# The library is going to call a procedure from this document:
-test_lib test_calls 1 2 | :: eq 3 | :: assert
+# The library is going to call a procedure from THIS document:
+test_lib test_calls 1 2
+    | >> {log "test_calls 1 2: "}
+    | :: eq 3
+    | :: assert
 
 [commands/ue]
 
@@ -44,3 +55,11 @@ test_lib unhandled_error
     ! * {log "error>>> $error"}
 test_lib test_calls 3 4 | :: eq 7 | :: assert
 log "FINISH"
+
+[commands/sum]
+
+log "START"
+sum_lib sum 2 3 | log "2+3="
+sum_lib sum 5 7 | log "5+7="
+sum_lib sum 17 19 | log "17+19="
+log "END"

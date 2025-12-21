@@ -1,0 +1,17 @@
+[Sum Library]
+
+
+[procedures/sum]
+parameters {
+    a {
+        type integer
+    }
+    b {
+        type integer
+    }
+}
+
+log "sum $a $b"
+log.debug [o $a | type]
+log.debug [o $b | type]
+return ($a + $b)
