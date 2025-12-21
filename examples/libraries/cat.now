@@ -1,0 +1,34 @@
+[Tac Library]
+
+Invert multi-line strings.
+
+[system_commands/sys:cat]
+command {
+    - cat
+}
+keep_stdin_open true
+
+[data_sources/pid]
+
+sys:cat
+| >> {log}
+| return
+
+[procedures/cat]
+parameters {
+    text {
+        type string
+    }
+}
+
+log "pid=$pid"
+
+o $text
+| >> {:: split "\n" | :: length | as n}
+| on $pid feed
+| take $n
+| collect
+| :: join "\n"
+| return
+
+return x

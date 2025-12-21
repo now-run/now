@@ -45,6 +45,22 @@ static this()
 
         return ExitCode.Success;
     };
+    systemProcessMethods["feed"] = function(Item target, string path, Input input, Output output)
+    {
+        // TODO: get rid of this, probably.
+
+        auto process = cast(SystemProcess)target;
+
+        foreach (item; input.popAll)
+        {
+            process.pipes.stdin.writeln(item.toString);
+        }
+        process.pipes.stdin.flush();
+
+        output.push(process);
+        return ExitCode.Success;
+    };
+
     systemProcessMethods["wait"] = function(Item target, string path, Input input, Output output)
     {
         auto process = cast(SystemProcess)target;

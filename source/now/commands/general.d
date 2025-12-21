@@ -1861,7 +1861,8 @@ But what if only one of them returns Skip or Break???
             inputStream,
             env,
             null,  // workdir (string)
-            false  // takeover (bool)
+            false, // keepStdinOpen
+            false  // takeover
         ));
         return ExitCode.Success;
     };

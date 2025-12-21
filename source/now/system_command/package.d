@@ -19,6 +19,7 @@ class SystemCommand : BaseCommand
     string keyValueSeparator;
     bool takeOver;
     bool takeOverOutput;
+    bool keepStdinOpen;
     string returns;
     bool isolateEnv;
     Document document;
@@ -154,6 +155,7 @@ class SystemCommand : BaseCommand
 
         this.takeOver = info.get!bool("take_over", false);
         this.takeOverOutput = info.get!bool("take_over_output", false);
+        this.keepStdinOpen = info.get!bool("keep_stdin_open", false);
         this.isolateEnv = info.get!bool("isolate_env", false);
     }
 
@@ -241,7 +243,8 @@ class SystemCommand : BaseCommand
         log(" -- inputStream: ", inputStream);
 
         auto process = new SystemProcess(
-            cmdline, inputStream, env, workdirStr, takeOver, takeOverOutput, isolateEnv
+            cmdline, inputStream, env, workdirStr,
+            takeOver, keepStdinOpen, takeOverOutput, isolateEnv
         );
 
         if (returns is null)
@@ -342,6 +345,7 @@ class SystemProcess : Item
     string[] cmdline;
     string workdir;
     bool takeOver;
+    bool keepStdinOpen;
     bool takeOverOutput;
     bool isolateEnv;
     string[string] env;
@@ -354,6 +358,7 @@ class SystemProcess : Item
         string[string] env=null,
         string workdir=null,
         bool takeOver=false,
+        bool keepStdinOpen=false,
         bool takeOverOutput=false,
         bool isolateEnv=false,
     )
@@ -397,7 +402,7 @@ class SystemProcess : Item
                 redirect |= Redirect.stdout;
                 log("redirect: stdout");
             }
-            if (inputStream !is null)
+            if (inputStream !is null || keepStdinOpen)
             {
                 redirect |= Redirect.stdin;
                 log("redirect: stdin");
@@ -527,6 +532,7 @@ class SystemProcess : Item
                 }
             }
 
+            log("reading process stdout...");
             line = pipes.stdout.readln();
             log("pipes.stdout.readln <- ", line);
 

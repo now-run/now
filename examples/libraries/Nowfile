@@ -3,6 +3,14 @@
 Runs a child process and communicate with it in a
 efficient manner.
 
+[libraries/cat]
+command {
+    - now
+    - :lib
+    - :f
+    - "$script_dir/cat.now"
+}
+
 [libraries/test_lib]
 command {
     - "$script_dir/library.sh"
@@ -62,4 +70,19 @@ log "START"
 sum_lib sum 2 3 | log "2+3="
 sum_lib sum 5 7 | log "5+7="
 sum_lib sum 17 19 | log "17+19="
+log "END"
+
+[commands/cat]
+
+log "START"
+o "alfa\nbeta\ngama"
+| cat cat
+| log
+
+log "---"
+
+o "one\ntwo\nthree\nfour"
+| cat cat
+| log
+
 log "END"
