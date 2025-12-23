@@ -120,6 +120,21 @@ class BaseCommand
             }
         }
 
+        // Fill in any References left:
+        foreach (key, value; newScope)
+        {
+            switch (value.type)
+            {
+                case ObjectType.Reference:
+                case ObjectType.ExecList:
+                    newScope[key] = value.evaluate(newScope);
+                    break;
+                default:
+                    // pass
+                    break;
+            }
+        }
+
         // Named arguments:
         log("- Named arguments");
         foreach (key, value; input.kwargs)
