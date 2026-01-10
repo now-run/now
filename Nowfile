@@ -41,12 +41,7 @@ return $error
 [logging/formats/default]
 description "This section defines how the `log` command will behave"
 
-dict
-    . (timestamp = [unixtime])
-    . (message = $message)
-    | json.encode
-    | return
-
+return "$[unixtime | :: to.isotime]: ${message}"
 
 [system_commands/dub]
 command {
@@ -138,15 +133,36 @@ print.gray "args: $args"
 description "Run all the examples."
 
 try {
-    path "examples" : glob "*" | foreach directory {
-        print $directory
-        val test : get ignore : contains ($directory : basename) : then {
-            print "skipping $directory"
-            continue
+    path "examples"
+    | :: glob "*"
+    | {
+        o
+        | >> {log}
+        | >> {
+            :: basename | as basename
+            log "basename=${basename}"
         }
-        print "Testing ${directory}..."
-        now "$directory" : check
+        | __ {
+            o $test_ignore
+            | :: contains $basename
+            | :: then {
+                log "skipping $basename"
+                continue
+            }
+        }
+        | >> {log "Testing:"}
+        | as dir
+        | chdir {
+            syscmd now run
+            | :: check
+        }
     }
+}
+
+[constants/test]
+ignore {
+    - progress
+    - prompts
 }
 
 [commands/dub]
