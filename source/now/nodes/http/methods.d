@@ -15,7 +15,6 @@ static this()
         */
         auto connection = cast(Http)object;
         auto p = input.pop!string;
-        // TODO: actually change the path!!!
         connection.path = p;
         output.push(connection);
         return ExitCode.Success;

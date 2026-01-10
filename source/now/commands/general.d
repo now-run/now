@@ -860,7 +860,12 @@ static this()
     builtinCommands["http"] = function(string name, Input input, Output output)
     {
         auto hostname = input.pop!String();
-        output.push(new Http(hostname));
+        auto connection = new Http(hostname);
+
+        // Preset headers:
+        connection.getBody(input.popAll);
+
+        output.push(connection);
         return ExitCode.Success;
     };
 
