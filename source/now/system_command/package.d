@@ -2,10 +2,12 @@ module now.system_command;
 
 
 import std.algorithm.mutation : stripRight;
+import std.json;
 import std.process;
 import std.stdio : readln;
 
 import now;
+import now.json;
 
 
 MethodsMap systemProcessMethods;
@@ -258,6 +260,12 @@ class SystemCommand : BaseCommand
             {
                 case "string":
                     output.push(process.getOutput(input.escopo));
+                    break;
+                case "json":
+                    auto outputString = process.getOutput(input.escopo);
+                    auto json = parseJSON(outputString);
+                    auto object = JsonToItem(json);
+                    output.push(object);
                     break;
                 case "process":
                     output.push(process);

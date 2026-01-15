@@ -1551,7 +1551,6 @@ But what if only one of them returns Skip or Break???
         /*
         return [o false | setprop (reason = "invalid token") (status = $status)]
         */
-        string key = input.pop!string;
         Item item = input.inputs.front;
 
         foreach (pairItem; input.args)
