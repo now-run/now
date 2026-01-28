@@ -21,9 +21,9 @@ class CsvParser : Parser
 
     List run()
     {
-        consumeWhitespaces();
         Items items;
 
+        consumeWhitespaces();
         while (!eof)
         {
             items ~= new List(consumeTuple());
@@ -79,6 +79,12 @@ void loadCsvCommands(CommandsMap commands)
         // 1- accept multiple arguments;
         // 2- if argument is Path, use a CsvReader class.
         string content = input.pop!string();
+
+        if (content.length == 0)
+        {
+            output.push(new List([]));
+            return ExitCode.Success;
+        }
 
         char separator = ',';
         auto separator_ptr = ("separator" in input.kwargs);
