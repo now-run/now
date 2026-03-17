@@ -137,7 +137,7 @@ void call(Escopo rootScope, string rpcName, JSONValue jArgs, JSONValue jKwargs)
                     JSONValue("error"),
                     JSONValue(rpcName),
                     JSONValue([ex2.message]),
-                    JSONValue.emptyObject,
+                    JSONValue(),
                 ]));
                 stdout.flush();
                 return;
@@ -149,7 +149,7 @@ void call(Escopo rootScope, string rpcName, JSONValue jArgs, JSONValue jKwargs)
                 JSONValue("return"),
                 JSONValue(rpcName),
                 JSONValue(return_result),
-                JSONValue.emptyObject,
+                JSONValue(),
             ]));
             stdout.flush();
             return;
@@ -160,7 +160,7 @@ void call(Escopo rootScope, string rpcName, JSONValue jArgs, JSONValue jKwargs)
                 JSONValue("error"),
                 JSONValue(rpcName),
                 JSONValue([ex.message]),
-                JSONValue.emptyObject,
+                JSONValue(),
             ]));
             stdout.flush();
             return;
@@ -179,7 +179,7 @@ void call(Escopo rootScope, string rpcName, JSONValue jArgs, JSONValue jKwargs)
         JSONValue(exitCodeString),
         JSONValue(rpcName),
         JSONValue(return_result),
-        JSONValue(JSONValue.emptyObject),
+        JSONValue(JSONValue()),
     ]);
     stdout.writeln(response);
     stdout.flush();

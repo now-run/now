@@ -189,7 +189,7 @@ class Library : SystemCommand
                     JSONValue("return"),
                     JSONValue(rpcName),
                     return_result,
-                    JSONValue.emptyObject,
+                    JSONValue(),
                     userData,
                 ]);
                 log(" return_json=", return_json);
