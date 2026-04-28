@@ -29,6 +29,14 @@ class Dict : Item
             this[key] = value;
         }
     }
+    this(string[string] values)
+    {
+        this();
+        foreach (key, value; values)
+        {
+            this[key] = new String(value);
+        }
+    }
 
     // ------------------
     // Conversions

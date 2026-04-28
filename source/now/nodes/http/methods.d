@@ -19,6 +19,16 @@ static this()
         output.push(connection);
         return ExitCode.Success;
     };
+    httpMethods["head"] = function(Item object, string path, Input input, Output output)
+    {
+        /*
+        > o $connection | :: head (authorization = "bearer 1234")
+        <html>...
+        */
+        auto connection = cast(Http)object;
+        output.push(connection.perform(HTTP.Method.head, input));
+        return ExitCode.Success;
+    };
     httpMethods["get"] = function(Item object, string path, Input input, Output output)
     {
         /*
@@ -95,6 +105,13 @@ static this()
     {
         auto response = cast(HttpResponse)object;
         output.push(cast(long)response.parent.http.statusLine.code);
+        return ExitCode.Success;
+    };
+    httpResponseMethods["headers"] = function(Item object, string path, Input input, Output output)
+    {
+        auto response = cast(HttpResponse)object;
+        auto headers = response.parent.http.responseHeaders;
+        output.push(new Dict(headers));
         return ExitCode.Success;
     };
     httpResponseMethods["content"] = function(Item object, string path, Input input, Output output)
