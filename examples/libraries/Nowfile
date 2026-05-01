@@ -3,28 +3,12 @@
 Runs a child process and communicate with it in a
 efficient manner.
 
-[libraries/cat]
-command {
-    - now
-    - :lib
-    - :f
-    - "$script_dir/cat.now"
-}
-
 [libraries/test_lib]
 command {
     - "$script_dir/library.sh"
     - {
         arg1 "argument-one"
     }
-}
-
-[libraries/sum_lib]
-command {
-    - now
-    - :lib
-    - :f
-    - sum.now
 }
 
 [procedures/sum]
@@ -34,11 +18,16 @@ parameters {
     }
     b {
         type integer
+        default 1
     }
 }
 
-log "procedures/sum $a $b"
-return ([to.integer $a] + [to.integer $b])
+log "summing up ${a} and ${b}..."
+return ($a + $b)
+
+[procedures/multi_values_return]
+
+return a b c
 
 [commands/run]
 description "Call some procedures from external library."
@@ -46,43 +35,40 @@ description "Call some procedures from external library."
 test_lib start 1 (2 = 3) [dict (4 = 5) (6 = 7)] [list 8 9 10] | log "response:"
 test_lib err
     ! "self inflicted error" {log "Error (as expected): $error"}
-    ! * {log "Uncaught error: [${error}]"}
+    ! * {log "Uncaught error (shouldn't be seeing this): [${error}]"}
 
 log "Proceeding..."
 
 # The library is going to call a procedure from THIS document:
-test_lib test_calls 1 2
-    | >> {log "test_calls 1 2: "}
+test_lib sum 1 2
+    | >> {log "sum 1 2: "}
     | :: eq 3
     | :: assert
 
-[commands/ue]
+test_lib ping
+    | >> {log "ping: "}
+    | :: eq pong
+    | :: assert
 
-log "START"
-test_lib unhandled_error
-    ! * {log "error>>> $error"}
-test_lib test_calls 3 4 | :: eq 7 | :: assert
-log "FINISH"
+[commands/test]
 
-[commands/sum]
+log "multi_values_return:"
+dict (jsonrpc = "2.0") (id = 1) (method = multi_values_return) | json.encode | jsonrpc.process | print
 
-log "START"
-sum_lib sum 2 3 | log "2+3="
-sum_lib sum 5 7 | log "5+7="
-sum_lib sum 17 19 | log "17+19="
-log "END"
+log "sum 2 3:"
+dict (jsonrpc = "2.0") (id = 2) (method = sum) (params = (2 , 3)) | json.encode | jsonrpc.process | print
 
-[commands/cat]
+log "sum b=4 a=5:"
+dict (jsonrpc = "2.0") (id = 2) (method = sum) (params = [dict (b = 4) (a = 5)]) | json.encode | jsonrpc.process | print
 
-log "START"
-o "alfa\nbeta\ngama"
-| cat cat
-| log
+log "sum kwargs:"
+dict (jsonrpc = "2.0") (id = 2) (method = sum) (params = [dict (c = "123") (d = 5)]) | json.encode | jsonrpc.process | print
 
-log "---"
+log "ping:"
+dict (jsonrpc = "2.0") (id = "test_id_01") (method = ping) | json.encode | jsonrpc.process | print
 
-o "one\ntwo\nthree\nfour"
-| cat cat
-| log
+log "method blebs:"
+dict (jsonrpc = "2.0") (id = 2) (method = blebs) | json.encode | jsonrpc.process | print
 
-log "END"
+log "not a json input:"
+o "not really a json" | jsonrpc.process | print

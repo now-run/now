@@ -13,6 +13,7 @@ class Library : SystemCommand
     ProcessPipes pipes;
     std.process.Pid pid;
     string respawn;
+    ulong request_id;
 
     this(string name, Dict info, Document document)
     {
@@ -111,100 +112,71 @@ class Library : SystemCommand
         }
 
         auto rpcName = input.pop!string;
-        // ["call" "${rpc_name}", [args, ...], {kw: args, ...}]
-        JSONValue json = [
-            JSONValue("call"),
-            JSONValue(rpcName),
-            ItemToJson(new List(input.popAll())),
-            ItemToJson(new Dict(input.kwargs)),
-        ];
+
+        auto json = JSONValue([
+            "jsonrpc": "2.0",
+            "method": rpcName
+        ]);
+        json["id"] = request_id++;
+        json["params"] = ItemToJson(new List(input.popAll()));
+        // TODO: allow keyword arguments!
+        // ItemToJson(new Dict(input.kwargs)),
 
         pipes.stdin.writeln(json.toString);
         pipes.stdin.flush();
 
-        ExitCode exitCode = ExitCode.Success;
-        // Return is a special-case flag here.
-        do
-        {
-            exitCode = processResponse(input, output);
-            log("exitCode=", exitCode);
-        } while (exitCode == ExitCode.Return);
+        log("processResponse...");
+        auto response = pipes.stdout.readln();
+        log("response=", response);
 
-        log(" Library.run quitting...");
+        auto exitCode = processResponse(response, input, output);
+        log(" Library.run quitting; exitCode=", exitCode);
         return exitCode;
     }
 
-    ExitCode processResponse(Input input, Output output)
+    ExitCode processResponse(string response, Input input, Output output)
     {
-        log("processResponse...");
-        auto response = pipes.stdout.readln();
+        // TODO: handle invalid JSON
         auto response_json = parseJSON(response);
         log("response_json=", response_json);
-        // ["${op}", "${rpc_name}", [args, ...], {kw: args, ...}, {user: data, ...}]
-        auto op = response_json[0].str;
-        auto rpcName = response_json[1].str;
-        auto args = response_json[2];
-        auto kwargs = response_json[3];
-        log(" op=", op, " rpcName=", rpcName, " args=", args, " kwargs=", kwargs);
-        /*
-           - return: returns a value
-           - error: throws an error
-           - call: calls a procedure
-        */
-        switch (op)
+
+        auto jsonrpc = response_json["jsonrpc"].str;
+        auto response_id = response_json["id"];
+
+        Item result;
+        if (JSONValue* resultRef = "result" in response_json)
         {
-            case "return":
-                auto returnedList = cast(List)(JsonToItem(args));
-                output.push(returnedList.items);
-                return ExitCode.Success;
-            case "event":
-            case "error":
-                auto message = args[0].str;
-                log(" args[0]=", args[0]);
-                log(" error message=", message);
-                auto ex = new NowException(
-                    input.escopo,
-                    message,
-                );
-                ex.classe = message;
-                throw ex;
-            case "call":
-                auto itemArgs = args.array.map!(x => JsonToItem(x)).array;
-                auto itemKwargs = (cast(Dict)(JsonToItem(kwargs))).values;
-
-                log(" library call! ", itemArgs, " ", itemKwargs);
-
-                auto callInput = Input(input.escopo, [], itemArgs, itemKwargs);
-                auto callOutput = new Output();
-                auto document = input.escopo.document;
-                auto callExitCode = document.runProcedure(rpcName, callInput, callOutput);
-                // TODO: check callExitCode.
-                log(" library call exit code=", callExitCode);
-                log(" output: ", callOutput.items);
-
-                JSONValue return_result = ItemToJson(new List(callOutput.items));
-                auto userData = response_json[4];
-
-                auto return_json = JSONValue([
-                    JSONValue("return"),
-                    JSONValue(rpcName),
-                    return_result,
-                    JSONValue(),
-                    userData,
-                ]);
-                log(" return_json=", return_json);
-
-                pipes.stdin.writeln(return_json.toString);
-                pipes.stdin.flush();
-                // Return is a special-case flag here.
-                return ExitCode.Return;
-
-            default:
-                throw new NowException(
-                    input.escopo,
-                    "Invalid operation returned: " ~ op,
-                );
+            result = JsonToItem(*resultRef);
         }
+        Item error;
+        if (JSONValue* errorRef = "error" in response_json)
+        {
+            error = JsonToItem(*errorRef);
+        }
+
+        if (result !is null)
+        {
+            output.push(result);
+            return ExitCode.Success;
+        }
+        if (error !is null)
+        {
+            auto errorMsg = (cast(String)error).toString;
+            auto ex = new NowException(
+                input.escopo,
+                errorMsg
+            );
+            ex.classe = errorMsg;
+            throw ex;
+        }
+
+        // XXX: is this line reachable???
         return ExitCode.Success;
+        throw new NowException(
+            input.escopo,
+            "No result or error were returned in json-rpc response!",
+            new String(response),
+            -1
+        );
     }
 }
