@@ -23,6 +23,7 @@ import now.commands.http;
 import now.commands.iterators;
 import now.commands.ini;
 import now.commands.json;
+import now.commands.jsonrpc;
 import now.commands.markdown;
 import now.commands.simpletemplate;
 import now.commands.terminal;
@@ -1908,6 +1909,7 @@ But what if only one of them returns Skip or Break???
     loadDotEnvCommands(builtinCommands);
     loadIniCommands(builtinCommands);
     loadJsonCommands(builtinCommands);
+    loadJsonrpcCommands(builtinCommands);
     loadHttpCommands(builtinCommands);
     loadMarkdownCommands(builtinCommands);
     loadTemplateCommands(builtinCommands);

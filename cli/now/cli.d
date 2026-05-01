@@ -13,6 +13,7 @@ import std.string;
 
 import now;
 import now.httpserver;
+import now.jsonrpc;
 import now.library_server;
 import now.env_vars;
 import now.commands;
@@ -65,6 +66,7 @@ int main(string[] args)
                 case "cmd":
                 case "dump":
                 case "http":
+                case "jsonrpc":
                 case "lib":
                 case "lp":
                 case "repl":
@@ -131,6 +133,8 @@ int main(string[] args)
                 return dump(document, documentArgs);
             case "http":
                 return httpServer(document, documentArgs);
+            case "jsonrpc":
+                return jsonrpcServer(document, documentArgs);
             case "lib":
                 return libraryServer(document, documentArgs);
             case "lp":
