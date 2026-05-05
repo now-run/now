@@ -45,7 +45,7 @@ void loadBase64Commands(CommandsMap commands)
                         item
                     );
             }
-            auto result = Base64URL.encode(data);
+            auto result = Base64URLNoPadding.encode(data);
             output.push(result.to!string);
         }
         return ExitCode.Success;
@@ -55,7 +55,7 @@ void loadBase64Commands(CommandsMap commands)
         foreach (item; input.popAll)
         {
             auto s = item.toString();
-            ubyte[] result = Base64URL.decode(s);
+            ubyte[] result = Base64URLNoPadding.decode(s);
             output.push(cast(string)result);
         }
         return ExitCode.Success;
