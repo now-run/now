@@ -1,0 +1,134 @@
+[MCP Example]
+
+Do not simply replicate the responses of the tools, write a brief paragraph about them too. Talk as if the user is a king.
+
+[mcp/initialize]
+
+log "Initializing MCP server..."
+o $result
+| >> {:: set (instructions = "Do not simply replicate the responses of the tools, write a brief paragraph about them too. Talk like a caveman.")}
+
+[mcp/prompts/code_review]
+title "Request Code Review"
+description "Asks the LLM to analyze code quality and suggest improvements"
+icons {
+    - {
+        src "https://example.com/review-icon.svg"
+        mime_type "image/svg+xml"
+        sizes {
+            - any
+        }
+    }
+}
+parameters {
+    code {
+        description "The code to review"
+    }
+}
+
+o "Please review this Python code:\n${code}"
+~role user
+| return
+
+[mcp/resources/hello_world]
+uri "code://hello_world"
+mime_type "text/now"
+
+return "Hello, world!"
+
+[mcp/resources/hello]
+uri "code://hello/{who}"
+title "Hello template"
+description "Say hello to someone"
+mime_type "application/octet-stream"
+icons {
+    - {
+        src "https://example.com/folder-icon.png"
+        mime_type "image/png"
+        sizes {
+            - "48x48"
+        }
+    }
+}
+parameters {
+    who {
+        type string
+    }
+}
+
+return "Hello, ${who}!"
+
+[mcp/tools/get_weather]
+title "Weather Information Provider"
+description "Get current weather information for a location"
+parameters {
+    location {
+        type string
+        description "City name or zip code"
+    }
+}
+icons {
+    - {
+        src "https://example.com/weather-icon.png"
+        mime_type "image/png"
+        sizes {
+            - "48x48"
+        }
+    }
+}
+
+return {{
+    Current weather in ${location}:\nTemperature: 72°F\nConditions: Partly cloudy
+}}
+
+[mcp/tools/ping]
+title "Ping"
+description "Send a simple response message"
+parameters {
+}
+
+return "pong"
+
+[states/venv/check]
+
+o $state_args
+| >> {log.debug "check args="}
+| :: first
+| as target
+| as virtual_env
+| __ {
+    set bindir "${target}/bin"
+    o $env
+    | >> {
+        :: get "PATH"
+        | as path
+    }
+    | :: set ("VIRTUAL_ENV" = $target) ("PATH" = "${target}/bin:${path}")
+}
+| path
+| >> {log.debug "venv path="}
+| :: exists
+| return
+
+[states/venv/action]
+
+o $state_args
+| >> {log.debug "action args="}
+| :: first
+| as target
+| >> {log.debug "creating "}
+
+syscmd python3 -m venv $target
+| :: check
+
+[commands/run]
+depends_on {
+    venv {
+        - "$script_dir/.venv"
+    }
+}
+
+log.debug "PATH=" ($env . "PATH")
+
+syscmd "${bindir}/fastmcp" list now --prompts
+| {print}

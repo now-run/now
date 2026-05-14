@@ -48,8 +48,10 @@ class BaseCommand
         }
         */
         auto depends_on = info.getOrCreate!Dict("depends_on");
+        log(" depends_on=", depends_on);
         foreach (name, args; depends_on)
         {
+            log(" - ", name, ": ", args);
             auto l = cast(List)args;
             if (l is null)
             {
@@ -230,8 +232,10 @@ class BaseCommand
         // state checks!
         foreach (stateName; this.dependsOnOrder)
         {
+            log(" state=", stateName);
             auto state = input.escopo.document.states[stateName];
             auto stateArgs = this.dependsOn[stateName];
+            log(" - args=", stateArgs);
             auto stateOutput = new Output();
             auto stateExitCode = state.run(
                 stateArgs, newScope, stateOutput

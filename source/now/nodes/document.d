@@ -9,7 +9,6 @@ import std.parallelism : TaskPool, totalCPUs;
 import std.string : toStringz;
 import std.uni : toLower, toUpper;
 
-
 import now.nodes;
 
 import now.base_command;

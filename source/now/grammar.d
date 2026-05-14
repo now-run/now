@@ -536,7 +536,7 @@ class NowParser : Parser
                     auto key = consumeAtom();
                     consumeSpace();
                     auto value = consumeItem();
-                    log("~~~ ", key, " = ", value);
+                    log("  ", arg, " ~ ", key, " = ", value);
                     consumeWhitespaces();
 
                     if (arg !is null)
