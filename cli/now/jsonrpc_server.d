@@ -1,4 +1,4 @@
-module now.jsonrpc;
+module now.jsonrpc_server;
 
 import now;
 

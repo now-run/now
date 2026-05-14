@@ -122,6 +122,8 @@ class SubstString : String
             }
         }
 
-        return [new String(result, true)];
+        auto s = new String(result, true);
+        s.properties = this.properties;
+        return [s];
     }
 }

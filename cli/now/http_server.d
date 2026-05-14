@@ -1,4 +1,4 @@
-module now.httpserver;
+module now.http_server;
 
 import core.thread : Fiber;
 import std.algorithm : among, filter, remove;

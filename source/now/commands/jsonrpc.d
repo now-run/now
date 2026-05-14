@@ -1,14 +1,36 @@
 module now.commands.jsonrpc;
 
 import std.json;
+
 import now;
 import now.commands;
 import now.json;
+import now.jsonrpc;
 
+ulong requestId = 0;
 
 void loadJsonrpcCommands(CommandsMap commands)
 {
-    // json-rpc
+    commands["jsonrpc.call"] = function(string path, Input input, Output output)
+    {
+        string method = input.pop!string;
+
+        JSONValue args = ItemToJson(new List(input.popAll));
+
+
+        JSONValue response = ["jsonrpc": "2.0", "method": method];
+        response.object["id"] = ++requestId;
+
+        response.object["params"] = args;
+        if (input.kwargs)
+        {
+            response.object["params"] = ItemToJson(new Dict(input.kwargs));
+        }
+
+        output.push(response.toString);
+
+        return ExitCode.Success;
+    };
     commands["jsonrpc.process"] = function(string path, Input input, Output output)
     {
         /*
@@ -16,11 +38,17 @@ void loadJsonrpcCommands(CommandsMap commands)
         calls x
         returns a json-rpc response string
         */
+
+        string prefix = "rpc:";
+        if (auto prefixPtr = ("prefix" in input.kwargs))
+        {
+            prefix = (*prefixPtr).toString;
+        }
+
         ExitCode exitCode = ExitCode.Success;
 
         foreach (item; input.popAll)
         {
-
             auto request = item.toString;
             JSONValue request_json;
 
@@ -58,7 +86,8 @@ void loadJsonrpcCommands(CommandsMap commands)
             }
 
             auto request_id = request_json["id"];
-            auto name = request_json["method"].str;
+            auto original_name = request_json["method"].str;
+            string name = prefix ~ original_name;
 
             Args args;
             KwArgs kwargs;

@@ -1,0 +1,82 @@
+[MCP Example]
+
+Transport is stdio.
+
+[mcp/prompts/code_review]
+title "Request Code Review"
+description "Asks the LLM to analyze code quality and suggest improvements"
+icons {
+    - {
+        src "https://example.com/review-icon.svg"
+        mime_type "image/svg+xml"
+        sizes {
+            - any
+        }
+    }
+}
+parameters {
+    code {
+        description "The code to review"
+    }
+}
+
+o "Please review this Python code:\n${code}"
+~role user
+| return
+
+[mcp/resources/hello_world]
+uri "code://hello_world"
+mime_type "text/now"
+
+return "Hello, world!"
+
+[mcp/resource_templates/hello]
+uri_template "code://hello/{who}"
+title "Hello template"
+description "Say hello to someone"
+mime_type "application/octet-stream"
+icons {
+    - {
+        src "https://example.com/folder-icon.png"
+        mime_type "image/png"
+        sizes {
+            - "48x48"
+        }
+    }
+}
+
+return "Hello, ${who}!"
+
+[mcp/tools/get_weather]
+title "Weather Information Provider"
+description "Get current weather information for a location"
+parameters {
+    location {
+        type string
+        description "City name or zip code"
+    }
+}
+icons {
+    - {
+        src "https://example.com/weather-icon.png"
+        mime_type "image/png"
+        sizes {
+            - "48x48"
+        }
+    }
+}
+
+return "Current weather in ${location}:\nTemperature: 72°F\nConditions: Partly cloudy"
+
+[mcp/tools/ping]
+title "Ping"
+description "Send a simple response message"
+parameters {
+}
+
+return "pong"
+
+[commands/run]
+
+syscmd fastmcp list now --prompts
+| {print}

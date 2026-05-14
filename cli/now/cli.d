@@ -12,9 +12,11 @@ import std.stdio;
 import std.string;
 
 import now;
-import now.httpserver;
-import now.jsonrpc;
+import now.http_server;
+import now.jsonrpc_server;
 import now.library_server;
+import now.mcp_server;
+
 import now.env_vars;
 import now.commands;
 
@@ -69,6 +71,7 @@ int main(string[] args)
                 case "jsonrpc":
                 case "lib":
                 case "lp":
+                case "mcp":
                 case "repl":
                 case "watch":
                     nowArgs ~= keyword;
@@ -139,6 +142,8 @@ int main(string[] args)
                 return libraryServer(document, documentArgs);
             case "lp":
                 return lineProcessor(document, documentArgs);
+            case "mcp":
+                return mcpServer(document, documentArgs);
             case "repl":
                 return repl(document, documentArgs, nowArgs);
             case "watch":
@@ -396,6 +401,9 @@ int now_help()
     stdout.writeln("  :cmd <command> - run commands passed as arguments");
     stdout.writeln("  :dump - prints the document as interpreted");
     stdout.writeln("  :f <file> - run a specific file");
+    stdout.writeln("  :http - start a HTTP server (socket)");
+    stdout.writeln("  :jsonrpc - start a JSON-RPC server (stdio)");
+    stdout.writeln("  :mcp - start a MCP server (stdio)");
     stdout.writeln("  :repl - enter interactive mode");
     stdout.writeln("  :stdin - read a document from standard input");
     stdout.writeln("  :watch - watch-and-execute a file containing a subprogram");
