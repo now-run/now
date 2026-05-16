@@ -512,7 +512,7 @@ static this()
         auto target = (cast(String)object).toString;
         foreach (item; input.popAll)
         {
-            output.push(cmp!"a > b"(item.toString(), target) == 1);
+            output.push(cmp!"a < b"(item.toString(), target) < 0);
         }
         return ExitCode.Success;
     };
@@ -521,7 +521,7 @@ static this()
         auto target = (cast(String)object).toString;
         foreach (item; input.popAll)
         {
-            output.push(cmp!"a > b"(item.toString(), target) != -1);
+            output.push(cmp!"a <= b"(item.toString(), target) < 0);
         }
         return ExitCode.Success;
     };
@@ -530,7 +530,7 @@ static this()
         auto target = (cast(String)object).toString;
         foreach (item; input.popAll)
         {
-            output.push(cmp!"a < b"(item.toString(), target) == 1);
+            output.push(cmp!"a > b"(item.toString(), target) < 0);
         }
         return ExitCode.Success;
     };
@@ -539,10 +539,16 @@ static this()
         auto target = (cast(String)object).toString;
         foreach (item; input.popAll)
         {
-            output.push(cmp!"a < b"(item.toString(), target) != -1);
+            output.push(cmp!"a >= b"(item.toString(), target) < 0);
         }
         return ExitCode.Success;
     };
+    stringMethods[">"] = stringMethods["gt"];
+    stringMethods[">="] = stringMethods["gte"];
+    stringMethods["<"] = stringMethods["lt"];
+    stringMethods["<="] = stringMethods["lte"];
+    stringMethods["=="] = stringMethods["eq"];
+    stringMethods["!="] = stringMethods["neq"];
 
     stringMethods["to.bytes"] = function(Item object, string path, Input input, Output output)
     {
@@ -568,6 +574,42 @@ static this()
         auto target = cast(String)object;
         auto reversed = target.toString.retro.array.to!string;
         output.push(reversed);
+        return ExitCode.Success;
+    };
+
+    stringMethods["semver"] = function(Item object, string path, Input input, Output output)
+    {
+        /*
+        > o "1.2.3-rc2" | :: semver
+        0001.0002.0003.rc2
+
+        > o "1.2.3" | :: semver
+        0001.0002.0003.zzzz
+        */
+        auto s = (cast(String)object).toString.toLower;
+        log("s=", s);
+        auto main_parts = s.split("-");
+        log("main_parts=", main_parts, main_parts.length);
+        auto version_parts = main_parts[0].split(".");
+        log("version_parts=", version_parts);
+
+
+        auto result = version_parts
+            .map!(ns => format("%04u", ns.to!ulong))
+            .join(".");
+        log("pre result=", result);
+
+        if (main_parts.length == 1)
+        {
+            result ~= ".zzzz";
+        }
+        else
+        {
+            result ~= "." ~ main_parts[1..$].join(".");
+        }
+        log("result=", result);
+
+        output.push(result);
         return ExitCode.Success;
     };
 }
