@@ -593,6 +593,10 @@ static this()
         auto version_parts = main_parts[0].split(".");
         log("version_parts=", version_parts);
 
+        while (version_parts.length < 3)
+        {
+            version_parts ~= "0";
+        }
 
         auto result = version_parts
             .map!(ns => format("%04u", ns.to!ulong))
