@@ -1,16 +1,9 @@
 {
     "mcpServers": {
         "now": {
-            "command": "now",
-            "args": [":mcp"],
+            "command": "now.mcp",
+            "args": [],
             "env": {
-            }
-        },
-        "now-debug": {
-            "command": "now.debug",
-            "args": [":mcp"],
-            "env": {
-                "LOG_LEVEL": "debug"
             }
         }
     }

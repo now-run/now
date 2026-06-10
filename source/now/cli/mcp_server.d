@@ -2,6 +2,7 @@ module now.mcp_server;
 
 import now.nodes;
 
+import now.cli;
 import now.escopo;
 import now.json;
 import now.jsonrpc;
@@ -25,6 +26,11 @@ template print(T)
         stdout.writeln(msg);
         stdout.flush();
     }
+}
+
+int main(string[] args)
+{
+    return cliMain(args, &mcpServer);
 }
 
 int mcpServer(Document document, string[] documentArgs)

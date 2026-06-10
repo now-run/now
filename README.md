@@ -2,44 +2,42 @@
 
 Your code is ready. Now run.
 
-## Rationale
+## tl;dr
 
-Are you using *Make* as a command-runner for your
-project? Or do you have a `bin/` directory with
-*shell scripts*? Is your Makefile starting to feel
-somewhat limited? Are your shell scripts escaping
-from `bin/` and starting to feel pervasive in your
-project?
+```bash
+# Executes local Nowfile:
+$ now
 
-It's very likely that you wished that you could have
-the power of a good POSIX shell but wrapped in a simple
-interface like that of Make.
+# Executing commands:
+$ now.cmd 'print "Hello, World!"'
+$ echo 'print "Hello, standard input!" | now.stdin
 
-Well, those are basically the problems `Now` wants to
-solve. With `Now` you can write every supporting routines
-of your project in only one file while still being able to
-use all the power not only of a POSIX shell but of any
-other tool available in your system in a well-organized
-manner!
+# Read/eval/print loops:
+$ now.repl   # REPL
+$ now.watch watchfile  # Now open "watchfile" in your editor
+
+# Built-in servers:
+$ now.http
+$ now.mcp
+$ now.jsonrpc
+
+```
 
 ## Features
 
 * REPL
-* `Nowfile` (like a `Makefile`)
+* Auto-load local `Nowfile` (just like `make` does with local `Makefile`)
 * Self-documenting command line interfaces
-* Syntax for structured data
-* Pipelines!
-* System Commands
-* Shells and Scripts (define external programs, like bash,
-  and code that are expected to be run by them in your
-  document/program)
+* Pipeline-oriented language
 * Load configuration from environment variables automatically
-* Template System
-* Data Sources (you can easily define procedures that
-  load constants into your document before running it)
-* Libraries implemented as external processes (no dynamic
-  libraries / shared objects support required)
-* Sections of your document can be simply text
+* Simple Template System
+* Libraries implemented as **jsonrpc** based _external_ processes
+
+### Built-in Servers
+
+* HTTP
+* jsonrpc
+* MCP
 
 ## Install
 
@@ -50,69 +48,13 @@ brew tap now-run/now  # Add the tap, first -- you only have to do it once.
 brew install now      # Install the package
 ```
 
-### Using dub
-
-To build Now, you must have `dub` installed.
-
-On Debian-based Linux distros:
-
-```bash
-$ sudo apt-get install -y dub
-```
-
-On MacOS X:
-
-```bash
-$ brew install dub
-```
-
-Now you can run Now using `dub`, like in
-
-```bash
-$ dub run now -b release
-```
-
-but probably you'll want to run it directly, so I recommend
-you create a symbolic link into some directory present in
-your `$PATH`. In my case, I have a `~/bin` for that, so it
-would be like this:
-
-```bash
-$ cd ~/bin
-$ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
-```
-
-Please notice you'll have to indicate the installed
-version. If you want to automate that, you can use
-`jq`:
-
-```bash
-$ NOW_VERSION=$(dub describe now | jq -rc '.packages[0].version')
-$ cd ~/bin
-$ ln -sf ~/.dub/packages/now-$NOW_VERSION/now/dist/now now
-```
-
-### Using make
+### Compiling it yourself
 
 - Have `ldc` installed (it's called `ldc2` on some systems);
 - Have `make` installed;
 - Clone the repository;
 - `make release`;
 - Symlink or copy `dist/now` to a directory under your `PATH`.
-
-## Run
-
-Considering there's a `Nowfile` in the current directory:
-
-```bash
-$ now <subcommand>
-```
-
-You can get a help text by calling `now` without arguments:
-
-```bash
-$ now
-```
 
 ## Extras
 

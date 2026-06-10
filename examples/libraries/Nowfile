@@ -11,7 +11,7 @@ command {
     }
 }
 
-[procedures/sum]
+[procedures/rpc:sum]
 parameters {
     a {
         type integer
@@ -25,7 +25,7 @@ parameters {
 log "summing up ${a} and ${b}..."
 return ($a + $b)
 
-[procedures/multi_values_return]
+[procedures/rpc:multi_values_return]
 
 return a b c
 
@@ -51,24 +51,45 @@ test_lib ping
     | :: assert
 
 [commands/test]
+description "Call jsonrpc.process to handle many types of requests."
 
-log "multi_values_return:"
-dict (jsonrpc = "2.0") (id = 1) (method = multi_values_return) | json.encode | jsonrpc.process | print
+
+dict (jsonrpc = "2.0") (id = 1) (method = multi_values_return)
+| json.encode
+| jsonrpc.process
+| print
 
 log "sum 2 3:"
-dict (jsonrpc = "2.0") (id = 2) (method = sum) (params = (2 , 3)) | json.encode | jsonrpc.process | print
+dict (jsonrpc = "2.0") (id = 2) (method = sum) (params = (2 , 3))
+| json.encode
+| jsonrpc.process
+| print
 
 log "sum b=4 a=5:"
-dict (jsonrpc = "2.0") (id = 2) (method = sum) (params = [dict (b = 4) (a = 5)]) | json.encode | jsonrpc.process | print
+dict (jsonrpc = "2.0") (id = 2) (method = sum) (params = [dict (b = 4) (a = 5)]) 
+| json.encode
+| jsonrpc.process
+| print
 
 log "sum kwargs:"
-dict (jsonrpc = "2.0") (id = 2) (method = sum) (params = [dict (c = "123") (d = 5)]) | json.encode | jsonrpc.process | print
+dict (jsonrpc = "2.0") (id = 2) (method = sum) (params = [dict (c = "123") (d = 5)])
+| json.encode
+| jsonrpc.process
+| print
 
 log "ping:"
-dict (jsonrpc = "2.0") (id = "test_id_01") (method = ping) | json.encode | jsonrpc.process | print
+dict (jsonrpc = "2.0") (id = "test_id_01") (method = ping)
+| json.encode
+| jsonrpc.process
+| print
 
 log "method blebs:"
-dict (jsonrpc = "2.0") (id = 2) (method = blebs) | json.encode | jsonrpc.process | print
+dict (jsonrpc = "2.0") (id = 2) (method = blebs)
+| json.encode
+| jsonrpc.process
+| print
 
 log "not a json input:"
-o "not really a json" | jsonrpc.process | print
+o "not really a json"
+| jsonrpc.process
+| print

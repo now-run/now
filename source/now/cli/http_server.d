@@ -21,6 +21,7 @@ import now.cli;
 import now.env_vars;
 import now.json;
 
+
 const auto DEFAULT_IP_BLOCK_TIME = "300";
 const auto DEFAULT_PORT = 5000;
 const auto DEFAULT_STATIC_DIR = "./static";
@@ -704,6 +705,11 @@ class Client : Fiber
     }
 }
 
+
+int main(string[] args)
+{
+    return cliMain(args, &httpServer);
+}
 
 int httpServer(Document document, string[] documentArgs)
 {
